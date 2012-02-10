@@ -153,7 +153,7 @@ void mexFunction(int nlhs,       mxArray *plhs[],
 	}
 	ov=100.0*(1-bna/bua);
         if (j == 0) {
-          mexPrintf("over with %d: %g\n", i, 1-ov/100.0) ;
+          //mexPrintf("over with %d: %g\n", i, 1-ov/100.0) ;
         }
 	tover_out[j*dims2[1]+i]=ov;
 	mover_out[j*dims2[1]+i]=ov;

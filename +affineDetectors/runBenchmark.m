@@ -37,10 +37,10 @@ for iDetector = 1:numel(detectors)
     frames{i} = curDetector.detectPoints(images{i});
   end
 
-  fprintf('\nEvaluating regions for method #%02d: %s\n\n', ...
-          iDetector, curDetector.getName());
+  fprintf('\n');
 
   for i=2:6
+  fprintf('Evaluating regions for image: %02d/%02d ...\n',i,6);
     [framesA,framesB,framesA_,framesB_] = ...
         cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
 

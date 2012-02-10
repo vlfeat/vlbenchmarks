@@ -32,7 +32,7 @@ neighs = cell(1,N2) ;
 scores = cell(1,N2) ;
 
 for i2 = 1:N2
-  fprintf('%.2f %%\r', i2/N2*100) ;
+  %fprintf('%.2f %%\r', i2/N2*100) ;
 
   s = 30 / sqrt(a2(i2) / pi)  ;
 
