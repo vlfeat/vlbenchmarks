@@ -24,7 +24,7 @@ repeatibilityScore = zeros(numDetectors,6); repeatibilityScore(:,1)=1;
 for i = 2:6, figure(i); clf; end
 
 for iDetector = 1:numel(detectors)
-  curDetector = detectors(iDetector);
+  curDetector = detectors{iDetector};
   assert(isa(curDetector,'affineDetectors.genericDetector'),...
          'Detector not an instance of genericDetector\n');
   frames = cell(1,6);
@@ -62,7 +62,7 @@ xlabel('image') ;
 ylim([0 100]) ;
 
 legendStr = cell(1,numel(detectors));
-for i = 1:numel(detectors), legendStr{i} = detectors(i).getName(); end
+for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
 legend(legendStr);
 grid on ;
 

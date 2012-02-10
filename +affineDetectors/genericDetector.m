@@ -7,7 +7,7 @@ classdef genericDetector < handle
     % None here yet, the subclasses will define if needed
   end
 
-  properties (SetAccess=private, GetAccess=private)
+  properties (SetAccess=protected, GetAccess=protected)
     detectorName % Set this in the constructor to use the name for plotting
     % purposes, else it will be set to a default value
   end
