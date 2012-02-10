@@ -3,9 +3,13 @@
 % state inside an object of this class.
 
 classdef genericDetector < handle
-  properties (Abstract, SetAccess=private, GetAccess=public)
-    % No properties
-    % Instances of this class will define the properties they need
+  properties (SetAccess=private, GetAccess=public)
+    % None here yet, the subclasses will define if needed
+  end
+
+  properties (SetAccess=private, GetAccess=private)
+    detectorName % Set this in the constructor to use the name for plotting
+    % purposes, else it will be set to a default value
   end
 
   methods(Abstract)
@@ -24,4 +28,17 @@ classdef genericDetector < handle
     %   frames(4,:) stores ??
     %   frames(5,:) stores ??
   end
-end
+
+  methods
+    % This function returns the name of the detector used
+    function name = getName(obj)
+      if(isempty(obj.detectorName))
+        name = class(obj);
+      else
+        name = obj.detectorName;
+      end
+    end
+
+  end % ------- end of methods --------
+
+end % -------- end of class ---------
