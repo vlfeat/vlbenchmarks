@@ -32,15 +32,15 @@ for i=2:6
   % find frames fully visible in both images
   bboxA = [1 1 size(images{1}, 2) size(images{1}, 1)] ;
   bboxB = [1 1 size(images{i}, 2) size(images{i}, 1)] ;
-  selA = find(helpers.isEllipseInBBox(bboxA, framesA ) & ...
-              helpers.isEllipseInBBox(bboxB, framesA_)) ;
-  selB = find(helpers.isEllipseInBBox(bboxA, framesB_) & ...
-              helpers.isEllipseInBBox(bboxB, framesB )) ;
+  selA = helpers.isEllipseInBBox(bboxA, framesA ) & ...
+         helpers.isEllipseInBBox(bboxB, framesA_);
+  selB = helpers.isEllipseInBBox(bboxA, framesB_) & ...
+         helpers.isEllipseInBBox(bboxB, framesB );
 
-  framesA  = framesA(:, selA) ;
-  framesA_ = framesA_(:, selA) ;
-  framesB  = framesB(:, selB) ;
-  framesB_ = framesB_(:, selB) ;
+  framesA  = framesA(:, selA);
+  framesA_ = framesA_(:, selA);
+  framesB  = framesB(:, selB);
+  framesB_ = framesB_(:, selB);
 
   figure(i) ; clf ;
   subplot(1,2,1) ; imagesc(images{1}) ; colormap gray ;
@@ -53,7 +53,7 @@ for i=2:6
   frameMatches = matchEllipses(framesB_, framesA) ;
   bestMatches = findOneToOneMatches(frameMatches,framesA,framesB_);
 
-  repeat(i) = sum(bestMatches) / min(length(selA), length(selB)) ;
+  repeat(i) = sum(bestMatches) / min(nnz(selA), nnz(selB)) ;
 end
 
 figure(100) ; clf ;
