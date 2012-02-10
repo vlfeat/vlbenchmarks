@@ -1,5 +1,5 @@
-function well = ellwhomog(H, ell)
-% ELLWHOMOG  Warp ellpitical frames through homography
+function well = warpEllipse(H, ell)
+% warpEllipse  Warp elliptical frames through homography
 %
 %   Author:: Andrea Vedaldi
 
@@ -15,8 +15,3 @@ for i=1:size(ell,2)
 
   well(:,i) = [t_ ; S_([1;2;4])] ;
 end
-
-
-
-
-

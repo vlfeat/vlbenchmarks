@@ -1,4 +1,4 @@
-function g = frametoell(f)
+function g = frameToEllipse(f)
 % FRAMETOELL
 
 switch size(f, 1)

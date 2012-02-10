@@ -7,36 +7,35 @@ import affineDetectors.*;
 conf.dataDir  = 'data' ; % TODO: make this relative to the current m file, ask Andrea if vlfeat has a fn
 conf.imageSel = [1 2] ;
 
-for i=1:6
-  imagePaths{i} = fullfile(conf.dataDir, 'graf', sprintf('img%d.ppm',i)) ;
-end
+images = cell(1,6); frames = cell(1,6);
 
 for i=1:6
-  images{i} = imread(imagePaths{i}) ;
+  imagePath = fullfile(conf.dataDir, 'graf', sprintf('img%d.ppm',i)) ;
+  images{i} = imread(imagePath) ;
   tfs{i} = textread(fullfile(conf.dataDir, 'graf', sprintf('H1to%dp', i))) ;
 
-  frames{i} = detector(images{i});
+  frames{i} = detector.detectPoints(images{i});
 
-  figure(i) ; clf ; imagesc(tmp) ; colormap gray ;
-  vl_plotframe(helpers.frametoellipse(frames{i})) ;
+  figure(i) ; clf ; imagesc(rgb2gray(images{i})) ; colormap gray ;
+  vl_plotframe(helpers.frameToEllipse(frames{i})) ;
 end
 
-repeat = [1] ;
-repeat_ = repeat ;
-vggRepeat = repeat ;
+repeat = zeros(1,6); repeat(1)=1;
 
 for i=2:6
-  framesA = helpers.frametoellipse(frames{1}) ;
-  framesB = helpers.frametoellipse(frames{i}) ;
+  framesA = helpers.frameToEllipse(frames{1}) ;
+  framesB = helpers.frameToEllipse(frames{i}) ;
 
-  framesA_ = helpers.ellwhomog(tfs{i},      framesA) ;
-  framesB_ = ellwhomog(inv(tfs{i}), framesB) ;
+  framesA_ = helpers.warpEllipse(tfs{i},      framesA) ;
+  framesB_ = helpers.warpEllipse(inv(tfs{i}), framesB) ;
 
   % find frames fully visible in both images
   bboxA = [1 1 size(images{1}, 2) size(images{1}, 1)] ;
   bboxB = [1 1 size(images{i}, 2) size(images{i}, 1)] ;
-  selA = find(ellclip(bboxA, framesA ) & ellclip(bboxB, framesA_)) ;
-  selB = find(ellclip(bboxA, framesB_) & ellclip(bboxB, framesB )) ;
+  selA = find(helpers.isEllipseInBBox(bboxA, framesA ) & ...
+              helpers.isEllipseInBBox(bboxB, framesA_)) ;
+  selB = find(helpers.isEllipseInBBox(bboxA, framesB_) & ...
+              helpers.isEllipseInBBox(bboxB, framesB )) ;
 
   framesA  = framesA(:, selA) ;
   framesA_ = framesA_(:, selA) ;
@@ -51,11 +50,23 @@ for i=2:6
   hold on ; vl_plotframe(framesA_) ; axis equal ;
   vl_plotframe(framesB, 'b', 'linewidth', 1) ;
 
-  ev = evalFrameStability(framesB_, framesA ) ;
+  frameMatches = matchEllipses(framesB_, framesA) ;
+  bestMatches = findOneToOneMatches(frameMatches,framesA,framesB_);
 
+  repeat(i) = sum(bestMatches) / min(length(selA), length(selB)) ;
+end
+
+figure(100) ; clf ;
+plot(repeat * 100,'linewidth', 3) ; hold on ;
+ylabel('repeatab. %') ;
+xlabel('image') ;
+ylim([0 100]) ;
+legend('vl_mser') ;
+grid on ;
+
+function bestMatches = findOneToOneMatches(ev,framesA,framesB)
   matches = [] ;
-  wout_ = zeros(length(framesB_), length(framesA)) ;
-  good = zeros(1, size(framesA, 2)) ;
+  bestMatches = zeros(1, size(framesA, 2)) ;
 
   for j=1:length(framesA)
     numNeighs = length(ev.scores{j}) ;
@@ -77,17 +88,5 @@ for i=2:6
     idx = idx + 1 ;
   end
 
-  idx = sub2ind(size(wout_), matches(2, :), matches(1, :)) ;
-  wout_(idx) = matches(3, :) ;
-  good(matches(1, matches(3, :) > .6)) = 1 ;
-
-  repeat(i) = sum(good) / min(length(selA), length(selB)) ;
-end
-
-figure(100) ; clf ;
-plot(repeat * 100,'linewidth', 3) ; hold on ;
-ylabel('repeatab. %') ;
-xlabel('image') ;
-ylim([0 100]) ;
-legend('us', 'vgg') ;
-grid on ;
+  bestMatches(matches(1, matches(3, :) > .6)) = 1 ;
+  % 0.6 is the overlap threshold, TODO: make this a parameter
