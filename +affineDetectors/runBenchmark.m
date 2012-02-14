@@ -16,7 +16,7 @@ for i=1:6
   tfs{i} = textread(fullfile(conf.dataDir, 'graf', sprintf('H1to%dp', i))) ;
 end
 
-% -------- Evaluate each detector output and plot it ---------------------------
+% -------- Compute each detectors output and store the evaluation --------------
 numDetectors = numel(detectors);
 repeatibilityScore = zeros(numDetectors,6); repeatibilityScore(:,1)=1;
 
@@ -55,6 +55,7 @@ for iDetector = 1:numel(detectors)
 
 end
 
+% ----------------- Plot the evaluation scores ---------------------------------
 figure(100) ; clf ;
 plot(repeatibilityScore' * 100,'linewidth', 3) ; hold on ;
 ylabel('repeatab. %') ;
