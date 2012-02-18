@@ -1,53 +1,60 @@
-function runBenchmark(detectors)
+function runBenchmark(detectors,dataset,varargin)
 % Function to run a affine co-variant feature detector on
 % dataset of images, and measure repeatibility
 
 import affineDetectors.*;
 
-conf.dataDir  = 'data' ; % TODO: make this relative to the current m file, ask Andrea if vlfeat has a fn
-conf.imageSel = [1 2] ;
-
+% -------- create options ------------------------
+opts.showQualitative = true;
+opts = commonFns.vl_argparse(opts,varargin);
 
 % -------- Load the dataset ----------------------------------------------------
-images = cell(1,6);
-for i=1:6
-  imagePath = fullfile(conf.dataDir, 'graf', sprintf('img%d.ppm',i)) ;
-  images{i} = imread(imagePath) ;
-  tfs{i} = textread(fullfile(conf.dataDir, 'graf', sprintf('H1to%dp', i))) ;
+assert(isa(dataset,'affineDetectors.genericDataset'),...
+    'dataset not an instance of generic dataset\n');
+numImages = dataset.numImages;
+images = cell(1,numImages);
+for i=1:numImages
+  imagePath = dataset.getImagePath(i);
+  images{i} = imread(imagePath);
+  tfs{i} = dataset.getTransformation(i);
 end
 
 % -------- Compute each detectors output and store the evaluation --------------
 numDetectors = numel(detectors);
-repeatibilityScore = zeros(numDetectors,6); repeatibilityScore(:,1)=1;
+repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
 
 % Clear all the figures
-for i = 2:6, figure(i); clf; end
+if opts.showQualitative
+  for i = 1:numImages, figure(i); clf; end
+end
 
 for iDetector = 1:numel(detectors)
   curDetector = detectors{iDetector};
   assert(isa(curDetector,'affineDetectors.genericDetector'),...
          'Detector not an instance of genericDetector\n');
-  frames = cell(1,6);
+  frames = cell(1,numImages);
 
   fprintf('\nComputing affine covariant regions for method #%02d: %s\n\n', ...
           iDetector, curDetector.getName());
 
-  for i = 1:6
-    fprintf('Computing regions for image: %02d/%02d ...\r',i,6);
+  for i = 1:numImages
+    fprintf('Computing regions for image: %02d/%02d ...\r',i,numImages);
     frames{i} = curDetector.detectPoints(images{i});
   end
 
   fprintf('\n');
 
-  for i=2:6
-  fprintf('Evaluating regions for image: %02d/%02d ...\n',i,6);
+  for i=2:numImages
+    fprintf('Evaluating regions for image: %02d/%02d ...\n',i,numImages);
     [framesA,framesB,framesA_,framesB_] = ...
         cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
 
-    plotFrames(framesA,framesB,framesA_,framesB_,iDetector,i,numDetectors,...
-               images{1},images{i},curDetector.getName());
+    if opts.showQualitative
+      plotFrames(framesA,framesB,framesA_,framesB_,iDetector,i,numDetectors,...
+                images{1},images{i},curDetector.getName());
+    end
 
-    frameMatches = matchEllipses(framesB_, framesA) ;
+    frameMatches = matchEllipses(framesB_, framesA);
     bestMatches = findOneToOneMatches(frameMatches,framesA,framesB_);
     repeatibilityScore(iDetector,i) = ...
         sum(bestMatches) / min(size(framesA,2), size(framesB,2));
@@ -56,7 +63,7 @@ for iDetector = 1:numel(detectors)
 end
 
 % ----------------- Plot the evaluation scores ---------------------------------
-figure(100) ; clf ;
+figure(numImages+1) ; clf ;
 plot(repeatibilityScore' * 100,'linewidth', 3) ; hold on ;
 ylabel('repeatab. %') ;
 xlabel('image') ;
