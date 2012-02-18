@@ -81,6 +81,8 @@ function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
     vl_plotframe(framesB, 'b', 'linewidth', 1) ;
     title(detectorName);
 
+    drawnow;
+
 function [framesA,framesB,framesA_,framesB_] = ...
     cropFramesToOverlapRegion(framesA,framesB,tfs,imageA,imageB)
 % This function transforms ellipses in A to B (and vice versa), and crops
