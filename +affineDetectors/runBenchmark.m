@@ -28,14 +28,26 @@ if opts.showQualitative
   for i = 1:numImages, figure(i); clf; end
 end
 
-for iDetector = 1:numel(detectors)
-  curDetector = detectors{iDetector};
-  assert(isa(curDetector,'affineDetectors.genericDetector'),...
-         'Detector not an instance of genericDetector\n');
-  frames = cell(1,numImages);
+fprintf('Running evaluation on %d detectors:\n',numDetectors);
 
+for i = 1:numel(detectors)
+  assert(isa(detectors{i},'affineDetectors.genericDetector'),...
+         'Detector not an instance of genericDetector\n');
+  fprintf('Detector #%02d: %s\n',i,detectors{i}.getName());
+end
+
+for iDetector = 1:numel(detectors)
+  frames = cell(1,numImages);
+  curDetector = detectors{iDetector};
   fprintf('\nComputing affine covariant regions for method #%02d: %s\n\n', ...
           iDetector, curDetector.getName());
+
+  if(~curDetector.isOk)
+    fprintf('Detector: %s is not working, message: %s\n',curDetector.getName(),...
+            curDetector.errMsg);
+    repeatibilityScore(iDetector,:) = 0;
+    continue;
+  end
 
   for i = 1:numImages
     fprintf('Computing regions for image: %02d/%02d ...\r',i,numImages);
@@ -65,14 +77,23 @@ end
 % ----------------- Plot the evaluation scores ---------------------------------
 figure(numImages+1) ; clf ;
 plot(repeatibilityScore' * 100,'linewidth', 3) ; hold on ;
-ylabel('repeatab. %') ;
-xlabel('image') ;
-ylim([0 100]) ;
+ylabel('Repeatibility. %') ;
+xlabel('Image #');
+title('Detector repeatibility vs. image index');
+ylim([0 100]);
+set(gca,'xtick',[1:numImages]);
 
 legendStr = cell(1,numel(detectors));
 for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
 legend(legendStr);
 grid on ;
+
+for i = 1:numel(detectors),
+  if ~detectors{i}.isOk,
+    fprintf('Detector %s failed because: %s\n',detectors{i}.getName(),...
+            detectors{i}.errMsg);
+  end
+end
 
 function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
                     numDetectors,imageA,imageB,detectorName)
@@ -80,13 +101,15 @@ function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
     figure(iImg);
     subplot(numDetectors,2,2*(iDetector-1)+1) ; imagesc(imageA);
     colormap gray ;
-    hold on ; vl_plotframe(framesA) ; axis off;
-    title(detectorName);
+    hold on ; vl_plotframe(framesA) ;
+    set(gca,'xtick',[],'ytick',[]);
+    ylabel(detectorName);
+    title('Reference image detections');
 
     subplot(numDetectors,2,2*(iDetector-1)+2) ; imagesc(imageB) ;
     hold on ; vl_plotframe(framesA_) ; axis off;
     vl_plotframe(framesB, 'b', 'linewidth', 1) ;
-    title(detectorName);
+    title('Transformed image detections');
 
     drawnow;
 
@@ -119,7 +142,7 @@ function [framesA,framesB,framesA_,framesB_] = ...
   framesB_ = framesB_(:, selB);
 
 function bestMatches = findOneToOneMatches(ev,framesA,framesB)
-  matches = [] ;
+  matches = zeros(3,0);
   bestMatches = zeros(1, size(framesA, 2)) ;
 
   for j=1:length(framesA)

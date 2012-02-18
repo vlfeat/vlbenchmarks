@@ -3,8 +3,11 @@
 % state inside an object of this class.
 
 classdef genericDetector < handle
-  properties (SetAccess=private, GetAccess=public)
+  properties (SetAccess=protected, GetAccess=public)
     % None here yet, the subclasses will define if needed
+    isOk = true; % signifies if detector has been installed and runs ok on
+    % this particular platform
+    errMsg = ''; % If there is some failure in detector, this string stores it
   end
 
   properties (SetAccess=public, GetAccess=public)
@@ -39,5 +42,12 @@ classdef genericDetector < handle
     end
 
   end % ------- end of methods --------
+
+  methods(Static)
+    % Over-ride this function to download and install data in the right location
+    function installDeps()
+      fprintf('No dependencies to install for this detector class\n');
+    end
+  end
 
 end % -------- end of class ---------

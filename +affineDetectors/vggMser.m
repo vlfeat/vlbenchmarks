@@ -6,10 +6,7 @@ classdef vggMser < affineDetectors.genericDetector
     % The properties below correspond to parameters for vgg_mser
 
     % Yet to add options for detector
-
-    softwareUrl
     binPath
-
   end
 
   methods
@@ -17,13 +14,33 @@ classdef vggMser < affineDetectors.genericDetector
     % See help vl_sift for possible parameters
     % This varargin is passed directly to vl_sift
     function obj = vggMser(varargin)
+      import affineDetectors.*;
       obj.detectorName = 'vggMser';
+      if ~vggMser.isInstalled(),
+        obj.isOk = false;
+        obj.errMsg = 'vggMser not found installed';
+        return;
+      end
       % Do the third party software management here
-      obj.softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz';
-      obj.binPath = 'thirdParty/vgg-mser/mser.ln';
+      cwd=commonFns.extractDirPath(mfilename('fullpath'));
+      machineType = computer();
+      binPath = '';
+      switch(machineType)
+        case  {'GLNX86','GLNXA64'}
+          binPath = fullfile(cwd,vggMser.rootInstallDir,'mser.ln');
+        case  {'PCWIN','PCWIN64'}
+          binPath = fullfile(cwd,vggMser.rootInstallDir,'mser.exe');
+        otherwise
+          obj.isOk = false;
+          obj.errMsg = sprintf('Arch: %s not supported by vggMser',...
+                                machineType);
+      end
+      obj.binPath = binPath;
     end
 
     function frames = detectPoints(obj,img)
+      if ~obj.isOk, frames = zeros(5,0); return; end
+
       if(size(img,3) > 1), img = rgb2gray(img); end
       binDir = commonFns.extractDirPath(obj.binPath);
 
@@ -32,9 +49,8 @@ classdef vggMser < affineDetectors.genericDetector
       featFile = [tmpName '.feat'];
 
       imwrite(img,imgFile);
-      args = sprintf(' -t 2 -es 2 -i ''%s'' -o ''%s''', imgFile, featFile);
-      cwd=commonFns.extractDirPath(mfilename('fullpath'));
-      binPath = [cwd obj.binPath];
+      args = sprintf(' -t 2 -es 2 -i "%s" -o "%s"', imgFile, featFile);
+      binPath = obj.binPath;
       cmd = [binPath ' ' args];
 
       [status,msg] = system(cmd);
@@ -46,6 +62,11 @@ classdef vggMser < affineDetectors.genericDetector
       delete(imgFile); delete(featFile);
     end
 
+  end
+
+  properties (Constant)
+    rootInstallDir = 'thirdParty/vggMser/';
+    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz';
   end
 
   methods (Static)
@@ -74,6 +95,30 @@ classdef vggMser < affineDetectors.genericDetector
 
       fclose(fid);
 
+    end
+
+    function installDeps()
+      import affineDetectors.*;
+      if vggMser.isInstalled(),
+        fprintf('Detector vggMser is already installed\n');
+        return
+      end
+      fprintf('Downloading vggMser to: %s ...\n',vggMser.rootInstallDir);
+
+      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      installDir = fullfile(cwd,vggMser.rootInstallDir);
+
+      untar(vggMser.softwareUrl,installDir);
+
+      fprintf('vggMser download and install complete\n\n');
+    end
+
+    function response = isInstalled()
+      import affineDetectors.*;
+      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      installDir = fullfile(cwd,vggMser.rootInstallDir);
+      if(exist(installDir,'dir')),  response = true;
+      else response = false; end
     end
 
   end % ---- end of static methods ----

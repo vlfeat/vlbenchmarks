@@ -12,7 +12,7 @@ function result = matchEllipses(f1, f2, varargin)
 import affineDetectors.*;
 
 conf_.normalizeFrames = true ;
-conf = vl_argparse(conf_, varargin) ;
+conf = commonFns.vl_argparse(conf_, varargin) ;
 
 % eigenvalues (radii squared)
 e1 = helpers.ellipseEigen(f1) ;
@@ -48,8 +48,8 @@ for i2 = 1:N2
 
     if z > 1
       figure(100) ; clf ;
-      vl_plotframe(S * f2(:, i2), 'g') ; hold on ;
-      vl_plotframe(S * f1(:, i1), 'r') ;
+      commonFns.vl_plotframe(S * f2(:, i2), 'g') ; hold on ;
+      commonFns.vl_plotframe(S * f1(:, i1), 'r') ;
       text(f1(1,i1),f1(2,i1), sprintf('%.2f %%', scores{i2}(n) * 100)) ;
       axis equal ;
       drawnow
