@@ -17,7 +17,7 @@ classdef vlFeatMser < affineDetectors.genericDetector
     end
 
     function frames = detectPoints(obj,img)
-      img = rgb2gray(img);
+      if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img); % If not already in uint8, then convert
 
       [xx brightOnDarkFrames] = vl_mser(img,obj.vl_mser_arguments{:});

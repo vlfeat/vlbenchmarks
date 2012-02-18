@@ -18,7 +18,7 @@ classdef vlFeatDOG < affineDetectors.genericDetector
     end
 
     function frames = detectPoints(obj,img)
-      img = rgb2gray(img);
+      if(size(img,3)>1), img = rgb2gray(img); end
       img = im2single(img);
 
       frames = vl_sift(img,obj.vl_sift_arguments{:});
