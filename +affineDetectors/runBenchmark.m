@@ -88,6 +88,8 @@ for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
 legend(legendStr);
 grid on ;
 
+fprintf('\n------ Evaluation completed ---------\n');
+
 for i = 1:numel(detectors),
   if ~detectors{i}.isOk,
     fprintf('Detector %s failed because: %s\n',detectors{i}.getName(),...
