@@ -1,5 +1,4 @@
 *.swp
-bin/
 *.DS_Store
 *.mexa64
 *.mexw32
@@ -8,4 +7,3 @@ bin/
 *.mexglx
 *.m~
 thirdParty/
-data/
