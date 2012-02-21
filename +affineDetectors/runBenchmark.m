@@ -23,9 +23,14 @@ end
 numDetectors = numel(detectors);
 repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
 
+if opts.showQualitative
+  figure(1); clf;
+  plotDataset(images);
+end
+
 % Clear all the figures
 if opts.showQualitative
-  for i = 1:numImages, figure(i); clf; end
+  for i = 2:numImages, figure(i); clf; end
 end
 
 fprintf('Running evaluation on %d detectors:\n',numDetectors);
@@ -61,15 +66,17 @@ for iDetector = 1:numel(detectors)
     [framesA,framesB,framesA_,framesB_] = ...
         cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
 
-    if opts.showQualitative
-      plotFrames(framesA,framesB,framesA_,framesB_,iDetector,i,numDetectors,...
-                images{1},images{i},curDetector.getName());
-    end
 
     frameMatches = matchEllipses(framesB_, framesA);
-    bestMatches = findOneToOneMatches(frameMatches,framesA,framesB_);
+    [bestMatches,matchIdxs] = findOneToOneMatches(frameMatches,framesA,framesB_);
     repeatibilityScore(iDetector,i) = ...
         sum(bestMatches) / min(size(framesA,2), size(framesB,2));
+
+    if opts.showQualitative
+      plotFrames(framesA,framesB,framesA_,framesB_,iDetector,i,numDetectors,...
+                images{1},images{i},curDetector.getName(),matchIdxs);
+    end
+
   end
 
 end
@@ -97,20 +104,42 @@ for i = 1:numel(detectors),
   end
 end
 
+function plotDataset(images)
+
+  numImages = numel(images);
+  numCols = ceil(sqrt(numImages));
+  numRows = ceil(numImages/numCols);
+
+  for i = 1:numImages
+    %colNo = 1+mod(i-1,numCols);
+    %rowNo = 1+floor((i-1)/numCols);
+    %subplot(numRows,numCols,(colNo-1)*numRows+rowNo);
+    subplot(numRows,numCols,i);
+    imshow(images{i}); title(sprintf('Image #%02d',i));
+  end
+  drawnow;
+
 function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
-                    numDetectors,imageA,imageB,detectorName)
+                    numDetectors,imageA,imageB,detectorName,matchIdxs)
 
     figure(iImg);
-    subplot(numDetectors,2,2*(iDetector-1)+1) ; imagesc(imageA);
+    subplot(numDetectors,2,2*(iDetector-1)+1) ; imshow(imageA);
     colormap gray ;
-    hold on ; vl_plotframe(framesA) ;
+    hold on ; vl_plotframe(framesA);
+    % Plot the transformed and matched frames from B on A in blue
+    matchLogical = false(1,size(framesB_,2));
+    matchLogical(matchIdxs) = true;
+    vl_plotframe(framesB_(:,matchLogical),'b','linewidth',1);
+    % Plot the remaining frames from B on A in red
+    vl_plotframe(framesB_(:,~matchLogical),'r','linewidth',1);
+    axis equal;
     set(gca,'xtick',[],'ytick',[]);
     ylabel(detectorName);
     title('Reference image detections');
 
-    subplot(numDetectors,2,2*(iDetector-1)+2) ; imagesc(imageB) ;
-    hold on ; vl_plotframe(framesA_) ; axis off;
-    vl_plotframe(framesB, 'b', 'linewidth', 1) ;
+    subplot(numDetectors,2,2*(iDetector-1)+2) ; imshow(imageB) ;
+    hold on ; vl_plotframe(framesB) ;axis equal; axis off;
+    %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
     title('Transformed image detections');
 
     drawnow;
@@ -143,8 +172,9 @@ function [framesA,framesB,framesA_,framesB_] = ...
   framesB  = framesB(:, selB);
   framesB_ = framesB_(:, selB);
 
-function bestMatches = findOneToOneMatches(ev,framesA,framesB)
+function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
   matches = zeros(3,0);
+  overlapThresh = 0.6; % TODO: pass this as a parameter
   bestMatches = zeros(1, size(framesA, 2)) ;
 
   for j=1:length(framesA)
@@ -167,5 +197,6 @@ function bestMatches = findOneToOneMatches(ev,framesA,framesB)
     idx = idx + 1 ;
   end
 
-  bestMatches(matches(1, matches(3, :) > .6)) = 1 ;
-  % 0.6 is the overlap threshold, TODO: make this a parameter
+  validMatches = matches(3,:) > overlapThresh;
+  bestMatches(matches(1, validMatches)) = 1 ;
+  matchIdxs = matches(2,validMatches);

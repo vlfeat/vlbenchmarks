@@ -13,7 +13,7 @@ classdef vlFeatDOG < affineDetectors.genericDetector
     % See help vl_sift for possible parameters
     % This varargin is passed directly to vl_sift
     function obj = vlFeatDOG(varargin)
-      obj.detectorName = 'vlFeatDOG';
+      obj.detectorName = 'DOG(vlFeat)';
       obj.vl_sift_arguments = varargin;
     end
 

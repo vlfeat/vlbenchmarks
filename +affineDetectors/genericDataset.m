@@ -5,8 +5,8 @@
 
 classdef genericDataset < handle
   properties (SetAccess=protected, GetAccess=public)
-    datasetName % Set this property in the constructor
-    numImages % Set in constructor
+    datasetName = 'empty';% Set this property in the constructor
+    numImages = 0 % Set in constructor
   end
 
   properties (SetAccess=public, GetAccess=public)
@@ -16,7 +16,7 @@ classdef genericDataset < handle
   methods(Abstract)
     imgPath = getImagePath(obj,imgIdx) % Return the full image
     % path of image number imgIdx in the dataset
-    tfs = getTransformation(obj,imgIdx) % Return the 3x3 homograph
+    tfs = getTransformation(obj,imgIdx) % Return the 3x3 homography
     % from image 1 to image imgIdx
   end
 

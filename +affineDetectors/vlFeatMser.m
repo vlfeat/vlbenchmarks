@@ -12,7 +12,7 @@ classdef vlFeatMser < affineDetectors.genericDetector
     % See help vl_mser for possible parameters
     % The varargin is passed directly to vl_mser
     function obj = vlFeatMser(varargin)
-      obj.detectorName = 'vlFeatMser';
+      obj.detectorName = 'MSER(vlFeat)';
       obj.vl_mser_arguments = varargin;
     end
 

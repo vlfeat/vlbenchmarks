@@ -3,9 +3,14 @@
 
 classdef vggMser < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)
-    % The properties below correspond to parameters for vgg_mser
+    % The properties below correspond to parameters for the vggMser
+    % binary accepts. See the binary help for explanation.
 
-    % Yet to add options for detector
+    es  % Ellipse scale
+    per % Maximum relative area
+    ms  % Minimum size of output region
+    mm  % Minimum margin
+
     binPath
   end
 
@@ -15,13 +20,26 @@ classdef vggMser < affineDetectors.genericDetector
     % This varargin is passed directly to vl_sift
     function obj = vggMser(varargin)
       import affineDetectors.*;
-      obj.detectorName = 'vggMser';
+      obj.detectorName = 'MSER(vgg)';
       if ~vggMser.isInstalled(),
         obj.isOk = false;
         obj.errMsg = 'vggMser not found installed';
         return;
       end
-      % Do the third party software management here
+
+      % Parse the passed options
+      opts.es = 1.0;
+      opts.per = 0.01;
+      opts.ms = 30;
+      opts.mm = 10;
+      opts = vl_argparse(opts,varargin);
+
+      obj.es = opts.es;
+      obj.per = opts.per;
+      obj.ms = opts.ms;
+      obj.mm = opts.mm;
+
+      % Check platform dependence
       cwd=commonFns.extractDirPath(mfilename('fullpath'));
       machineType = computer();
       binPath = '';
@@ -49,7 +67,8 @@ classdef vggMser < affineDetectors.genericDetector
       featFile = [tmpName '.feat'];
 
       imwrite(img,imgFile);
-      args = sprintf(' -t 2 -es 2 -i "%s" -o "%s"', imgFile, featFile);
+      args = sprintf(' -t 2 -es %f -per %f -ms %d -mm %d -i "%s" -o "%s"',...
+                     obj.es,obj.per,obj.ms,obj.mm,imgFile, featFile);
       binPath = obj.binPath;
       cmd = [binPath ' ' args];
 
