@@ -1,11 +1,32 @@
 function runBenchmark(detectors,dataset,varargin)
 % Function to run a affine co-variant feature detector on
-% dataset of images, and measure repeatibility
+% dataset of images, and measure repeatibility. Reproduces the
+% benchmark at: http://www.robots.ox.ac.uk/~vgg/research/affine/evaluation.html
+%
+% Usage:
+%   runBenchmark(detectors,dataset,'option','optionValue',...)
+%
+%   detectors: A cell array of various detectors to run on. Each detector has to
+%   implement the affineDetectors.genericDetector interface
+%
+%   dataset: An object that implements the class affineDetector.genericDataset
+%
+%   Options:
+%   'showQualitative' :: [true]
+%    Set to true to output qualitative results with ellipses for each detector
+%
+%   'saveResult'      :: [true]
+%    Set to true to enable saving the output figure and numbers into a directory
+%
+%   'saveDir'         :: ['savedResults/']
+%    Directory where to save the output of the evaluation.
 
 import affineDetectors.*;
 
 % -------- create options ------------------------
 opts.showQualitative = true;
+opts.saveResult = true;
+opts.saveDir = './savedResults/';
 opts = commonFns.vl_argparse(opts,varargin);
 
 % -------- Load the dataset ----------------------------------------------------
@@ -81,9 +102,10 @@ for iDetector = 1:numel(detectors)
 
 end
 
+repeatibilityScore = repeatibilityScore * 100;
 % ----------------- Plot the evaluation scores ---------------------------------
 figure(numImages+1) ; clf ;
-plot(repeatibilityScore' * 100,'linewidth', 3) ; hold on ;
+plot(repeatibilityScore','linewidth', 3) ; hold on ;
 ylabel('Repeatibility. %') ;
 xlabel('Image #');
 title('Detector repeatibility vs. image index');
@@ -97,12 +119,68 @@ grid on ;
 
 fprintf('\n------ Evaluation completed ---------\n');
 
+if(opts.saveResult)
+  vl_xmkdir(opts.saveDir);
+  figFile = fullfile(opts.saveDir,'detectorEval.eps');
+  fprintf('\nSaving figure as eps graphics: %s\n',figFile);
+  print('-depsc2',figFile);
+  figFile = fullfile(opts.saveDir,'detectorEval.fig');
+  fprintf('Saving figure as matlab figure to: %s\n',figFile);
+  saveas(gca,figFile);
+end
+
+% -------- Print out the scores --------------------
+if(opts.saveResult)
+  fH = fopen(fullfile(opts.saveDir,'detectorEval.txt'),'w');
+  fidOut = [1 fH];
+else
+  fidOut = 1;
+end
+
+detNames = cell(1,numel(detectors));
+maxNameLen = 0;
+for i = 1:numDetectors
+  detNames{i} = detectors{i}.getName();
+  maxNameLen = max(maxNameLen,length(detNames{i}));
+end
+
+maxNameLen = max(length('Method name'),maxNameLen);
+myprintf(fidOut,'Printing repeatability scores:\n\n');
+formatString = ['%' sprintf('%d',maxNameLen) 's:'];
+
+myprintf(fidOut,formatString,'Method name');
+for i = 1:size(repeatibilityScore,2)
+ myprintf(fidOut,'  Img#%02d',i);
+end
+myprintf(fidOut,'\n');
+
+for i = 1:numDetectors
+  myprintf(fidOut,formatString,detNames{i});
+  for j = 1:size(repeatibilityScore,2)
+    myprintf(fidOut,'  %6s',sprintf('%.2f',repeatibilityScore(i,j)));
+  end
+  myprintf(fidOut,'\n');
+end
+
+if(opts.saveResult)
+  fclose(fH);
+  matFile = fullfile(opts.saveDir,'detectorEval.mat');
+  save(matFile,'detNames','repeatibilityScore');
+  fprintf('\nScores saved to: %s\n',matFile);
+end
+
 for i = 1:numel(detectors),
   if ~detectors{i}.isOk,
     fprintf('Detector %s failed because: %s\n',detectors{i}.getName(),...
             detectors{i}.errMsg);
   end
 end
+
+function myprintf(fids,format,varargin)
+
+  for i = 1:numel(fids)
+    fprintf(fids(i),format,varargin{:});
+  end
 
 function plotDataset(images)
 
