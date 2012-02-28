@@ -1,22 +1,22 @@
-% Class vggAffine: This class implements the genericDetector interface.
-% The implementation wraps around the vgg implementation of
-% harris and hessian affine detectors
+% VGGAFFINE class to wrap around the VGG affine co-variant detectors.
 %
-% Usage:
-% obj = affineDetectors.vggAffine();
-% frames = obj.detectPoints(img)
+%   obj = affineDetectors.vggAffine('Option','OptionValue',...);
+%   frames = obj.detectPoints(img)
 %
-% The vggAffine constructor call above takes the following options in the usual
-% matlab format, i.e. affineDetectors.vggAffine('optionName','optionValue',...)
+%   This class implements the genericDetector interface and wraps around the
+%   vgg implementation of harris and hessian affine detectors available at:
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/extract_features2.tar.gz
 %
-% Detector:: ['hessian']
-%   One of 'hessian' or 'harris' to select what type of corner detector to use
+%   The constructor call above takes the following options:
 %
-% HarThresh:: [10]
-%   Threshold for harris corner detection (only used when detector is 'harris')
+%   Detector:: ['hessian']
+%     One of 'hessian' or 'harris' to select what type of corner detector to use
 %
-% HesThresh:: [200]
-%   Threshold for hessian maxima detection (only used when detector is 'hessian')
+%   HarThresh:: [10]
+%     Threshold for harris corner detection (only used when detector is 'harris')
+%
+%   HesThresh:: [200]
+%     Threshold for hessian maxima detection (only used when detector is 'hessian')
 
 classdef vggAffine < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)

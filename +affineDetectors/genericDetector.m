@@ -1,10 +1,13 @@
-% This abstract class defines the interface for a generic affine interest point
-% detector. It inherits from the handle class, so that means you can maintain
-% state inside an object of this class.
+% GENERICDETECTOR Abstract class that defines the interface for a
+%   generic affine interest point detector.
+%
+%   It inherits from the handle class, so that means you can maintain state
+%   inside an object of this class. If you have to add your own detector make
+%   sure it inherits this class.
+%   (see +affineDetectors/exampleDetector.m for a simple example)
 
 classdef genericDetector < handle
   properties (SetAccess=protected, GetAccess=public)
-    % None here yet, the subclasses will define if needed
     isOk = true; % signifies if detector has been installed and runs ok on
     % this particular platform
     errMsg = ''; % If there is some failure in detector, this string stores it
@@ -23,12 +26,17 @@ classdef genericDetector < handle
     % passed to this function. The actual detectPoints function should
     % handle transforming the img to grayScale/double etc.
     % Output:
-    %   frames: 5 x nFrames array storing the output of affine detection.
+    %   frames: 3 x nFrames array storing the output regions as circles
+    %     or
+    %   frames: 5 x nFrames array storing the output regions as ellipses
+    %
     %   frames(1,:) stores the X-coordinates of the points
     %   frames(2,:) stores the Y-coordinates of the points
-    %   frames(3,:) stores ?? TODO
-    %   frames(4,:) stores ??
-    %   frames(5,:) stores ??
+    %
+    %   if frames is 3 x nFrames, then frames(3,:) is the radius of the circles
+    %   if frames is 5 x nFrames, then frames(3,:), frames(4,:) and frames(5,:)
+    %   store respectively the S11, S12, S22 such that
+    %   ELLIPSE = {x: x' inv(S) x = 1}.
   end
 
   methods

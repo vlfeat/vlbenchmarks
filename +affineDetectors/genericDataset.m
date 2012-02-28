@@ -1,7 +1,9 @@
-% This abstract class defines the interface for a generic dataset for evaluating
-% affine detectors
-% It inherits from the handle class, so that means you can maintain
-% state inside an object of this class.
+% GENERICDATASET Abstract class for a generic dataset for evaluating
+% affine detectors.
+%   It inherits from the handle class, so that means you can
+%   maintain state inside an object of this class. If you have to add your
+%   own dataset, make sure it inherits from this class
+%   (see +affineDetectors/vggDataset.m for a example)
 
 classdef genericDataset < handle
   properties (SetAccess=protected, GetAccess=public)

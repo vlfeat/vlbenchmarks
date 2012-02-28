@@ -1,8 +1,7 @@
-function installDeps()
+function install()
 % Function to install all third party dependencies
 
 affineDetectors.installDeps();
-
 installVlFeat();
 
 function installVlFeat()
@@ -20,10 +19,10 @@ function installVlFeat()
   commonFns.vl_xmkdir(installDir);
   vlFeatDir = fullfile(installDir,['vlfeat-' installVersion]);
 
-  % If vlfeat is already downloaded, then just run setup.m
+  %If vlfeat is already downloaded, then do nothing
   if(exist(vlFeatDir,'dir'))
-    fprintf('VLFeat is already downloaded, setting up paths ...\n');
-    run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
+    fprintf('VLFeat is already downloaded\n');
+  %  run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
     fprintf('Done!\n');
     return;
   end
@@ -32,5 +31,5 @@ function installVlFeat()
   softwareUrl = sprintf('http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz',...
                          installVersion);
   untar(softwareUrl,installDir);
-  run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
+  %run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
   fprintf('Done!\n');

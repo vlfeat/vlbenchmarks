@@ -1,5 +1,6 @@
-% This class implements affineDetectors.genericDataset
-% its a wrapper around all the vgg benchmark dataset
+% VGGDATASET class to wrap around the vgg affine benchmark datasets
+%
+% The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
 
 classdef vggDataset < affineDetectors.genericDataset
   properties (SetAccess=private, GetAccess=public)

@@ -1,15 +1,14 @@
 function runBenchmark(detectors,dataset,varargin)
-% Function to run a affine co-variant feature detector on
-% dataset of images, and measure repeatibility. Reproduces the
-% benchmark at: http://www.robots.ox.ac.uk/~vgg/research/affine/evaluation.html
+% RUNBENCHMARK Run the affine co-variant detector benchmark
+%   runBenchmark(Detectors,Dataset,'Option','OptionValue',...) runs
+%   a suite of detectors on a given dataset. The benchmark should
+%   reproduce the benchmark available at:
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/evaluation.html
 %
-% Usage:
-%   runBenchmark(detectors,dataset,'option','optionValue',...)
-%
-%   detectors: A cell array of various detectors to run on. Each detector has to
+%   Detectors: A cell array of various detectors to run on. Each detector has to
 %   implement the affineDetectors.genericDetector interface
 %
-%   dataset: An object that implements the class affineDetector.genericDataset
+%   Dataset: An object that implements the class affineDetector.genericDataset
 %
 %   Options:
 %   'showQualitative' :: [true]
@@ -18,7 +17,7 @@ function runBenchmark(detectors,dataset,varargin)
 %   'saveResult'      :: [true]
 %    Set to true to enable saving the output figure and numbers into a directory
 %
-%   'saveDir'         :: ['savedResults/']
+%   'saveDir'         :: ['./savedResults/']
 %    Directory where to save the output of the evaluation.
 
 import affineDetectors.*;

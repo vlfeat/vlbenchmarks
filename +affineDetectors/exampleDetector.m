@@ -1,6 +1,10 @@
-% This is an example class that demonstrates how to create a trivial
-% interest point detector. Modify it to wrap around your own detector
-% implementation. This class implements the genericDetector interface.
+% EXAMPLEDETECTOR Example class implementing a generic detector
+%   obj = affineDetectors.exampleDetector();
+%   obj.detectPoints(img);
+%
+%   This is an example class that demonstrates how to create a trivial
+%   interest point detector. Modify it to wrap around your own detector
+%   implementation. This class implements the genericDetector interface.
 
 classdef exampleDetector < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)

@@ -1,5 +1,15 @@
-% This class implements the genericDetector interface. The implementation
-% wraps around the vlFeat implementation of DOG region detection.
+% VLFEATDOG class to wrap around the VLFeat DOG detector implementation
+%
+%   obj = affineDetectors.vlFeatDOG('Option','OptionValue',...);
+%   frames = obj.detectPoints(img)
+%
+%   This class wraps aronud the Difference of Gaussian (DOG) implementation
+%   of VLFeat that is used as a detector for computing SIFT descriptors
+%
+%   The options to the constructor are the same as that for vl_sift
+%   See help vl_sift to see those options and their default values.
+%
+%   See also: vl_sift
 
 classdef vlFeatDOG < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)

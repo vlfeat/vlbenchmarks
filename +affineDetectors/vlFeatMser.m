@@ -1,5 +1,15 @@
-% This class implements the genericDetector interface. The implementation
-% wraps around the vlFeat implementation of MSER region detection.
+% VLFEATMSER class to wrap around the VLFeat MSER implementation
+%
+%   obj = affineDetectors.vlFeatMser('Option','OptionValue',...);
+%   frames = obj.detectPoints(img)
+%
+%   This class wraps aronud the MSER implementation of VLFeat
+%
+%   The options to the constructor are the same as that for vl_mser
+%   See help vl_mser to see those options and their default values.
+%
+%   See also: vl_mser
+
 
 classdef vlFeatMser < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)

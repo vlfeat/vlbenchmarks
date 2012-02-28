@@ -1,5 +1,26 @@
-% This class implements the genericDetector interface. The implementation
-% wraps around the vgg implementation of MSER
+% VGGMSER class to wrap around the VGG MSER implementation
+%
+%   obj = affineDetectors.vggMser('Option','OptionValue',...);
+%   frames = obj.detectPoints(img)
+%
+%   This class implements the genericDetector interface and wraps around the
+%   vgg implementation of MSER detectors available at:
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz
+%
+%   The constructor call above takes the following options (see the vgg
+%   mser binary for complete interpretation of these options):
+%
+%   ES:: [1.0]
+%     Scale of the ellipse
+%
+%   PER:: [0.01]
+%     Maximum relative area
+%
+%   MS:: [30]
+%     Minimum size of output region
+%
+%   MM:: [10]
+%     Minimum margin
 
 classdef vggMser < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)

@@ -1,17 +1,16 @@
-% Class sfop: This class implements the genericDetector interface.
-% The implementation wraps around the implementation of SFOP
-% available at: http://www.ipb.uni-bonn.de/index.php?id=220#software
+% SFOP class to wrap around the SFOP implementation
 %
-% Usage:
-% obj = affineDetectors.sfop();
-% frames = obj.detectPoints(img)
+%   obj = affineDetectors.sfop('Option','OptionValue',...);
+%   frames = obj.detectPoints(img)
 %
-% The sfop constructor call above takes the following options in the usual
-% matlab format, i.e. affineDetectors.sfop('optionName','optionValue',...)
+%   This class implements the genericDetector interface and wraps around
+%   the implementation of SFOP available at:
+%   http://www.ipb.uni-bonn.de/index.php?id=220#software
 %
-% These options are documented in the SFOP code, which you can see at
-% +affineDetectors/thirdParty/sfop/sfop-0.9/matlab/sfopParams.m
-% (once you have installed all the third party software using installDeps command)
+%   The options are documented in the SFOP code, which you can see at
+%   +affineDetectors/thirdParty/sfop/sfop-0.9/matlab/sfopParams.m
+%   (the above file only exists once you have installed all the third party
+%   software using installDeps command)
 
 classdef sfop < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)
