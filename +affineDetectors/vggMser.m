@@ -15,9 +15,8 @@ classdef vggMser < affineDetectors.genericDetector
   end
 
   methods
-    % The constructor is used to set the options for vl_sift call
-    % See help vl_sift for possible parameters
-    % This varargin is passed directly to vl_sift
+    % The constructor is used to set the options for the vgg
+    % mser binary.
     function obj = vggMser(varargin)
       import affineDetectors.*;
       obj.detectorName = 'MSER(vgg)';
@@ -60,7 +59,6 @@ classdef vggMser < affineDetectors.genericDetector
       if ~obj.isOk, frames = zeros(5,0); return; end
 
       if(size(img,3) > 1), img = rgb2gray(img); end
-      binDir = commonFns.extractDirPath(obj.binPath);
 
       tmpName = tempname;
       imgFile = [tmpName '.png'];
@@ -74,7 +72,7 @@ classdef vggMser < affineDetectors.genericDetector
 
       [status,msg] = system(cmd);
       if status
-        error('%d: %s: %s', status, cmd, message) ;
+        error('%d: %s: %s', status, cmd, msg) ;
       end
 
       frames = obj.parseMserOutput(featFile);
@@ -127,7 +125,13 @@ classdef vggMser < affineDetectors.genericDetector
       cwd = commonFns.extractDirPath(mfilename('fullpath'));
       installDir = fullfile(cwd,vggMser.rootInstallDir);
 
-      untar(vggMser.softwareUrl,installDir);
+      try
+        untar(vggMser.softwareUrl,installDir);
+      catch err
+        warning('Error downloading from: %s\n',vggMser.softwareUrl);
+        fprintf('Following error was reported while untarring: %s\n',...
+                 err.message);
+      end
 
       fprintf('vggMser download and install complete\n\n');
     end

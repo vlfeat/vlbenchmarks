@@ -43,7 +43,9 @@ for i2 = 1:N2
   S = diag([1 1 s^2 s^2 s^2]) ;
   for n = 1:length(neighs{i2})
     i1 = neighs{i2}(n) ;
-    z = helpers.computeEllipseOverlap_slow(S * f2(:, i2), S * f1(:, i1)) ;
+    z = helpers.computeEllipseOverlap_slow(S * f2(:, i2), S * f1(:, i1)) ; % slow
+    % is actually faster
+    %z = helpers.computeEllipseOverlap(S * f2(:, i2), S * f1(:, i1)) ;
     scores{i2}(n) = z ;
 
     if z > 1

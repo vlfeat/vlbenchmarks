@@ -7,3 +7,5 @@ vggDataset.installDeps();
 
 fprintf('\n----- Downloading and installing feature detectors -----\n');
 vggMser.installDeps();
+vggAffine.installDeps();
+sfop.installDeps();
