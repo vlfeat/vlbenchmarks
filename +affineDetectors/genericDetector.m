@@ -52,6 +52,11 @@ classdef genericDetector < handle
   end % ------- end of methods --------
 
   methods(Static)
+    % Over-ride this function to delete data from the right location
+    function cleanDeps()
+      fprintf('No dependencies to delete for this detector class\n');
+    end
+
     % Over-ride this function to download and install data in the right location
     function installDeps()
       fprintf('No dependencies to install for this detector class\n');

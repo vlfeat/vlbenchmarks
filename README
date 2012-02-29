@@ -11,3 +11,12 @@ install();     % To install all third party dependencies
 ------- Running the benchmark --------------------------
 setup();                         % Setups the paths properly
 affineDetectors.benchmarkDemo(); % Runs a demonstration of the benchmark
+
+
+------ Cleaning up installation -----------------------
+In case the install() command above is interrupted, or doesn't complete for some
+reason, you can clear up all the downloaded third party software and re-install
+from scratch by running the following:
+
+clean();         % Will delete all the third party directories
+install();       % To install all third party dependencies

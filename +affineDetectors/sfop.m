@@ -1,4 +1,4 @@
-% SFOP class to wrap around the SFOP implementation
+% SFOP class to wrap around the SFOP detector implementation
 %
 %   obj = affineDetectors.sfop('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
@@ -65,6 +65,24 @@ classdef sfop < affineDetectors.genericDetector
   end
 
   methods (Static)
+
+    function cleanDeps()
+      import affineDetectors.*;
+
+      fprintf('Deleting SFOP from: %s ...\n',sfop.rootInstallDir);
+
+      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      installDir = fullfile(cwd,sfop.rootInstallDir);
+
+      if(exist(installDir,'dir'))
+        rmdir(installDir,'s');
+        fprintf('SFOP installation deleted\n');
+      else
+        fprintf('SFOP not installed, nothing to delete\n');
+      end
+
+    end
+
     function installDeps()
       import affineDetectors.*;
       if sfop.isInstalled(),

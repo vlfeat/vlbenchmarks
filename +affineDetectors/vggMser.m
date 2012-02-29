@@ -108,6 +108,24 @@ classdef vggMser < affineDetectors.genericDetector
   end
 
   methods (Static)
+
+    function cleanDeps()
+      import affineDetectors.*;
+
+      fprintf('Deleting vggMser from: %s ...\n',vggMser.rootInstallDir);
+
+      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      installDir = fullfile(cwd,vggMser.rootInstallDir);
+
+      if(exist(installDir,'dir'))
+        rmdir(installDir,'s');
+        fprintf('Vgg mser installation deleted\n');
+      else
+        fprintf('Vgg mser not installed, nothing to delete\n');
+      end
+
+    end
+
     function frames = parseMserOutput(featFile)
       fid = fopen(featFile,'r');
       if fid==-1

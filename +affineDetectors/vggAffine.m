@@ -112,6 +112,24 @@ classdef vggAffine < affineDetectors.genericDetector
   end
 
   methods (Static)
+
+    function cleanDeps()
+      import affineDetectors.*;
+
+      fprintf('Deleting vggAffine from: %s ...\n',vggAffine.rootInstallDir);
+
+      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      installDir = fullfile(cwd,vggAffine.rootInstallDir);
+
+      if(exist(installDir,'dir'))
+        rmdir(installDir,'s');
+        fprintf('Vgg affine installation deleted\n');
+      else
+        fprintf('Vgg affine not installed, nothing to delete\n');
+      end
+
+    end
+
     function installDeps()
       import affineDetectors.*;
       if vggAffine.isInstalled(),

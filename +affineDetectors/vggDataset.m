@@ -1,6 +1,14 @@
 % VGGDATASET class to wrap around the vgg affine benchmark datasets
 %
-% The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
+%   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
+%
+%   obj = affineDetectors.vggDataset('Option','OptionValue',...)
+%
+%   Following options are supported:
+%
+%   Category :: ['graf']
+%     The category within the vgg dataset, has to be one of 'bikes','trees',
+%     'graf','wall','bark','boat','leuven','ubc'
 
 classdef vggDataset < affineDetectors.genericDataset
   properties (SetAccess=private, GetAccess=public)
@@ -54,6 +62,22 @@ classdef vggDataset < affineDetectors.genericDataset
   end
 
   methods (Static)
+    function cleanDeps()
+      import affineDetectors.*;
+      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      installDir = fullfile(cwd,vggDataset.rootInstallDir);
+
+      fprintf('Deleting vgg dataset in: %s \n',vggDataset.rootInstallDir);
+      if(exist(installDir,'dir'))
+        rmdir(installDir,'s');
+        fprintf('Vgg dataset deleted\n');
+      else
+        fprintf('Vgg dataset not installed, nothing to delete\n');
+      end
+
+
+    end
+
     function installDeps()
       import affineDetectors.*;
       if(vggDataset.isInstalled()),
