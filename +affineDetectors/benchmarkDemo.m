@@ -22,4 +22,4 @@ detectors{3}.detectorName = 'MSER(VLfeat)'; % You can change the default name th
 
 dataset = affineDetectors.vggDataset('category','graf');
 
-affineDetectors.runBenchmark(detectors,dataset,'ShowQualitative',false);
+affineDetectors.runBenchmark(detectors,dataset,'ShowQualitative',true);
