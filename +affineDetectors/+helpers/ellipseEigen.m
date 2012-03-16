@@ -16,10 +16,10 @@ vec2 = [zeros(1,nEl);ones(1,nEl)];
 nonDiag = (f(4,:)~=0);
 
 vec1(1,nonDiag) = f(4,nonDiag);
-vec1(2,nonDiag) = eeig(1,nonDiag)-f(3,:);
+vec1(2,nonDiag) = eeig(1,nonDiag)-f(3,nonDiag);
 
 vec2(1,nonDiag) = f(4,nonDiag);
-vec2(2,nonDiag) = eeig(2,nonDiag)-f(3,:);
+vec2(2,nonDiag) = eeig(2,nonDiag)-f(3,nonDiag);
 
 norm1 = sqrt(sum(vec1.*vec1,1));
 norm2 = sqrt(sum(vec2.*vec2,1));
