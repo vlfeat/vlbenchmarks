@@ -1,7 +1,9 @@
 function vggEll = ellToVgg(ell,eigVal,eigVec)
+% Transforms the ellipse into format suitable for passing into
+% kristian's ellipse overlap function.
 % This function does what the helper function elltovgg
 % in the file computeEllipseOverlap_slow does, but in a faster
-% way, without for loops
+% way, without for loops.
 
 vggEll = zeros(5+4,size(ell,2));
 

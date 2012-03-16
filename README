@@ -15,7 +15,9 @@ setup();                         % Setups the paths properly
 affineDetectors.benchmarkDemo(); % Runs a demo of the benchmark
 
 See help affineDetectors.benchmarkDemo to see the list of currently available
-detectors and datasets.
+detectors and datasets. affineDetectors.benchmarkDemo calls the function
+affineDetectors.runBenchmark with some demo detectors and datasets. See help
+affineDetectors.runBenchmark for help on how to call the benchmark.
 
 3. CLEANING UP AN INSTALLATION
 

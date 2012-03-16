@@ -86,8 +86,9 @@ for iDetector = 1:numel(detectors)
   end
 
   for i = 1:numImages
-    fprintf('Computing regions for image: %02d/%02d ...\r',i,numImages);
+    fprintf('Computing regions for image: %02d/%02d ...',i,numImages);
     frames{i} = curDetector.detectPoints(images{i});
+    fprintf(' (%d regions detected)\r',size(frames{i},2));
   end
 
   fprintf('\n');
