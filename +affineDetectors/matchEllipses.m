@@ -43,26 +43,12 @@ for i2 = 1:N2
   maxOverlap = min(a2(i2), a1) ./ max(a2(i2), a1) .* canOverlap ;
   neighs{i2} = find(maxOverlap > 0.3) ;
 
-  S = [1 1 s^2 s^2 s^2]';
+  %S = [1 1 s^2 s^2 s^2]';
   vggS = [1 1 1/s^2 1/s^2 1/s^2 s s s s]';
-  for n = 1:length(neighs{i2})
-    i1 = neighs{i2}(n) ;
-    z = helpers.computeEllipseOverlap_slow(S .* f2(:, i2), S .* f1(:, i1),...
-                                           vggS.*vggEll2(:,i2),vggS.*vggEll1(:,i1));
-    % computeEllipseOverlap_slow is actually faster than below
-    % z = helpers.computeEllipseOverlap(S * f2(:, i2), S * f1(:, i1)) ;
-    scores{i2}(n) = z ;
 
-    if z > 1
-      figure(100) ; clf ;
-      commonFns.vl_plotframe(S * f2(:, i2), 'g') ; hold on ;
-      commonFns.vl_plotframe(S * f1(:, i1), 'r') ;
-      text(f1(1,i1),f1(2,i1), sprintf('%.2f %%', scores{i2}(n) * 100)) ;
-      axis equal ;
-      drawnow
-      pause
-    end
-  end
+  lhsEllipse = vggS.*vggEll2(:,i2);
+  rhsEllipse = bsxfun(@times,vggEll1(:,neighs{i2}),vggS);
+  scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse)';
 
 end
 

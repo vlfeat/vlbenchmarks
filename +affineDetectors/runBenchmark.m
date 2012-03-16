@@ -257,6 +257,7 @@ function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
   matches = zeros(3,0);
   overlapThresh = 0.6; % TODO: pass this as a parameter
   bestMatches = zeros(1, size(framesA, 2)) ;
+  matchIdxs = [];
 
   for j=1:length(framesA)
     numNeighs = length(ev.scores{j}) ;
@@ -266,18 +267,21 @@ function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
     end
   end
 
+  matches = matches(:,matches(3,:)>overlapThresh);
+
   % eliminate assigment by priority
-  [drop, perm] = sort(matches(3,:), 'descend') ;
-  matches = matches(:, perm) ;
+  [drop, perm] = sort(matches(3,:), 'descend');
+  matches = matches(:, perm);
+  availA = true(1,size(framesA,2));
+  availB = true(1,size(framesB,2));
 
-  idx = 1 ;
-  while idx < size(matches,2)
-    isDup = (matches(1, idx+1:end) == matches(1, idx)) | ...
-            (matches(2, idx+1:end) == matches(2, idx)) ;
-    matches(:, find(isDup) + idx) = [] ;
-    idx = idx + 1 ;
+  for idx = 1:size(matches,2)
+    aIdx = matches(1,idx);
+    bIdx = matches(2,idx);
+    if(availA(aIdx) && availB(bIdx))
+      bestMatches(aIdx) = 1;
+      matchIdxs = [matchIdxs bIdx];
+      availA(aIdx) = false;
+      availB(bIdx) = false;
+    end
   end
-
-  validMatches = matches(3,:) > overlapThresh;
-  bestMatches(matches(1, validMatches)) = 1 ;
-  matchIdxs = matches(2,validMatches);
