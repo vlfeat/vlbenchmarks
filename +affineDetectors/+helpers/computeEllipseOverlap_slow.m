@@ -1,14 +1,15 @@
-function overlap =  computeEllipseOverlap_slow(a, b)
+function overlap =  computeEllipseOverlap_slow(a, b,vggA,vggB)
 % ELLOVERLAP_SLOW
 %
 %
 
 import affineDetectors.*
 
-a = elltovgg(a) ;
-b = elltovgg(b) ;
+%a = elltovgg(a) ;
+%b = elltovgg(b) ;
+%scalingVector = [scale*ones(2,1);1/scale*ones(3,1);sqrt(scale)*ones(4,1)];
 
-[w, tw, d, td] = helpers.mexComputeEllipseOverlap(a, b, -1) ; % This mex file
+[w, tw, d, td] = helpers.mexComputeEllipseOverlap(vggA, vggB, -1) ; % This mex file
 % is borrowed from Kristians code, just renamed it
 overlap = 1 - tw / 100 ;
 

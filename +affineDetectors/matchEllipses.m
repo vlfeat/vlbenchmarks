@@ -15,8 +15,11 @@ conf_.normalizeFrames = true ;
 conf = commonFns.vl_argparse(conf_, varargin) ;
 
 % eigenvalues (radii squared)
-e1 = helpers.ellipseEigen(f1) ;
-e2 = helpers.ellipseEigen(f2) ;
+[e1,eigVec1] = helpers.ellipseEigen(f1) ;
+[e2,eigVec2] = helpers.ellipseEigen(f2) ;
+
+vggEll1 = helpers.ellToVgg(f1,e1,eigVec1);
+vggEll2 = helpers.ellToVgg(f2,e2,eigVec2);
 
 % areas
 a1 = pi * sqrt(prod(e1,1)) ;
@@ -36,16 +39,18 @@ for i2 = 1:N2
 
   s = 30 / sqrt(a2(i2) / pi)  ;
 
-  canOverlap = sqrt(vl_alldist2(f2(1:2, i2), f1(1:2,:))) < 4 * sqrt(a2(i2) / pi) ;
+  canOverlap = sqrt(vl_alldist2(f2(1:2, i2), f1(1:2,:))) < 4 * sqrt(a2(i2) / pi);
   maxOverlap = min(a2(i2), a1) ./ max(a2(i2), a1) .* canOverlap ;
   neighs{i2} = find(maxOverlap > 0.3) ;
 
-  S = diag([1 1 s^2 s^2 s^2]) ;
+  S = [1 1 s^2 s^2 s^2]';
+  vggS = [1 1 1/s^2 1/s^2 1/s^2 s s s s]';
   for n = 1:length(neighs{i2})
     i1 = neighs{i2}(n) ;
-    z = helpers.computeEllipseOverlap_slow(S * f2(:, i2), S * f1(:, i1)) ; % slow
-    % is actually faster
-    %z = helpers.computeEllipseOverlap(S * f2(:, i2), S * f1(:, i1)) ;
+    z = helpers.computeEllipseOverlap_slow(S .* f2(:, i2), S .* f1(:, i1),...
+                                           vggS.*vggEll2(:,i2),vggS.*vggEll1(:,i1));
+    % computeEllipseOverlap_slow is actually faster than below
+    % z = helpers.computeEllipseOverlap(S * f2(:, i2), S * f1(:, i1)) ;
     scores{i2}(n) = z ;
 
     if z > 1
