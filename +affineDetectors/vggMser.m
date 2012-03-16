@@ -112,7 +112,7 @@ classdef vggMser < affineDetectors.genericDetector
     function cleanDeps()
       import affineDetectors.*;
 
-      fprintf('Deleting vggMser from: %s ...\n',vggMser.rootInstallDir);
+      fprintf('\nDeleting vggMser from: %s ...\n',vggMser.rootInstallDir);
 
       cwd = commonFns.extractDirPath(mfilename('fullpath'));
       installDir = fullfile(cwd,vggMser.rootInstallDir);

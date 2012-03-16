@@ -11,14 +11,20 @@ function runBenchmark(detectors,dataset,varargin)
 %   Dataset: An object that implements the class affineDetector.genericDataset
 %
 %   Options:
-%   'showQualitative' :: [true]
-%    Set to true to output qualitative results with ellipses for each detector
 %
-%   'saveResult'      :: [true]
-%    Set to true to enable saving the output figure and numbers into a directory
+%   ShowQualitative :: [true]
+%     Set to true to output qualitative results with ellipses for each detector
 %
-%   'saveDir'         :: ['./savedResults/']
-%    Directory where to save the output of the evaluation.
+%   SaveResult      :: [true]
+%     Set to true to enable saving the output figure and numbers into a directory
+%
+%   SaveDir         :: ['./savedResults/']
+%     Directory where to save the output of the evaluation.
+%
+%   VerifyKristian  :: [false]
+%     Also runs the benchmark available at:
+%     http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz
+%     and plots the results for comparison
 
 import affineDetectors.*;
 
@@ -26,6 +32,7 @@ import affineDetectors.*;
 opts.showQualitative = true;
 opts.saveResult = true;
 opts.saveDir = './savedResults/';
+opts.verifyKristian = false;
 opts = commonFns.vl_argparse(opts,varargin);
 
 % -------- Load the dataset ----------------------------------------------------
@@ -33,15 +40,19 @@ assert(isa(dataset,'affineDetectors.genericDataset'),...
     'dataset not an instance of generic dataset\n');
 numImages = dataset.numImages;
 images = cell(1,numImages);
+imagePaths = cell(1,numImages);
 for i=1:numImages
-  imagePath = dataset.getImagePath(i);
-  images{i} = imread(imagePath);
+  imagePaths{i} = dataset.getImagePath(i);
+  images{i} = imread(imagePaths{i});
   tfs{i} = dataset.getTransformation(i);
 end
 
 % -------- Compute each detectors output and store the evaluation --------------
 numDetectors = numel(detectors);
 repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
+if(opts.verifyKristian)
+  repScoreKristian  = zeros(numDetectors,numImages);
+end
 
 if opts.showQualitative
   figure(1); clf;
@@ -84,7 +95,8 @@ for iDetector = 1:numel(detectors)
   for i=2:numImages
     fprintf('Evaluating regions for image: %02d/%02d ...\n',i,numImages);
     [framesA,framesB,framesA_,framesB_] = ...
-        cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
+        helpers.cropFramesToOverlapRegion(frames{1},frames{i},...
+        tfs{i},images{1},images{i});
 
 
     frameMatches = matchEllipses(framesB_, framesA);
@@ -97,6 +109,12 @@ for iDetector = 1:numel(detectors)
                 images{1},images{i},curDetector.getName(),matchIdxs);
     end
 
+  end
+
+  if (opts.verifyKristian)
+    fprintf('Running kristians benchmark code for verifying benchmark results:\n');
+    repScoreKristian(iDetector,:) = 100*runKristianEval(frames,imagePaths,...
+      images,tfs);
   end
 
 end
@@ -128,9 +146,33 @@ if(opts.saveResult)
   saveas(gca,figFile);
 end
 
-% -------- Print out the scores --------------------
+% -------- Print out and save the scores --------------------
+detNames = printScores(opts,detectors,repeatibilityScore,'detectorEval.txt');
+if(opts.verifyKristian)
+  fprintf('\nOutput of Kristians benchmark:\n');
+  printScores(opts,detectors,repScoreKristian,'detectorEvalKristian.txt');
+end
+
 if(opts.saveResult)
-  fH = fopen(fullfile(opts.saveDir,'detectorEval.txt'),'w');
+  matFile = fullfile(opts.saveDir,'detectorEval.mat');
+  save(matFile,'detNames','repeatibilityScore');
+  fprintf('\nScores saved to: %s\n',matFile);
+end
+
+% -------- Output which detectors didn't work ------
+for i = 1:numel(detectors),
+  if ~detectors{i}.isOk,
+    fprintf('Detector %s failed because: %s\n',detectors{i}.getName(),...
+            detectors{i}.errMsg);
+  end
+end
+
+function detNames = printScores(opts,detectors,repeatibilityScore,outFile);
+
+numDetectors = numel(detectors);
+
+if(opts.saveResult)
+  fH = fopen(fullfile(opts.saveDir,outFile),'w');
   fidOut = [1 fH];
 else
   fidOut = 1;
@@ -163,16 +205,6 @@ end
 
 if(opts.saveResult)
   fclose(fH);
-  matFile = fullfile(opts.saveDir,'detectorEval.mat');
-  save(matFile,'detNames','repeatibilityScore');
-  fprintf('\nScores saved to: %s\n',matFile);
-end
-
-for i = 1:numel(detectors),
-  if ~detectors{i}.isOk,
-    fprintf('Detector %s failed because: %s\n',detectors{i}.getName(),...
-            detectors{i}.errMsg);
-  end
 end
 
 function myprintf(fids,format,varargin)
@@ -220,34 +252,6 @@ function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
     title('Transformed image detections');
 
     drawnow;
-
-function [framesA,framesB,framesA_,framesB_] = ...
-    cropFramesToOverlapRegion(framesA,framesB,tfs,imageA,imageB)
-% This function transforms ellipses in A to B (and vice versa), and crops
-% them according to their visibility in the transformed frame
-
-  import affineDetectors.*;
-
-  framesA = helpers.frameToEllipse(framesA) ;
-  framesB = helpers.frameToEllipse(framesB) ;
-
-  framesA_ = helpers.warpEllipse(tfs,framesA) ;
-  framesB_ = helpers.warpEllipse(inv(tfs),framesB) ;
-
-  % find frames fully visible in both images
-  bboxA = [1 1 size(imageA, 2) size(imageA, 1)] ;
-  bboxB = [1 1 size(imageB, 2) size(imageB, 1)] ;
-
-  selA = helpers.isEllipseInBBox(bboxA, framesA ) & ...
-         helpers.isEllipseInBBox(bboxB, framesA_);
-
-  selB = helpers.isEllipseInBBox(bboxA, framesB_) & ...
-         helpers.isEllipseInBBox(bboxB, framesB );
-
-  framesA  = framesA(:, selA);
-  framesA_ = framesA_(:, selA);
-  framesB  = framesB(:, selB);
-  framesB_ = framesB_(:, selB);
 
 function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
   matches = zeros(3,0);

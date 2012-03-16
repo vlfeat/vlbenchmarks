@@ -67,7 +67,7 @@ classdef vggDataset < affineDetectors.genericDataset
       cwd = commonFns.extractDirPath(mfilename('fullpath'));
       installDir = fullfile(cwd,vggDataset.rootInstallDir);
 
-      fprintf('Deleting vgg dataset in: %s \n',vggDataset.rootInstallDir);
+      fprintf('\nDeleting vgg dataset in: %s \n',vggDataset.rootInstallDir);
       if(exist(installDir,'dir'))
         rmdir(installDir,'s');
         fprintf('Vgg dataset deleted\n');

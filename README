@@ -1,19 +1,22 @@
 This package implements detector benchmarks for various publically available
 interest point detectors.
 
-------- First time installation instructions -----------
-Run the following commands from the matlab prompt. Make sure your working
-directory is at the root (i.e. it looks like .../vlfeat_benchmarks/)
+1. FIRST TIME INSTALLATION INSTRUCTIONS
+Run the following commands from the matlab prompt. Make sure your present working
+directory (pwd) is at the root (i.e. pwd looks like <install dir>/vlfeat_benchmarks/)
 
-compile_mex(); % To compile the mex files
+compile_mex(); % To compile the mex files, you need to have the mex compiler
+               % setup properly for this to work
 install();     % To install all third party dependencies
 
-------- Running the benchmark --------------------------
+2. RUNNING THE BENCHMARK
+
 setup();                         % Setups the paths properly
 affineDetectors.benchmarkDemo(); % Runs a demonstration of the benchmark
 
 
------- Cleaning up installation -----------------------
+3. CLEANING UP AN INSTALLATION
+
 In case the install() command above is interrupted, or doesn't complete for some
 reason, you can clear up all the downloaded third party software and re-install
 from scratch by running the following:

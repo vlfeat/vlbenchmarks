@@ -116,7 +116,7 @@ classdef vggAffine < affineDetectors.genericDetector
     function cleanDeps()
       import affineDetectors.*;
 
-      fprintf('Deleting vggAffine from: %s ...\n',vggAffine.rootInstallDir);
+      fprintf('\nDeleting vggAffine from: %s ...\n',vggAffine.rootInstallDir);
 
       cwd = commonFns.extractDirPath(mfilename('fullpath'));
       installDir = fullfile(cwd,vggAffine.rootInstallDir);

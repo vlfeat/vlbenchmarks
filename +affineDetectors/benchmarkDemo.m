@@ -12,4 +12,4 @@ detectors{3}.detectorName = 'MSER(VLfeat)'; % You can change the name that is
 
 dataset = affineDetectors.vggDataset('category','graf');
 
-affineDetectors.runBenchmark(detectors,dataset);
+affineDetectors.runBenchmark(detectors,dataset,'verifyKristian','true');

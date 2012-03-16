@@ -15,6 +15,7 @@ function cleanVlFeat()
 
   if(exist(vlFeatDir,'dir'))
     rmdir(vlFeatDir,'s');
+    fprintf('VLFeat deleted.\n');
+  else
+    fprintf('VLFeat not installed, nothing to delete\n');
   end
-
-  fprintf('Done!\n');
