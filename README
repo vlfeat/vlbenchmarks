@@ -3,7 +3,7 @@ interest point detectors.
 
 1. FIRST TIME INSTALLATION INSTRUCTIONS
 Run the following commands from the matlab prompt. Make sure your present working
-directory (pwd) is at the root (i.e. pwd looks like <install dir>/vlfeat_benchmarks/)
+directory (pwd) is at the root (i.e. pwd looks like .../vlfeat_benchmarks/)
 
 compile_mex(); % To compile the mex files, you need to have the mex compiler
                % setup properly for this to work
@@ -12,8 +12,10 @@ install();     % To install all third party dependencies
 2. RUNNING THE BENCHMARK
 
 setup();                         % Setups the paths properly
-affineDetectors.benchmarkDemo(); % Runs a demonstration of the benchmark
+affineDetectors.benchmarkDemo(); % Runs a demo of the benchmark
 
+See help affineDetectors.benchmarkDemo to see the list of currently available
+detectors and datasets.
 
 3. CLEANING UP AN INSTALLATION
 
