@@ -53,8 +53,6 @@ repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
 if(opts.verifyKristian)
   repScoreKristian  = zeros(numDetectors,numImages);
   numOfCorespKristian  = zeros(numDetectors,numImages);
-  matchScoreKristian  = zeros(numDetectors,numImages);
-  numOfMatchesKristian  = zeros(numDetectors,numImages);
 end
 
 if opts.showQualitative
@@ -118,10 +116,8 @@ for iDetector = 1:numel(detectors)
   if (opts.verifyKristian)
     fprintf('Running kristians benchmark code for verifying benchmark results:\n');
     [repScoreKristian(iDetector,:), ...
-     numOfCorespKristian(iDetector,:), ...
-     matchScoreKristian(iDetector,:), ...
-     numOfMatchesKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
-                                                          images,tfs);
+     numOfCorespKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
+                                                         images,tfs);
   end
 
 end
@@ -140,12 +136,6 @@ if(opts.verifyKristian)
     plotScores(numImages+3,'KM_numCorrespond', numOfCorespKristian, ...
            'KM Detector num. of correspondences vs. image index', ...
            'Image #','#correspondences',detectors, opts, 2);
-    plotScores(numImages+4,'KM_matchScore', matchScoreKristian, ...
-           'KM Detector match score vs. image index', ...
-           'Image #','Match score [%]',detectors, opts, 1);
-    plotScores(numImages+5,'KM_matchNum', numOfMatchesKristian, ...
-           'KM Detector num. of matches vs. image index', ...
-           'Image #','#correct matches',detectors, opts,2);
 end
        
 % -------- Print out and save the scores --------------------
@@ -154,8 +144,6 @@ if(opts.verifyKristian)
   fprintf('\nOutput of Kristians benchmark:\n');
   printScores(opts,detectors,repScoreKristian,'detectorEvalKristianRepScore.txt', 'KM repeatability scores');
   printScores(opts,detectors,numOfCorespKristian,'detectorEvalKristianCorrNum.txt', 'KM num. of correspondences');
-  printScores(opts,detectors,matchScoreKristian,'detectorEvalKristianMatchScore.txt', 'KM match scores');
-  printScores(opts,detectors,numOfMatchesKristian,'detectorEvalKristianMatchNum.txt', 'KM number of matches');
 end
 
 if(opts.saveResult)

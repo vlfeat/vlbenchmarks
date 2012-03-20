@@ -1,4 +1,4 @@
-function [repScores numOfCorresp matchScores numOfMatches] = runKristianEval(frames,imagePaths,images,tfs)
+function [repScores numOfCorresp] = runKristianEval(frames,imagePaths,images,tfs)
 import affineDetectors.*;
 
 % Index of a value from the test results corresponding to idx*10 overlap
@@ -13,8 +13,6 @@ end
 
 repScores = zeros(1,numel(frames)); repScores(1) = 100;
 numOfCorresp = zeros(1,numel(frames));
-matchScores = zeros(1,numel(frames)); matchScores(1) = 100;
-numOfMatches = zeros(1,numel(frames));
 
 addpath('./');
 for i = 2:numel(frames)
@@ -31,11 +29,9 @@ for i = 2:numel(frames)
   save(tmpHFile,'H','-ASCII');
   fprintf('Running Kristians''s benchmark on Img#%02d/%02d\n',i,numel(frames));
   cd(krisDir);
-  [err,tmpRepScore, tmpNumOfCorresp, tmpMatchScores, tmpNumOfMatches] = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},1);
+  [err,tmpRepScore, tmpNumOfCorresp] = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},1);
   repScores(1,i) = tmpRepScore(overlap_err_idx);
   numOfCorresp(1,i) = tmpNumOfCorresp(overlap_err_idx);
-  matchScores(1,i) = tmpMatchScores(min([length(tmpMatchScores) overlap_err_idx]));
-  numOfMatches(1,i) = tmpNumOfMatches(min([length(tmpMatchScores) overlap_err_idx]));
   cd(curDir);
   delete(ellAFile);
   delete(ellBFile);
