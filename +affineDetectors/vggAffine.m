@@ -42,8 +42,8 @@ classdef vggAffine < affineDetectors.genericDetector
 
       % Parse the passed options
       opts.detector= 'hessian';
-      opts.harThresh = 10;
-      opts.hesThresh = 200;
+      opts.harThresh = 20000; % original 10
+      opts.hesThresh = 1000; % original 200
       opts = vl_argparse(opts,varargin);
 
       switch(lower(opts.detector))
