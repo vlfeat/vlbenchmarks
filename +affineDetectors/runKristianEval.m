@@ -1,4 +1,4 @@
-function scores = runKristianEval(frames,imagePaths,images,tfs)
+function [repScores numOfCorresp matchScores numOfMatches] = runKristianEval(frames,imagePaths,images,tfs)
 import affineDetectors.*;
 
 % Index of a value from the test results corresponding to idx*10 overlap
