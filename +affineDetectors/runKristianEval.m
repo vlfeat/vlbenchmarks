@@ -1,5 +1,12 @@
-function scores = runKristianEval_old(frames,imagePaths,images,tfs)
+function [repScores, numOfCorresp, matchScores, numOfMatches] = runKristianEval(frames,imagePaths,images,tfs)
 import affineDetectors.*;
+% New Matlab (R2011b) runs runKristianEval_old in file runKristianEval even if the
+% function runKristianEval(...) is called... So safe would be one file one
+% function in outer scope...
+
+% Index of a value from the test results corresponding to idx*10 overlap
+% error
+overlap_err_idx = 4;
 
 curDir = pwd;
 krisDir = helpers.getKristianDir();
@@ -7,8 +14,11 @@ if(~exist(krisDir,'dir'))
   error('Kristian''s benchmark not found, cannot run\n');
 end
 
-%addpath(krisDir);
-scores = zeros(1,numel(frames));scores(1,1) = 1;
+addpath(krisDir);
+repScores = zeros(1,numel(frames)); repScores(1) = 100;
+numOfCorresp = zeros(1,numel(frames));
+matchScores = zeros(1,numel(frames)); matchScores(1) = 100;
+numOfMatches = zeros(1,numel(frames));
 
 for i = 2:numel(frames)
   %[framesA,framesB,framesA_,framesB_] = ...
@@ -26,9 +36,11 @@ for i = 2:numel(frames)
   save(tmpHFile,'H','-ASCII');
   fprintf('Running Kristians''s benchmark on Img#%02d/%02d\n',i,numel(frames));
   cd(krisDir);
-  [err,tmpScore] = repeatability(ellAFile,ellBFile,tmpHFile,...
-                                    imagePaths{1},imagePaths{i},1);
-  scores(1,i) = tmpScore(4)/100;
+  [err,tmpRepScore, tmpNumOfCorresp, tmpMatchScores, tmpNumOfMatches] = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},1);
+  repScores(1,i) = tmpRepScore(overlap_err_idx);
+  numOfCorresp(1,i) = tmpNumOfCorresp(overlap_err_idx);
+  matchScores(1,i) = tmpMatchScores(min([length(tmpMatchScores) overlap_err_idx]));
+  numOfMatches(1,i) = tmpNumOfMatches(min([length(tmpMatchScores) overlap_err_idx]));
   cd(curDir);
   delete(ellAFile);
   delete(ellBFile);
@@ -37,7 +49,7 @@ end
 
 %rmpath(krisDir);
 
-function scores = runKristianEval(frames,imagePaths,images,tfs)
+function [repScores, numOfCorresp, matchScores, numOfMatches] = runKristianEval(frames,imagePaths,images,tfs)
 import affineDetectors.*;
 
 curDir = pwd;
@@ -47,7 +59,10 @@ if(~exist(krisDir,'dir'))
 end
 
 %addpath(krisDir);
-scores = zeros(1,numel(frames));scores(1,1) = 1;
+repScores = zeros(1,numel(frames));repScores(1,1) = 1;
+numOfCorresp = zeros(1,numel(frames));numOfCorresp(1,1) = 1;
+matchScores = zeros(1,numel(frames));matchScores(1,1) = 1;
+numOfMatches = zeros(1,numel(frames));numOfMatches(1,1) = 1;
 
 for i = 2:numel(frames)
   [framesA,framesB,framesA_,framesB_] = ...
@@ -65,7 +80,7 @@ for i = 2:numel(frames)
   cd(krisDir);
   [err,tmpScore] = repeatability(ellAFile,ellBFile,tmpHFile,...
                                     imagePaths{1},imagePaths{i},1);
-  scores(1,i) = tmpScore(4)/100;
+  repScores(1,i) = tmpScore(4)/100;
   cd(curDir);
   delete(ellAFile);
   delete(ellBFile);

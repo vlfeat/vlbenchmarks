@@ -52,6 +52,9 @@ numDetectors = numel(detectors);
 repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
 if(opts.verifyKristian)
   repScoreKristian  = zeros(numDetectors,numImages);
+  numOfCorespKristian  = zeros(numDetectors,numImages);
+  matchScoreKristian  = zeros(numDetectors,numImages);
+  numOfMatchesKristian  = zeros(numDetectors,numImages);
 end
 
 if opts.showQualitative
@@ -113,44 +116,45 @@ for iDetector = 1:numel(detectors)
 
   if (opts.verifyKristian)
     fprintf('Running kristians benchmark code for verifying benchmark results:\n');
-    repScoreKristian(iDetector,:) = 100*runKristianEval(frames,imagePaths,...
-      images,tfs);
+    [repScoreKristian(iDetector,:), ...
+     numOfCorespKristian(iDetector,:), ...
+     matchScoreKristian(iDetector,:), ...
+     numOfMatchesKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
+                                                          images,tfs);
   end
 
 end
 
 repeatibilityScore = repeatibilityScore * 100;
-% ----------------- Plot the evaluation scores ---------------------------------
-figure(numImages+1) ; clf ;
-plot(repeatibilityScore','linewidth', 3) ; hold on ;
-ylabel('Repeatibility. %') ;
-xlabel('Image #');
-title('Detector repeatibility vs. image index');
-ylim([0 100]);
-set(gca,'xtick',[1:numImages]);
-
-legendStr = cell(1,numel(detectors));
-for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
-legend(legendStr);
-grid on ;
-
 fprintf('\n------ Evaluation completed ---------\n');
 
-if(opts.saveResult)
-  vl_xmkdir(opts.saveDir);
-  figFile = fullfile(opts.saveDir,'detectorEval.eps');
-  fprintf('\nSaving figure as eps graphics: %s\n',figFile);
-  print('-depsc2',figFile);
-  figFile = fullfile(opts.saveDir,'detectorEval.fig');
-  fprintf('Saving figure as matlab figure to: %s\n',figFile);
-  saveas(gca,figFile);
+% ----------------- Plot the evaluation scores ---------------------------------
+plotScores(numImages+1,'detectorEval', repeatibilityScore, ...
+           'Detector repeatibility vs. image index', ...
+           'Image #','Repeatibility. %',detectors, opts, 1);
+if(opts.verifyKristian)
+    plotScores(numImages+2,'KM_repeatability', repScoreKristian, ...
+           'KM Detector repeatibility vs. image index', ...
+           'Image #','Repeatibility. %',detectors, opts, 1);
+    plotScores(numImages+3,'KM_numCorrespond', numOfCorespKristian, ...
+           'KM Detector num. of correspondences vs. image index', ...
+           'Image #','#correspondences',detectors, opts, 2);
+    plotScores(numImages+4,'KM_matchScore', matchScoreKristian, ...
+           'KM Detector match score vs. image index', ...
+           'Image #','Match score [%]',detectors, opts, 1);
+    plotScores(numImages+5,'KM_matchNum', numOfMatchesKristian, ...
+           'KM Detector num. of matches vs. image index', ...
+           'Image #','#correct matches',detectors, opts,2);
 end
-
+       
 % -------- Print out and save the scores --------------------
-detNames = printScores(opts,detectors,repeatibilityScore,'detectorEval.txt');
+detNames = printScores(opts,detectors,repeatibilityScore,'detectorEval.txt', 'repeatability scores');
 if(opts.verifyKristian)
   fprintf('\nOutput of Kristians benchmark:\n');
-  printScores(opts,detectors,repScoreKristian,'detectorEvalKristian.txt');
+  printScores(opts,detectors,repScoreKristian,'detectorEvalKristianRepScore.txt', 'KM repeatability scores');
+  printScores(opts,detectors,numOfCorespKristian,'detectorEvalKristianCorrNum.txt', 'KM num. of correspondences');
+  printScores(opts,detectors,matchScoreKristian,'detectorEvalKristianMatchScore.txt', 'KM match scores');
+  printScores(opts,detectors,numOfMatchesKristian,'detectorEvalKristianMatchNum.txt', 'KM number of matches');
 end
 
 if(opts.saveResult)
@@ -166,8 +170,9 @@ for i = 1:numel(detectors),
             detectors{i}.errMsg);
   end
 end
+end
 
-function detNames = printScores(opts,detectors,repeatibilityScore,outFile);
+function detNames = printScores(opts,detectors,repeatibilityScore,outFile, name);
 
 numDetectors = numel(detectors);
 
@@ -186,7 +191,7 @@ for i = 1:numDetectors
 end
 
 maxNameLen = max(length('Method name'),maxNameLen);
-myprintf(fidOut,'Printing repeatability scores:\n\n');
+myprintf(fidOut,strcat('\nPriting ', name,':\n'));
 formatString = ['%' sprintf('%d',maxNameLen) 's:'];
 
 myprintf(fidOut,formatString,'Method name');
@@ -206,12 +211,44 @@ end
 if(opts.saveResult)
   fclose(fH);
 end
+end
+
+function plotScores(figureNum, name, score, title_text, x_label, y_label, detectors, opts, xstart)
+    if isempty(xstart)
+        xstart = 1;
+    end
+    figure(figureNum) ; clf ;
+    xend = size(score,2);
+    plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
+    ylabel(y_label) ;
+    xlabel(x_label);
+    title(title_text);
+    %ylim([0 100]);
+    set(gca,'xtick',[1:size(score,2)]);
+
+    legendStr = cell(1,numel(detectors));
+    for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
+    legend(legendStr);
+    grid on ;
+
+    if(opts.saveResult)
+      vl_xmkdir(opts.saveDir);
+      figFile = fullfile(opts.saveDir,strcat(name,'.eps'));
+      fprintf('\nSaving figure as eps graphics: %s\n',figFile);
+      print('-depsc2',figFile);
+      figFile = fullfile(opts.saveDir,strcat(name,'.fig'));
+      fprintf('Saving figure as matlab figure to: %s\n',figFile);
+      saveas(gca,figFile);
+    end
+    
+end
 
 function myprintf(fids,format,varargin)
 
   for i = 1:numel(fids)
     fprintf(fids(i),format,varargin{:});
   end
+end
 
 function plotDataset(images)
 
@@ -227,6 +264,7 @@ function plotDataset(images)
     imshow(images{i}); title(sprintf('Image #%02d',i));
   end
   drawnow;
+end
 
 function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
                     numDetectors,imageA,imageB,detectorName,matchIdxs)
@@ -252,6 +290,7 @@ function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
     title('Transformed image detections');
 
     drawnow;
+end
 
 function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
   matches = zeros(3,0);
@@ -285,3 +324,4 @@ function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
       availB(bIdx) = false;
     end
   end
+end
