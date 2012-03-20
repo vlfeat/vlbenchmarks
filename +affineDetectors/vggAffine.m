@@ -54,7 +54,7 @@ classdef vggAffine < affineDetectors.genericDetector
         otherwise
           error('Invalid detector type: %s\n',opts.detector);
       end
-      this.detectorName = ['Affine(vgg)-' opts.detector];
+      this.detectorName = [opts.detector '-affine(vgg)' ];
       this.harThresh = opts.harThresh;
       this.hesThresh = opts.hesThresh;
 
