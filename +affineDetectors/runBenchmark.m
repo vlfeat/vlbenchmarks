@@ -21,6 +21,10 @@ function runBenchmark(detectors,dataset,varargin)
 %   SaveDir         :: ['./savedResults/']
 %     Directory where to save the output of the evaluation.
 %
+%   OverlapError    :: [0.4]
+%     Two ellipses are deemed to correspond when their overlap area error
+%     is smaller than OverlapError.
+%
 %   VerifyKristian  :: [false]
 %     Also runs the benchmark available at:
 %     http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz
@@ -33,6 +37,7 @@ opts.showQualitative = true;
 opts.saveResult = true;
 opts.saveDir = './savedResults/';
 opts.verifyKristian = false;
+opts.overlapError = 0.4;
 opts = commonFns.vl_argparse(opts,varargin);
 
 % -------- Load the dataset ----------------------------------------------------
@@ -50,9 +55,10 @@ end
 % -------- Compute each detectors output and store the evaluation --------------
 numDetectors = numel(detectors);
 repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
+numOfCorresp = zeros(numDetectors,numImages);
 if(opts.verifyKristian)
   repScoreKristian  = zeros(numDetectors,numImages);
-  numOfCorespKristian  = zeros(numDetectors,numImages);
+  numOfCorrespKristian  = zeros(numDetectors,numImages);
 end
 
 if opts.showQualitative
@@ -102,9 +108,11 @@ for iDetector = 1:numel(detectors)
 
 
     frameMatches = matchEllipses(framesB_, framesA);
-    [bestMatches,matchIdxs] = findOneToOneMatches(frameMatches,framesA,framesB_);
+    [bestMatches,matchIdxs] = ...
+        findOneToOneMatches(frameMatches,framesA,framesB_, opts.overlapError);
     repeatibilityScore(iDetector,i) = ...
         sum(bestMatches) / min(size(framesA,2), size(framesB,2));
+    numOfCorresp(iDetector,i) = sum(bestMatches);
 
     if opts.showQualitative
       plotFrames(framesA,framesB,framesA_,framesB_,iDetector,i,numDetectors,...
@@ -116,8 +124,8 @@ for iDetector = 1:numel(detectors)
   if (opts.verifyKristian)
     fprintf('Running kristians benchmark code for verifying benchmark results:\n');
     [repScoreKristian(iDetector,:), ...
-     numOfCorespKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
-                                                         images,tfs);
+     numOfCorrespKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
+                                                         images,tfs, opts.overlapError);
   end
 
 end
@@ -129,21 +137,25 @@ fprintf('\n------ Evaluation completed ---------\n');
 plotScores(numImages+1,'detectorEval', repeatibilityScore, ...
            'Detector repeatibility vs. image index', ...
            'Image #','Repeatibility. %',detectors, opts, 1);
+plotScores(numImages+2,'numCorrespond', numOfCorresp, ...
+           'Detector num. of correspondences vs. image index', ...
+           'Image #','#correspondences',detectors, opts, 2);
 if(opts.verifyKristian)
-    plotScores(numImages+2,'KM_repeatability', repScoreKristian, ...
+    plotScores(numImages+3,'KM_repeatability', repScoreKristian, ...
            'KM Detector repeatibility vs. image index', ...
            'Image #','Repeatibility. %',detectors, opts, 1);
-    plotScores(numImages+3,'KM_numCorrespond', numOfCorespKristian, ...
+    plotScores(numImages+4,'KM_numCorrespond', numOfCorrespKristian, ...
            'KM Detector num. of correspondences vs. image index', ...
            'Image #','#correspondences',detectors, opts, 2);
 end
        
 % -------- Print out and save the scores --------------------
 detNames = printScores(opts,detectors,repeatibilityScore,'detectorEval.txt', 'repeatability scores');
+printScores(opts,detectors,numOfCorresp,'numCorresp.txt', 'num. of correspondences');
 if(opts.verifyKristian)
   fprintf('\nOutput of Kristians benchmark:\n');
   printScores(opts,detectors,repScoreKristian,'detectorEvalKristianRepScore.txt', 'KM repeatability scores');
-  printScores(opts,detectors,numOfCorespKristian,'detectorEvalKristianCorrNum.txt', 'KM num. of correspondences');
+  printScores(opts,detectors,numOfCorrespKristian,'detectorEvalKristianCorrNum.txt', 'KM num. of correspondences');
 end
 
 if(opts.saveResult)
@@ -281,9 +293,9 @@ function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
     drawnow;
 end
 
-function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
+function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB, overlapError)
   matches = zeros(3,0);
-  overlapThresh = 0.6; % TODO: pass this as a parameter
+  overlapThresh = 1 - overlapError;
   bestMatches = zeros(1, size(framesA, 2)) ;
   matchIdxs = [];
 
@@ -297,9 +309,10 @@ function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB)
 
   matches = matches(:,matches(3,:)>overlapThresh);
 
-  % eliminate assigment by priority
+  % eliminate assigment by priority, i.e. sort the matches by the score
   [drop, perm] = sort(matches(3,:), 'descend');
   matches = matches(:, perm);
+  % Create maps which frames has not been 'used' yet
   availA = true(1,size(framesA,2));
   availB = true(1,size(framesB,2));
 

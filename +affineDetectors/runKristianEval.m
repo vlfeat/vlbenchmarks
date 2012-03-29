@@ -1,9 +1,13 @@
-function [repScores numOfCorresp] = runKristianEval(frames,imagePaths,images,tfs)
+function [repScores numOfCorresp] = runKristianEval(frames,imagePaths,images,tfs, overlapError)
 import affineDetectors.*;
 
 % Index of a value from the test results corresponding to idx*10 overlap
 % error
-overlap_err_idx = 4;
+overlap_err_idx = round(overlapError*10);
+if (overlapError*10 - overlap_err_idx) ~= 0
+    warning(['KM benchmark supports only limited set of overlap errors. ',...
+             'The comparison would not be accurate.']);
+end
 
 curDir = pwd;
 krisDir = helpers.getKristianDir();
