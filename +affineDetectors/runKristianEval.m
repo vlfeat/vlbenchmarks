@@ -1,8 +1,8 @@
-function [repScores numOfCorresp] = runKristianEval(frames,imagePaths,images,tfs, overlapError)
+function [repScores numOfCorresp matchScores numOfMatches] = runKristianEval(frames,imagePaths,images,tfs, overlapError, descrs)
 import affineDetectors.*;
 
 % Index of a value from the test results corresponding to idx*10 overlap
-% error
+% error. Kristian eval. computes only overlap errors in step of 0.1
 overlap_err_idx = round(overlapError*10);
 if (overlapError*10 - overlap_err_idx) ~= 0
     warning(['KM benchmark supports only limited set of overlap errors. ',...
@@ -17,26 +17,41 @@ end
 
 repScores = zeros(1,numel(frames)); repScores(1) = 100;
 numOfCorresp = zeros(1,numel(frames));
+matchScores = zeros(1,numel(frames)); matchScores(1) = 100;
+numOfMatches = zeros(1,numel(frames));
 
 addpath('./');
 for i = 2:numel(frames)
-  [framesA,framesB,framesA_,framesB_] = ...
-      helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
   tmpFile = tempname;
   ellAFile = [tempname 'ellA.txt'];
   ellBFile = [tempname 'ellB.txt'];
   tmpHFile = [tempname 'H.txt'];
-  helpers.vggwriteell(ellAFile,framesA);
-  helpers.vggwriteell(ellBFile,framesB);
+  if nargout == 2
+    [framesA,framesB,framesA_,framesB_] = ...
+      helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
+    helpers.vggwriteell(ellAFile,framesA);
+    helpers.vggwriteell(ellBFile,framesB);
+  elseif nargout == 4
+    [framesA,framesB,framesA_,framesB_, descrsA, descrsB] = ...
+      helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i}, ...
+                                        descrs{1}, descrs{i});
+    helpers.vggwriteell(ellAFile,framesA, descrsA);
+    helpers.vggwriteell(ellBFile,framesB, descrsB);
+  end
 
   H = tfs{i};
   save(tmpHFile,'H','-ASCII');
+  
   fprintf('Running Kristians''s benchmark on Img#%02d/%02d\n',i,numel(frames));
   cd(krisDir);
-  [err,tmpRepScore, tmpNumOfCorresp] = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},1);
+  [err,tmpRepScore, tmpNumOfCorresp, matchScore, numMatches] ...
+      = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},1);
+  cd(curDir);
+  
   repScores(1,i) = tmpRepScore(overlap_err_idx);
   numOfCorresp(1,i) = tmpNumOfCorresp(overlap_err_idx);
-  cd(curDir);
+  matchScores(1,i) = matchScore;
+  numOfMatches(1,i) = numMatches;
   delete(ellAFile);
   delete(ellBFile);
   delete(tmpHFile);

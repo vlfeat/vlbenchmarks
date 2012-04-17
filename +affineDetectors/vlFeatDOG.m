@@ -25,13 +25,18 @@ classdef vlFeatDOG < affineDetectors.genericDetector
     function obj = vlFeatDOG(varargin)
       obj.detectorName = 'DOG(vlFeat)';
       obj.vl_sift_arguments = varargin;
+      obj.calcDescs = true;
     end
 
-    function frames = detectPoints(obj,img)
+    function [frames descs] = detectPoints(obj,img)
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2single(img);
 
-      frames = vl_sift(img,obj.vl_sift_arguments{:});
+      if nargout == 1
+        [frames] = vl_sift(img,obj.vl_sift_arguments{:});
+      elseif nargout == 2
+        [frames descs] = vl_sift(img,obj.vl_sift_arguments{:});
+      end
     end
 
   end

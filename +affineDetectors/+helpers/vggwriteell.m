@@ -1,4 +1,4 @@
-function vggwriteell(fileName, ell)
+function vggwriteell(fileName, ell, descrs)
 % VGGWRITEELL
 
 for i=1:size(ell,2)
@@ -8,7 +8,19 @@ for i=1:size(ell,2)
 end
 
 f = fopen(fileName, 'w') ;
-fprintf(f,'0\n%d\n', size(ell,2)) ;
-fprintf(f,'%g %g %g %g %g\n', ell) ;
+switch nargin
+    case 2 % Elliptic keypoint
+      fprintf(f,'0\n%d\n', size(ell,2)) ;  
+      fprintf(f,'%g %g %g %g %g\n', ell) ;
+    case 3 % Elliptic point + descriptor
+      fprintf(f,'%d\n%d\n', size(descrs,1), size(ell,2)) ;  
+      for i=1:size(ell,2)
+        fprintf(f,'%g ', ell(:,i)');
+        fprintf(f,'%g ', descrs(:,i)');
+        fprintf(f,'\n');
+      end
+  otherwise
+        error('Invalid number of input arguments');
+end
 fclose(f) ;
 

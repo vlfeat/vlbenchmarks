@@ -33,6 +33,7 @@ classdef vggAffine < affineDetectors.genericDetector
     % The constructor is used to set the options for vggAffine
     function this = vggAffine(varargin)
       import affineDetectors.*;
+      this.calcDescs = true;
 
       if ~vggAffine.isInstalled(),
         this.isOk = false;
@@ -80,18 +81,25 @@ classdef vggAffine < affineDetectors.genericDetector
       this.binPath = binPath;
     end
 
-    function frames = detectPoints(this,img)
+    function [frames descrs] = detectPoints(this,img)
       if ~this.isOk, frames = zeros(5,0); return; end
 
       if(size(img,3) > 1), img = rgb2gray(img); end
-
+      
       tmpName = tempname;
       imgFile = [tmpName '.png'];
       outFile = [tmpName '.png.' this.detectorType];
+      
+      if nargout == 2 
+        desc_param='-sift'; 
+        outFile = strcat(outFile, '.sift');
+      else 
+        desc_param = ''; 
+      end;
 
       imwrite(img,imgFile);
-      args = sprintf(' -%s -harThres %f -hesThres %f -i "%s"',...
-                     this.detectorType,this.harThresh,this.hesThresh,imgFile);
+      args = sprintf(' -%s -harThres %f -hesThres %f -i "%s" %s',...
+                     this.detectorType,this.harThresh,this.hesThresh,imgFile,desc_param);
       binPath = this.binPath;
       cmd = [binPath ' ' args];
 
@@ -100,7 +108,7 @@ classdef vggAffine < affineDetectors.genericDetector
         error('%d: %s: %s', status, cmd, msg) ;
       end
 
-      frames = vl_ubcread(outFile,'format','oxford');
+      [frames descrs] = vl_ubcread(outFile,'format','oxford');
       delete(imgFile); delete(outFile); delete([outFile '.params']);
     end
 

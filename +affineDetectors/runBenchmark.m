@@ -34,6 +34,7 @@ import affineDetectors.*;
 
 % -------- create options ------------------------
 opts.showQualitative = true;
+opts.calcMatches = true;
 opts.saveResult = true;
 opts.saveDir = './savedResults/';
 opts.verifyKristian = false;
@@ -58,7 +59,9 @@ repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
 numOfCorresp = zeros(numDetectors,numImages);
 if(opts.verifyKristian)
   repScoreKristian  = zeros(numDetectors,numImages);
+  matchScoreKristian  = zeros(numDetectors,numImages);
   numOfCorrespKristian  = zeros(numDetectors,numImages);
+  numOfMatchesKristian  = zeros(numDetectors,numImages);
 end
 
 if opts.showQualitative
@@ -81,6 +84,8 @@ end
 
 for iDetector = 1:numel(detectors)
   frames = cell(1,numImages);
+  descriptors = cell(1,numImages);
+  
   curDetector = detectors{iDetector};
   fprintf('\nComputing affine covariant regions for method #%02d: %s\n\n', ...
           iDetector, curDetector.getName());
@@ -94,7 +99,16 @@ for iDetector = 1:numel(detectors)
 
   for i = 1:numImages
     fprintf('Computing regions for image: %02d/%02d ...',i,numImages);
-    frames{i} = curDetector.detectPoints(images{i});
+    if opts.calcMatches
+      if curDetector.calcDescs
+        [frames{i} descriptors{i}] = curDetector.detectPoints(images{i});
+      else
+        [frames{i}] = curDetector.detectPoints(images{i});
+        % TODO add posibility to calc descriptors of keypoints
+      end
+    else
+      frames{i} = curDetector.detectPoints(images{i});
+    end
     fprintf(' (%d regions detected)\r',size(frames{i},2));
   end
 
@@ -105,7 +119,6 @@ for iDetector = 1:numel(detectors)
     [framesA,framesB,framesA_,framesB_] = ...
         helpers.cropFramesToOverlapRegion(frames{1},frames{i},...
         tfs{i},images{1},images{i});
-
 
     frameMatches = matchEllipses(framesB_, framesA);
     [bestMatches,matchIdxs] = ...
@@ -123,9 +136,17 @@ for iDetector = 1:numel(detectors)
 
   if (opts.verifyKristian)
     fprintf('Running kristians benchmark code for verifying benchmark results:\n');
-    [repScoreKristian(iDetector,:), ...
-     numOfCorrespKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
-                                                         images,tfs, opts.overlapError);
+    if opts.calcMatches && ~isempty(descriptors)
+        [repScoreKristian(iDetector,:), numOfCorrespKristian(iDetector,:),...
+        matchScoreKristian(iDetector,:), numOfMatchesKristian(iDetector,:)] ...
+                = runKristianEval(frames,imagePaths,images,tfs, ...
+                                  opts.overlapError, descriptors);
+    else
+        [repScoreKristian(iDetector,:), ...
+        numOfCorrespKristian(iDetector,:)] = runKristianEval(frames,imagePaths,...
+                                                            images,tfs, opts.overlapError);
+    end
+        
   end
 
 end
@@ -134,19 +155,28 @@ repeatibilityScore = repeatibilityScore * 100;
 fprintf('\n------ Evaluation completed ---------\n');
 
 % ----------------- Plot the evaluation scores ---------------------------------
-plotScores(numImages+1,'detectorEval', repeatibilityScore, ...
+fn = numImages; % Number of figure
+plotScores(fn,'detectorEval', repeatibilityScore, ...
            'Detector repeatibility vs. image index', ...
-           'Image #','Repeatibility. %',detectors, opts, 1);
-plotScores(numImages+2,'numCorrespond', numOfCorresp, ...
+           'Image #','Repeatibility. %',detectors, opts, 1); fn = fn + 1;
+plotScores(fn, 'numCorrespond', numOfCorresp, ...
            'Detector num. of correspondences vs. image index', ...
-           'Image #','#correspondences',detectors, opts, 2);
+           'Image #','#correspondences',detectors, opts, 2); fn = fn + 1;
 if(opts.verifyKristian)
-    plotScores(numImages+3,'KM_repeatability', repScoreKristian, ...
-           'KM Detector repeatibility vs. image index', ...
-           'Image #','Repeatibility. %',detectors, opts, 1);
-    plotScores(numImages+4,'KM_numCorrespond', numOfCorrespKristian, ...
-           'KM Detector num. of correspondences vs. image index', ...
-           'Image #','#correspondences',detectors, opts, 2);
+  plotScores(fn, 'KM_repeatability', repScoreKristian, ...
+             'KM Detector repeatibility vs. image index', ...
+             'Image #','Repeatibility. %',detectors, opts, 1); fn = fn + 1;
+  plotScores(fn, 'KM_numCorrespond', numOfCorrespKristian, ...
+             'KM Detector num. of correspondences vs. image index', ...
+             'Image #','#correspondences',detectors, opts, 2); fn = fn + 1;
+  if opts.calcMatches
+    plotScores(fn, 'KM_matchScore', matchScoreKristian, ...
+               'KM Detector matching score vs. image index', ...
+               'Image #','Matching score %',detectors, opts, 1); fn = fn + 1;
+    plotScores(fn, 'KM_numMatches', numOfMatchesKristian, ...
+               'KM Detector num of matches vs. image index', ...
+               'Image #','#correct matches',detectors, opts, 2);
+  end
 end
        
 % -------- Print out and save the scores --------------------
@@ -156,6 +186,10 @@ if(opts.verifyKristian)
   fprintf('\nOutput of Kristians benchmark:\n');
   printScores(opts,detectors,repScoreKristian,'detectorEvalKristianRepScore.txt', 'KM repeatability scores');
   printScores(opts,detectors,numOfCorrespKristian,'detectorEvalKristianCorrNum.txt', 'KM num. of correspondences');
+  if opts.calcMatches
+    printScores(opts,detectors,matchScoreKristian,'detectorEvalKristianMatchScore.txt', 'KM match scores');
+    printScores(opts,detectors,numOfMatchesKristian,'detectorEvalKristianMatchesNum.txt', 'KM num. of matches');
+  end
 end
 
 if(opts.saveResult)
@@ -215,32 +249,32 @@ end
 end
 
 function plotScores(figureNum, name, score, title_text, x_label, y_label, detectors, opts, xstart)
-    if isempty(xstart)
-        xstart = 1;
-    end
-    figure(figureNum) ; clf ;
-    xend = size(score,2);
-    plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
-    ylabel(y_label) ;
-    xlabel(x_label);
-    title(title_text);
-    %ylim([0 100]);
-    set(gca,'xtick',[1:size(score,2)]);
+  if isempty(xstart)
+      xstart = 1;
+  end
+  figure(figureNum) ; clf ;
+  xend = size(score,2);
+  plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
+  ylabel(y_label) ;
+  xlabel(x_label);
+  title(title_text);
+  %ylim([0 100]);
+  set(gca,'xtick',[1:size(score,2)]);
 
-    legendStr = cell(1,numel(detectors));
-    for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
-    legend(legendStr);
-    grid on ;
+  legendStr = cell(1,numel(detectors));
+  for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
+  legend(legendStr);
+  grid on ;
 
-    if(opts.saveResult)
-      vl_xmkdir(opts.saveDir);
-      figFile = fullfile(opts.saveDir,strcat(name,'.eps'));
-      fprintf('\nSaving figure as eps graphics: %s\n',figFile);
-      print('-depsc2',figFile);
-      figFile = fullfile(opts.saveDir,strcat(name,'.fig'));
-      fprintf('Saving figure as matlab figure to: %s\n',figFile);
-      saveas(gca,figFile);
-    end
+  if(opts.saveResult)
+    vl_xmkdir(opts.saveDir);
+    figFile = fullfile(opts.saveDir,strcat(name,'.eps'));
+    fprintf('\nSaving figure as eps graphics: %s\n',figFile);
+    print('-depsc2',figFile);
+    figFile = fullfile(opts.saveDir,strcat(name,'.fig'));
+    fprintf('Saving figure as matlab figure to: %s\n',figFile);
+    saveas(gca,figFile);
+  end
     
 end
 

@@ -1,7 +1,7 @@
-function [framesA,framesB,framesA_,framesB_] = ...
-    cropFramesToOverlapRegion(framesA,framesB,tfs,imageA,imageB)
+function [framesA,framesB,framesA_,framesB_,descrsA, descrsB] = ...
+    cropFramesToOverlapRegion(framesA,framesB,tfs,imageA,imageB, descrsA, descrsB)
 % This function transforms ellipses in A to B (and vice versa), and crops
-% them according to their visibility in the transformed frame
+% them according to their visibility in the transformed frames.
 
   import affineDetectors.*;
 
@@ -26,4 +26,8 @@ function [framesA,framesB,framesA_,framesB_] = ...
   framesB  = framesB(:, selB);
   framesB_ = framesB_(:, selB);
 
+  if nargout == 6
+      descrsA = descrsA(:, selA);
+      descrsB = descrsB(:, selB);
+  end
 
