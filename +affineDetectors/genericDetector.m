@@ -23,7 +23,9 @@ classdef genericDetector < handle
     % is expected to be used to set the options specific to that
     % detector
 
-    frames = detectPoints(img)  % Expect a 3 channel(RGB) uint8 image to be
+    frames = detectPoints(obj, img)  
+    % DETECTPOINTS
+    % Expect a 3 channel(RGB) uint8 image to be
     % passed to this function. The actual detectPoints function should
     % handle transforming the img to grayScale/double etc.
     % Output:
@@ -38,6 +40,14 @@ classdef genericDetector < handle
     %   if frames is 5 x nFrames, then frames(3,:), frames(4,:) and frames(5,:)
     %   store respectively the S11, S12, S22 such that
     %   ELLIPSE = {x: x' inv(S) x = 1}.
+    
+    sign = signature(obj)
+    % SIGNATURE
+    % Returns unique signature for detector parameters.
+    %
+    % This function is used for caching detected results. When the detector
+    % parameters had changed, the signature must be different as well.
+ 
   end
 
   methods

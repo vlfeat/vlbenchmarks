@@ -1,0 +1,12 @@
+function [ signature ] = file_signature( filename )
+%FILE_SIGNATURE Compute a file signature
+%   Computes file signature based on its name and modification date.
+%   Returns a string "file_name@modification_date". The file_name
+%   is without path and the modification date is in format of matlab dir.
+
+f_info = dir(filename);
+
+signature = sprintf('%s;%s', f_info.name, f_info.date);
+
+end
+

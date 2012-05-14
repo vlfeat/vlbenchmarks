@@ -15,6 +15,7 @@ classdef vlFeatHessian < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vl_hessian_arguments
+    binPath
   end
 
   methods
@@ -24,16 +25,25 @@ classdef vlFeatHessian < affineDetectors.genericDetector
     function obj = vlFeatHessian(varargin)
       obj.detectorName = 'hessian-affine(vlFeat)';
       obj.vl_hessian_arguments = varargin;
+      obj.calcDescs = true;
+      obj.binPath = which('vl_hessian');
     end
 
-    function frames = detectPoints(obj,img)
+    function [frames descs] = detectPoints(obj,img)
       if(size(img,3)>1), img = rgb2gray(img); end
       img = single(img); % If not already in uint8, then convert
 
-      [frames] = vl_hessian(img,obj.vl_hessian_arguments{:},'CalcAffine');
-
-      %sel = find(frames(3,:).*frames(5,:) - frames(4,:).^2 >= 1) ;
-      %frames = frames(:, sel) ;
+      if nargout == 2
+        [frames descs] = vl_hessian(img,obj.vl_hessian_arguments{:});
+      elseif nargout == 1
+        [frames] = vl_hessian(img,obj.vl_hessian_arguments{:});
+      end
+       
+    end
+    
+    function sign = signature(obj)
+      sign = [commonFns.file_signature(obj.binPath) ';'...
+              evalc('disp(obj.vl_hessian_arguments)')];
     end
 
   end

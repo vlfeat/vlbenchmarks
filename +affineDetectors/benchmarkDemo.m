@@ -1,4 +1,4 @@
-function benchMarkDemo()
+function benchmarkDemo()
 % BENCHMARKDEMO Script demonstrating how to run the benchmarks for
 %   different algorithms.
 %
@@ -14,17 +14,36 @@ function benchMarkDemo()
 %
 %   See <a href="matlab: help affineDetectors.exampleDetector">affineDetectors.exampleDetector</a> on how to add your own detector
 
-detectors{1} = affineDetectors.vlFeatDOG(); % Default options
+import affineDetectors.*;
+global storage;
+global tests;
+
+detectors{1} = vlFeatDOG(); % Default options
 %detectors{2} = affineDetectors.vggMser('ms',30); % Custom options
 %detectors{3} = affineDetectors.vlFeatMser(); % Default options
 %detectors{3}.detectorName = 'MSER(VLfeat)'; % You can change the default name that is
 % used in the plot legend by modifying the above field
-%detectors{2} = affineDetectors.vlFeatHessian();
-detectors{2} = affineDetectors.cmpHessian();
-detectors{3} = affineDetectors.vggAffine('Detector', 'hessian');
-detectors{4} = affineDetectors.vggAffine('Detector', 'harris');
+detectors{2} = cmpHessian();
+%detectors{3} = vlFeatHessian();
+%detectors{3} = vggAffine('Detector', 'hessian');
+%detectors{3} = affineDetectors.vggAffine('Detector', 'harris');
 
-dataset = affineDetectors.vggDataset('category','graf');
+dataset = vggDataset('category','graf');
 
-affineDetectors.runBenchmark(detectors,dataset,'verifyKristian',true, ...
-                             'ShowQualitative',false, 'OverlapError',0.40);
+% Initialise storage if it does not exist.
+if isempty(storage)
+  storage = framesStorage(dataset);
+end
+
+% TODO solve where to store tests - cell is not ideal storage because it
+% does not support adding new tests on demand...
+if isempty(tests)
+  tests = {repeatabilityTest(storage), kristianEvalTest(storage)};
+end
+
+storage.addDetectors(detectors);
+
+% Run tests.
+for i=1:numel(tests)
+  tests{i}.runTest();
+end

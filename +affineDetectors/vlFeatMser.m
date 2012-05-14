@@ -15,6 +15,7 @@ classdef vlFeatMser < affineDetectors.genericDetector
   properties (SetAccess=private, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vl_mser_arguments
+    binPath
   end
 
   methods
@@ -24,6 +25,7 @@ classdef vlFeatMser < affineDetectors.genericDetector
     function obj = vlFeatMser(varargin)
       obj.detectorName = 'MSER(vlFeat)';
       obj.vl_mser_arguments = varargin;
+      obj.binPath = which('vl_mser');
     end
 
     function frames = detectPoints(obj,img)
@@ -37,6 +39,11 @@ classdef vlFeatMser < affineDetectors.genericDetector
       frames = vl_ertr([brightOnDarkFrames darkOnBrightFrames]);
       sel = find(frames(3,:).*frames(5,:) - frames(4,:).^2 >= 1) ;
       frames = frames(:, sel) ;
+    end
+    
+    function sign = signature(obj)
+      sign = [commonFns.file_signature(obj.binPath) ';'...
+              evalc('disp(obj.vl_mser_arguments)')];
     end
 
   end

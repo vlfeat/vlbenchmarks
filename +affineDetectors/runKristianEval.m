@@ -1,5 +1,6 @@
 function [repScores numOfCorresp matchScores numOfMatches] = runKristianEval(frames,imagePaths,images,tfs, overlapError, descrs)
 import affineDetectors.*;
+import affineDetectors.helpers.*;
 
 % Index of a value from the test results corresponding to idx*10 overlap
 % error. Kristian eval. computes only overlap errors in step of 0.1
@@ -31,12 +32,14 @@ for i = 2:numel(frames)
       helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i});
     helpers.vggwriteell(ellAFile,framesA);
     helpers.vggwriteell(ellBFile,framesB);
+    common_part = 1;
   elseif nargout == 4
-    [framesA,framesB,framesA_,framesB_, descrsA, descrsB] = ...
-      helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i}, ...
-                                        descrs{1}, descrs{i});
-    helpers.vggwriteell(ellAFile,framesA, descrsA);
-    helpers.vggwriteell(ellBFile,framesB, descrsB);
+    % [framesA,framesB,framesA_,framesB_, descrsA, descrsB] = ...
+    %  helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i}, ...
+    %                                    descrs{1}, descrs{i});
+    helpers.vggwriteell(ellAFile,frameToEllipse(frames{1}), descrs{1});
+    helpers.vggwriteell(ellBFile,frameToEllipse(frames{i}), descrs{i});
+    common_part = 0;
   end
 
   H = tfs{i};
@@ -45,7 +48,7 @@ for i = 2:numel(frames)
   fprintf('Running Kristians''s benchmark on Img#%02d/%02d\n',i,numel(frames));
   cd(krisDir);
   [err,tmpRepScore, tmpNumOfCorresp, matchScore, numMatches] ...
-      = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},1);
+      = repeatability(ellAFile,ellBFile,tmpHFile,imagePaths{1},imagePaths{i},common_part);
   cd(curDir);
   
   repScores(1,i) = tmpRepScore(overlap_err_idx);

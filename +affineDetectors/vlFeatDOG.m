@@ -16,6 +16,7 @@ classdef vlFeatDOG < affineDetectors.genericDetector
     % The properties below correspond to parameters for vl_sift
     % See help vl_sift for description of these properties
     vl_sift_arguments
+    binPath
   end
 
   methods
@@ -26,6 +27,7 @@ classdef vlFeatDOG < affineDetectors.genericDetector
       obj.detectorName = 'DOG(vlFeat)';
       obj.vl_sift_arguments = varargin;
       obj.calcDescs = true;
+      obj.binPath = which('vl_sift');
     end
 
     function [frames descs] = detectPoints(obj,img)
@@ -37,6 +39,11 @@ classdef vlFeatDOG < affineDetectors.genericDetector
       elseif nargout == 2
         [frames descs] = vl_sift(img,obj.vl_sift_arguments{:});
       end
+    end
+    
+    function sign = signature(obj)
+      sign = [commonFns.file_signature(obj.binPath) ';'...
+              evalc('disp(obj.vl_sift_arguments)')];
     end
 
   end

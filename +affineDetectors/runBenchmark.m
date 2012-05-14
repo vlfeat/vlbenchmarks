@@ -33,30 +33,14 @@ function runBenchmark(detectors,dataset,varargin)
 import affineDetectors.*;
 
 % -------- create options ------------------------
-opts.showQualitative = true;
-opts.calcMatches = true;
-opts.saveResult = true;
-opts.saveDir = './savedResults/';
-opts.verifyKristian = false;
+opts.calcMatches = false;
 opts.overlapError = 0.4;
 opts = commonFns.vl_argparse(opts,varargin);
 
-% -------- Load the dataset ----------------------------------------------------
-assert(isa(dataset,'affineDetectors.genericDataset'),...
-    'dataset not an instance of generic dataset\n');
-numImages = dataset.numImages;
-images = cell(1,numImages);
-imagePaths = cell(1,numImages);
-for i=1:numImages
-  imagePaths{i} = dataset.getImagePath(i);
-  images{i} = imread(imagePaths{i});
-  tfs{i} = dataset.getTransformation(i);
-end
 
 % -------- Compute each detectors output and store the evaluation --------------
-numDetectors = numel(detectors);
-repeatibilityScore = zeros(numDetectors,numImages); repeatibilityScore(:,1)=1;
-numOfCorresp = zeros(numDetectors,numImages);
+
+
 if(opts.verifyKristian)
   repScoreKristian  = zeros(numDetectors,numImages);
   matchScoreKristian  = zeros(numDetectors,numImages);
@@ -76,41 +60,8 @@ end
 
 fprintf('Running evaluation on %d detectors:\n',numDetectors);
 
-for i = 1:numel(detectors)
-  assert(isa(detectors{i},'affineDetectors.genericDetector'),...
-         'Detector not an instance of genericDetector\n');
-  fprintf('Detector #%02d: %s\n',i,detectors{i}.getName());
-end
-
 for iDetector = 1:numel(detectors)
-  frames = cell(1,numImages);
-  descriptors = cell(1,numImages);
   
-  curDetector = detectors{iDetector};
-  fprintf('\nComputing affine covariant regions for method #%02d: %s\n\n', ...
-          iDetector, curDetector.getName());
-
-  if(~curDetector.isOk)
-    fprintf('Detector: %s is not working, message: %s\n',curDetector.getName(),...
-            curDetector.errMsg);
-    repeatibilityScore(iDetector,:) = 0;
-    continue;
-  end
-
-  for i = 1:numImages
-    fprintf('Computing regions for image: %02d/%02d ...',i,numImages);
-    if opts.calcMatches
-      if curDetector.calcDescs
-        [frames{i} descriptors{i}] = curDetector.detectPoints(images{i});
-      else
-        [frames{i}] = curDetector.detectPoints(images{i});
-        % TODO add posibility to calc descriptors of keypoints
-      end
-    else
-      frames{i} = curDetector.detectPoints(images{i});
-    end
-    fprintf(' (%d regions detected)\r',size(frames{i},2));
-  end
 
   fprintf('\n');
 
@@ -198,166 +149,4 @@ if(opts.saveResult)
   fprintf('\nScores saved to: %s\n',matFile);
 end
 
-% -------- Output which detectors didn't work ------
-for i = 1:numel(detectors),
-  if ~detectors{i}.isOk,
-    fprintf('Detector %s failed because: %s\n',detectors{i}.getName(),...
-            detectors{i}.errMsg);
-  end
-end
-end
-
-function detNames = printScores(opts,detectors,repeatibilityScore,outFile, name);
-
-numDetectors = numel(detectors);
-
-if(opts.saveResult)
-  fH = fopen(fullfile(opts.saveDir,outFile),'w');
-  fidOut = [1 fH];
-else
-  fidOut = 1;
-end
-
-detNames = cell(1,numel(detectors));
-maxNameLen = 0;
-for i = 1:numDetectors
-  detNames{i} = detectors{i}.getName();
-  maxNameLen = max(maxNameLen,length(detNames{i}));
-end
-
-maxNameLen = max(length('Method name'),maxNameLen);
-myprintf(fidOut,strcat('\nPriting ', name,':\n'));
-formatString = ['%' sprintf('%d',maxNameLen) 's:'];
-
-myprintf(fidOut,formatString,'Method name');
-for i = 1:size(repeatibilityScore,2)
- myprintf(fidOut,'  Img#%02d',i);
-end
-myprintf(fidOut,'\n');
-
-for i = 1:numDetectors
-  myprintf(fidOut,formatString,detNames{i});
-  for j = 1:size(repeatibilityScore,2)
-    myprintf(fidOut,'  %6s',sprintf('%.2f',repeatibilityScore(i,j)));
-  end
-  myprintf(fidOut,'\n');
-end
-
-if(opts.saveResult)
-  fclose(fH);
-end
-end
-
-function plotScores(figureNum, name, score, title_text, x_label, y_label, detectors, opts, xstart)
-  if isempty(xstart)
-      xstart = 1;
-  end
-  figure(figureNum) ; clf ;
-  xend = size(score,2);
-  plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
-  ylabel(y_label) ;
-  xlabel(x_label);
-  title(title_text);
-  %ylim([0 100]);
-  set(gca,'xtick',[1:size(score,2)]);
-
-  legendStr = cell(1,numel(detectors));
-  for i = 1:numel(detectors), legendStr{i} = detectors{i}.getName(); end
-  legend(legendStr);
-  grid on ;
-
-  if(opts.saveResult)
-    vl_xmkdir(opts.saveDir);
-    figFile = fullfile(opts.saveDir,strcat(name,'.eps'));
-    fprintf('\nSaving figure as eps graphics: %s\n',figFile);
-    print('-depsc2',figFile);
-    figFile = fullfile(opts.saveDir,strcat(name,'.fig'));
-    fprintf('Saving figure as matlab figure to: %s\n',figFile);
-    saveas(gca,figFile);
-  end
-    
-end
-
-function myprintf(fids,format,varargin)
-
-  for i = 1:numel(fids)
-    fprintf(fids(i),format,varargin{:});
-  end
-end
-
-function plotDataset(images)
-
-  numImages = numel(images);
-  numCols = ceil(sqrt(numImages));
-  numRows = ceil(numImages/numCols);
-
-  for i = 1:numImages
-    %colNo = 1+mod(i-1,numCols);
-    %rowNo = 1+floor((i-1)/numCols);
-    %subplot(numRows,numCols,(colNo-1)*numRows+rowNo);
-    subplot(numRows,numCols,i);
-    imshow(images{i}); title(sprintf('Image #%02d',i));
-  end
-  drawnow;
-end
-
-function plotFrames(framesA,framesB,framesA_,framesB_,iDetector,iImg,...
-                    numDetectors,imageA,imageB,detectorName,matchIdxs)
-
-    figure(iImg);
-    subplot(numDetectors,2,2*(iDetector-1)+1) ; imshow(imageA);
-    colormap gray ;
-    hold on ; vl_plotframe(framesA);
-    % Plot the transformed and matched frames from B on A in blue
-    matchLogical = false(1,size(framesB_,2));
-    matchLogical(matchIdxs) = true;
-    vl_plotframe(framesB_(:,matchLogical),'b','linewidth',1);
-    % Plot the remaining frames from B on A in red
-    vl_plotframe(framesB_(:,~matchLogical),'r','linewidth',1);
-    axis equal;
-    set(gca,'xtick',[],'ytick',[]);
-    ylabel(detectorName);
-    title('Reference image detections');
-
-    subplot(numDetectors,2,2*(iDetector-1)+2) ; imshow(imageB) ;
-    hold on ; vl_plotframe(framesB) ;axis equal; axis off;
-    %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
-    title('Transformed image detections');
-
-    drawnow;
-end
-
-function [bestMatches,matchIdxs] = findOneToOneMatches(ev,framesA,framesB, overlapError)
-  matches = zeros(3,0);
-  overlapThresh = 1 - overlapError;
-  bestMatches = zeros(1, size(framesA, 2)) ;
-  matchIdxs = [];
-
-  for j=1:length(framesA)
-    numNeighs = length(ev.scores{j}) ;
-    if numNeighs > 0
-      matches = [matches, ...
-                 [j *ones(1,numNeighs) ; ev.neighs{j} ; ev.scores{j} ] ] ;
-    end
-  end
-
-  matches = matches(:,matches(3,:)>overlapThresh);
-
-  % eliminate assigment by priority, i.e. sort the matches by the score
-  [drop, perm] = sort(matches(3,:), 'descend');
-  matches = matches(:, perm);
-  % Create maps which frames has not been 'used' yet
-  availA = true(1,size(framesA,2));
-  availB = true(1,size(framesB,2));
-
-  for idx = 1:size(matches,2)
-    aIdx = matches(1,idx);
-    bIdx = matches(2,idx);
-    if(availA(aIdx) && availB(bIdx))
-      bestMatches(aIdx) = 1;
-      matchIdxs = [matchIdxs bIdx];
-      availA(aIdx) = false;
-      availB(bIdx) = false;
-    end
-  end
 end

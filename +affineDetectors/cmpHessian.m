@@ -78,6 +78,10 @@ classdef cmpHessian < affineDetectors.genericDetector
       delete(imgFile); delete(featFile);
     end
 
+    function sign = signature(obj)
+      sign = commonFns.file_signature(obj.binPath);
+    end
+    
   end
 
   properties (Constant)

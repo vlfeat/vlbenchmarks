@@ -35,8 +35,15 @@ classdef vggDataset < affineDetectors.genericDataset
       cwd = commonFns.extractDirPath(mfilename('fullpath'));
       obj.dataDir = fullfile(cwd,obj.rootInstallDir,opts.category);
       obj.numImages = 6;
-      if exist(fullfile(obj.dataDir,'img1.ppm')), obj.imgExt = 'ppm';
-      else obj.imgExt = 'pgm'; end
+      ppm_files = dir(fullfile(obj.dataDir,'img*.ppm'));
+      pgm_files = dir(fullfile(obj.dataDir,'img*.pgm'));
+      if size(ppm_files,1) == 6
+        obj.imgExt = 'ppm';
+      elseif size(pgm_files,1) == 6
+        obj.imgExt = 'pgm';
+      else
+        error('Ivalid dataset image files.');
+      end
     end
 
     function imgPath = getImagePath(obj,imgIdx)

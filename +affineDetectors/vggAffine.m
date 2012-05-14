@@ -33,6 +33,7 @@ classdef vggAffine < affineDetectors.genericDetector
     % The constructor is used to set the options for vggAffine
     function this = vggAffine(varargin)
       import affineDetectors.*;
+      import commonFns.*;
       this.calcDescs = true;
 
       if ~vggAffine.isInstalled(),
@@ -110,6 +111,13 @@ classdef vggAffine < affineDetectors.genericDetector
 
       [frames descrs] = vl_ubcread(outFile,'format','oxford');
       delete(imgFile); delete(outFile); delete([outFile '.params']);
+    end
+    
+    function sign = signature(obj)
+      sign = [commonFns.file_signature(obj.binPath) ';' ... 
+              obj.detectorType ';' ... 
+              num2str(obj.harThresh) ';' ...
+              num2str(obj.hesThresh)];
     end
 
   end

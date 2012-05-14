@@ -22,5 +22,5 @@ switch nargin
   otherwise
         error('Invalid number of input arguments');
 end
-fclose(f) ;
+  fclose(f) ;
 

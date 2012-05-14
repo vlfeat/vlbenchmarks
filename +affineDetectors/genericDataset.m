@@ -22,6 +22,27 @@ classdef genericDataset < handle
     tfs = getTransformation(obj,imgIdx) % Return the 3x3 homography
     % from image 1 to image imgIdx
   end
+  
+  methods
+    function sign = signature(obj)
+    % SIGNATURE
+    % Returns unique signature for detector parameters.
+    %
+    % This function is used for caching detected results. When the detector
+    % parameters had changed, the signature must be different as well.
+    
+      sign_c = cell(1,obj.numImages);
+      for i=1:obj.numImages
+        img_fname = obj.getImagePath(i);
+        img_sign = commonFns.file_signature(img_fname);
+        sign_c{i} = [img_sign ';'];
+      end
+    
+      sign = cell2mat(sign_c);
+    end
+
+    
+  end
 
   methods(Static)
 
