@@ -1,4 +1,3 @@
-function benchmarkDemo()
 % BENCHMARKDEMO Script demonstrating how to run the benchmarks for
 %   different algorithms.
 %
@@ -15,35 +14,33 @@ function benchmarkDemo()
 %   See <a href="matlab: help affineDetectors.exampleDetector">affineDetectors.exampleDetector</a> on how to add your own detector
 
 import affineDetectors.*;
-global storage;
-global tests;
+global storage
+global tests
 
 %detectors{1} = vlFeatDOG(); % Default options
 %detectors{2} = affineDetectors.vggMser('ms',30); % Custom options
 %detectors{3} = affineDetectors.vlFeatMser(); % Default options
 %detectors{3}.detectorName = 'MSER(VLfeat)'; % You can change the default name that is
 % used in the plot legend by modifying the above field
-detectors{1} = cmpHessian();
-detectors{2} = vlFeatHessian();
-detectors{3} = vlFeatFramedet('hessian','oriented_ellipse');
-%detectors{3} = vggAffine('Detector', 'hessian');
+%detectors{1} = cmpHessian();
+detectors{1} = vlFeatCovdet('AffineAdaptation',true,'Orientation',true,'Method','hessian');
+%detectors{2} = vggAffine('Detector', 'hessian');
 %detectors{3} = affineDetectors.vggAffine('Detector', 'harris');
 
 dataset = vggDataset('category','graf');
 
 % Initialise storage if it does not exist.
 if isempty(storage)
-  storage = framesStorage(dataset);
+  storage = framesStorage(dataset, 'calcDescriptors', true);
+  storage.addDetectors(detectors, false);
 end
 
 % TODO solve where to store tests - cell is not ideal storage because it
 % does not support adding new tests on demand...
 if isempty(tests)
-  tests = {repeatabilityTest(storage)};
-  %tests = {repeatabilityTest(storage), kristianEvalTest(storage)};
+  %tests = {repeatabilityTest(storage)};
+  tests = {repeatabilityTest(storage), kristianEvalTest(storage)};
 end
-
-storage.addDetectors(detectors);
 
 % Run tests.
 for i=1:numel(tests)

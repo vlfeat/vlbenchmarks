@@ -34,6 +34,10 @@ classdef kristianEvalTest < affineDetectors.genericTest
         obj.km_opts = commonFns.vl_argparse(obj.km_opts,varargin{:});
       end
       
+      if obj.km_opts.CalcMatches && ~resultsStorage.opts.calcDescriptors
+        error ('For match score test, descriptors need to be calculated.');
+      end
+      
       numDetectors = obj.framesStorage.numDetectors();
       numImages = obj.framesStorage.numImages();
       obj.repeatibilityScore = zeros(numDetectors,numImages); 

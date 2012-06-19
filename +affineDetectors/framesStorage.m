@@ -106,16 +106,20 @@ classdef framesStorage < handle
     end
     
     
-    function addDetectors(obj, detectors)
+    function addDetectors(obj, detectors, remove_duplicates)
       % ADDDETECTORS(detectors) Adds new detectors. Detectors is cell of
       % detectors objects.
       % Does not support more detectors of one class.
       det_num = numel(detectors);
       
+      if nargin == 2
+        remove_duplicates = true;
+      end
+      
       for i=1:det_num
         det_class = class(detectors{i});
         [is_memb det_idx] = ismember(det_class, obj.det_classes);
-        if ~is_memb
+        if sum(is_memb)==0 || ~remove_duplicates
           obj.detectors{end+1} = detectors{i};
           obj.det_classes{end+1} = det_class;
           obj.frames{end+1} = [];
