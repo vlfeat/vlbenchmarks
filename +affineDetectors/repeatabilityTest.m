@@ -63,9 +63,15 @@ classdef repeatabilityTest < affineDetectors.genericTest
             frameMatches = matchEllipses(framesB_, framesA);
             [bestMatches,matchIdxs] = ...
                 obj.findOneToOneMatches(frameMatches,framesA,framesB_);
+            numBestMatches = sum(bestMatches);
             obj.repeatibilityScore(iDetector,i) = ...
-                sum(bestMatches) / min(size(framesA,2), size(framesB,2));
-            obj.numOfCorresp(iDetector,i) = sum(bestMatches);
+                numBestMatches / min(size(framesA,2), size(framesB,2));
+            obj.numOfCorresp(iDetector,i) = numBestMatches;
+            
+            if obj.rep_opts.showQualitative
+              obj.framesStorage.plotFrames(framesA,framesB,framesA_,framesB_,...
+                iDetector,i,matchIdxs);
+            end
           end
           obj.repeatibilityScore(iDetector,:) = obj.repeatibilityScore(iDetector,:) * 100;
         else
@@ -75,11 +81,12 @@ classdef repeatabilityTest < affineDetectors.genericTest
 
       fprintf('\n------ Repeatability test completed ---------\n');
       
+      datasetName = obj.framesStorage.dataset.datasetName;
       obj.plotScores(21,'detectorEval', obj.repeatibilityScore, ...
-           'Detector repeatibility vs. image index', ...
+           ['Detector repeatibility vs. image index (',datasetName,')'], ...
            'Image #','Repeatibility. %', 2);
       obj.plotScores(22, 'numCorrespond', obj.numOfCorresp, ...
-           'Detector num. of correspondences vs. image index', ...
+           ['Detector num. of correspondences vs. image index (',datasetName,')'], ...
            'Image #','#correspondences', 2);
          
       obj.printScores(obj.repeatibilityScore,'scores.txt', 'repeatability scores');
@@ -95,7 +102,7 @@ classdef repeatabilityTest < affineDetectors.genericTest
       bestMatches = zeros(1, size(framesA, 2)) ;
       matchIdxs = [];
 
-      for j=1:length(framesA)
+      for j=1:size(framesA,2)
         numNeighs = length(ev.scores{j}) ;
         if numNeighs > 0
           matches = [matches, ...

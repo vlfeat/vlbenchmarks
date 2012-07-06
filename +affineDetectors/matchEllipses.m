@@ -14,6 +14,7 @@ import affineDetectors.*;
 conf_.normalizeFrames = true ;
 conf = commonFns.vl_argparse(conf_, varargin) ;
 
+
 % eigenvalues (radii squared)
 [e1,eigVec1] = helpers.ellipseEigen(f1) ;
 [e2,eigVec2] = helpers.ellipseEigen(f2) ;
@@ -33,6 +34,12 @@ N1 = size(f1,2) ;
 N2 = size(f2,2) ;
 neighs = cell(1,N2) ;
 scores = cell(1,N2) ;
+
+if isempty(f1) || isempty(f2)
+  result.neighs = neighs ;
+  result.scores = scores ;
+  return;
+end
 
 for i2 = 1:N2
   %fprintf('%.2f %%\r', i2/N2*100) ;

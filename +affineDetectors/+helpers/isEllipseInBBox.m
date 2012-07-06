@@ -1,6 +1,11 @@
 function sel = isEllipseInBBox(bbox, f)
 % ELLCLIP
 
+if isempty(f)
+  sel = false;
+  return;
+end
+
 rx = sqrt(f(3,:)) ;
 ry = sqrt(f(5,:)) ;
 

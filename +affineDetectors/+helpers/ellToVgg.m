@@ -7,6 +7,10 @@ function vggEll = ellToVgg(ell,eigVal,eigVec)
 
 vggEll = zeros(5+4,size(ell,2));
 
+if isempty(ell)
+  return;
+end
+
 vggEll(1:2,:) = ell(1:2,:);
 v1byLambda1 = bsxfun(@rdivide,eigVec(1:2,:),eps+eigVal(1,:));
 v2byLambda2 = bsxfun(@rdivide,eigVec(3:4,:),eps+eigVal(2,:));

@@ -3,8 +3,16 @@ function g = frameToEllipse(f)
 % Convert frame to unoriented ellipse. If the frame is already an ellipse
 % does not do anything and in case of an oriented ellipse converts into
 % unoriented.
+if isempty(f)
+  g=[];
+  return;
+end
 
 switch size(f, 1)
+  case 2+1
+    g(1:2,:) = f(1:2,:); % The coordinates
+    g([3 5],:) =  [1;1] * (f(3,:) .* f(3,:)) ;
+  
   case 2+2
     g(1:2,:) = f(1:2,:); % The coordinates
     g([3 5],:) =  [1;1] * (f(3,:) .* f(3,:)) ;
