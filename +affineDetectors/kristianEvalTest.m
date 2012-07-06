@@ -26,7 +26,8 @@ classdef kristianEvalTest < affineDetectors.genericTest
   methods
     function obj = kristianEvalTest(resultsStorage, varargin)
       name = 'kristian_eval';
-      obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
+      %obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
+      obj = obj@affineDetectors.genericTest(resultsStorage, name);
       
       obj.km_opts.OverlapError = 0.4;
       obj.km_opts.CalcMatches = true;
@@ -79,8 +80,8 @@ classdef kristianEvalTest < affineDetectors.genericTest
                                       obj.km_opts.OverlapError, detDescs);
           else
               [obj.repeatibilityScore(iDetector,:), ...
-              obj.numOfCorrespKristian(iDetector,:)] = ...
-                  runKristianEval(detFrames,imagePaths,...
+               obj.numOfCorresp(iDetector,:)] = ...
+                  affineDetectors.runKristianEval(detFrames,imagePaths,...
                                   images,tfs, obj.km_opts.OverlapError);
           end
         else 

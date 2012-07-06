@@ -21,9 +21,11 @@ classdef repeatabilityTest < affineDetectors.genericTest
   methods
     function obj = repeatabilityTest(resultsStorage, varargin)
       name = 'repeatability';
-      obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
+      %obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
+      obj = obj@affineDetectors.genericTest(resultsStorage, name);
       
       obj.rep_opts.overlapError = 0.4;
+      obj.rep_opts.showQualitative = false;
       if numel(varargin) > 0
         obj.rep_opts = commonFns.vl_argparse(obj.rep_opts,varargin{:});
       end

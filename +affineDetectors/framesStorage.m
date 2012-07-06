@@ -36,7 +36,7 @@ classdef framesStorage < handle
     opts                      % Options
     det_signatures = {};      % Last signatures of the detectors.
     dataset_signature = '';   % Last signature of the dataset.
-    det_classes;              % List of classes of the detectors
+    det_names;              % List of classes of the detectors
   end
   
   methods
@@ -76,6 +76,8 @@ classdef framesStorage < handle
         fprintf('Loaded %d images.\n',numImages);
       end
       
+      obj.dataset_signature = cur_dataset_sign;
+      
       for det_i = 1:det_num
         detector = obj.detectors{det_i};
         det_sign = detector.signature();
@@ -90,7 +92,6 @@ classdef framesStorage < handle
                 detNames{det_i});
         end;
       end
-      obj.dataset_signature = cur_dataset_sign;
       
       % -------- Output which detectors didn't work ------
       for i = 1:numel(obj.detectors),
@@ -117,11 +118,11 @@ classdef framesStorage < handle
       end
       
       for i=1:det_num
-        det_class = class(detectors{i});
-        [is_memb det_idx] = ismember(det_class, obj.det_classes);
+        det_name = detectors{i}.detectorName;
+        [is_memb det_idx] = ismember(det_name, obj.det_names);
         if sum(is_memb)==0 || ~remove_duplicates
           obj.detectors{end+1} = detectors{i};
-          obj.det_classes{end+1} = det_class;
+          obj.det_names{end+1} = det_name;
           obj.frames{end+1} = [];
           obj.detectorsNames{end+1} = detectors{i}.detectorName;
           obj.det_signatures{end+1} = '';
@@ -137,6 +138,36 @@ classdef framesStorage < handle
     
     function numimages = numImages(obj)
       numimages = obj.dataset.numImages;
+    end
+    
+        
+    function plotFrames(obj,framesA,framesB,framesA_,framesB_,...
+                        iDetector,iImg,matchIdxs);
+        numDetectors = numel(obj.detectors);
+        detectorName = obj.detectors{iDetector}.detectorName;
+        imageA = obj.images{1};
+        imageB = obj.images{iImg};
+        figure(iImg);
+        subplot(numDetectors,2,2*(iDetector-1)+1) ; imshow(imageA);
+        colormap gray ;
+        hold on ; vl_plotframe(framesA,'linewidth', 1);
+        % Plot the transformed and matched frames from B on A in blue
+        matchLogical = false(1,size(framesB_,2));
+        matchLogical(matchIdxs) = true;
+        vl_plotframe(framesB_(:,matchLogical),'b','linewidth',1);
+        % Plot the remaining frames from B on A in red
+        vl_plotframe(framesB_(:,~matchLogical),'r','linewidth',1);
+        axis equal;
+        set(gca,'xtick',[],'ytick',[]);
+        ylabel(detectorName);
+        title('Reference image detections');
+
+        subplot(numDetectors,2,2*(iDetector-1)+2) ; imshow(imageB) ;
+        hold on ; vl_plotframe(framesB,'linewidth', 1) ;axis equal; axis off;
+        %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
+        title('Transformed image detections');
+
+        drawnow;
     end
     
   end
@@ -193,34 +224,6 @@ classdef framesStorage < handle
         imshow(obj.images{i}); title(sprintf('Image #%02d',i));
       end
       drawnow;
-    end
-    
-    function plotFrames(obj,framesA,framesB,framesA_,framesB_,...
-                        iDetector,iImg,matchIdxs);
-        numDetectors = numel(obj.detectors);
-        imageA = obj.images{1};
-        imageB = obj.images{iImg};
-        figure(iImg);
-        subplot(numDetectors,2,2*(iDetector-1)+1) ; imshow(imageA);
-        colormap gray ;
-        hold on ; vl_plotframe(framesA);
-        % Plot the transformed and matched frames from B on A in blue
-        matchLogical = false(1,size(framesB_,2));
-        matchLogical(matchIdxs) = true;
-        vl_plotframe(framesB_(:,matchLogical),'b','linewidth',1);
-        % Plot the remaining frames from B on A in red
-        vl_plotframe(framesB_(:,~matchLogical),'r','linewidth',1);
-        axis equal;
-        set(gca,'xtick',[],'ytick',[]);
-        ylabel(detectorName);
-        title('Reference image detections');
-
-        subplot(numDetectors,2,2*(iDetector-1)+2) ; imshow(imageB) ;
-        hold on ; vl_plotframe(framesB) ;axis equal; axis off;
-        %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
-        title('Transformed image detections');
-
-        drawnow;
     end
     
   end
