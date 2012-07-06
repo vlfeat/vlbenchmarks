@@ -51,7 +51,8 @@ classdef genericTest < handle
       detNames = obj.framesStorage.detectorsNames;
 
       if(obj.opts.SaveResults)
-        fH = fopen(fullfile(obj.opts.SaveDir,outFile),'w');
+        datasetName = obj.framesStorage.dataset.datasetName;
+        fH = fopen(fullfile(obj.opts.SaveDir,datasetName,outFile),'w');
         fidOut = [1 fH];
       else
         fidOut = 1;
@@ -122,15 +123,17 @@ classdef genericTest < handle
       for i = 1:numel(detectors) 
         legendStr{i} = detectors{i}.getName(); 
       end
-      legend(legendStr);
+      legend(legendStr,'Location','SouthEast');
       grid on ;
+      axis([xstart xend 0 max([max(max(score)) 1])]);
 
       if(obj.opts.SaveResults)
-        vl_xmkdir(obj.opts.SaveDir);
-        figFile = fullfile(obj.opts.SaveDir,strcat(outFile,'.eps'));
+        datasetName = obj.framesStorage.dataset.datasetName;
+        vl_xmkdir(fullfile(obj.opts.SaveDir,datasetName));
+        figFile = fullfile(obj.opts.SaveDir,datasetName,strcat(outFile,'.eps'));
         fprintf('\nSaving figure as eps graphics: %s\n',figFile);
         print('-depsc2',figFile);
-        figFile = fullfile(obj.opts.SaveDir,strcat(outFile,'.fig'));
+        figFile = fullfile(obj.opts.SaveDir,datasetName,strcat(outFile,'.fig'));
         fprintf('Saving figure as matlab figure to: %s\n',figFile);
         saveas(gca,figFile);
       end

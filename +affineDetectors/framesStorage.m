@@ -64,7 +64,7 @@ classdef framesStorage < handle
       
       if newDataset
         % -------- Load the dataset ---------------------------
-        fprintf('\nLoading dataset... ');
+        fprintf(['\nLoading dataset ',obj.dataset.datasetName]);
         numImages = obj.dataset.numImages;
         obj.images = cell(1,numImages);
         imagePaths = cell(1,numImages);

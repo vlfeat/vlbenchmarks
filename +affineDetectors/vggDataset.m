@@ -30,7 +30,7 @@ classdef vggDataset < affineDetectors.genericDataset
       opts = commonFns.vl_argparse(opts,varargin);
       assert(ismember(opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg dataset: %s\n',opts.category));
-      obj.datasetName = ['vggDataset_' opts.category];
+      obj.datasetName = ['vggDataset-' opts.category];
       obj.category= opts.category;
       cwd = commonFns.extractDirPath(mfilename('fullpath'));
       obj.dataDir = fullfile(cwd,obj.rootInstallDir,opts.category);
