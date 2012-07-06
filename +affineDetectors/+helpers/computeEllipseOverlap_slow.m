@@ -7,5 +7,6 @@ import affineDetectors.*
 
 [w, tw, d, td] = helpers.mexComputeEllipseOverlap(vggA, vggB, -1) ; % This mex file
 % is borrowed from Kristians code, just renamed it
+
 overlap = 1 - tw / 100 ;
 
