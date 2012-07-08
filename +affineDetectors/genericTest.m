@@ -87,7 +87,7 @@ classdef genericTest < handle
     end
 
     function plotScores(obj, figureNum, outFile, score, title_text, ...
-                        x_label, y_label, xstart)
+                        y_label, xstart)
       % PLOTSCORES
       % Plot the scores into unified figure number figureNum. If 
       % opts.SaveResults is true, save the figure to opts.SaveDir/outFile
@@ -97,7 +97,6 @@ classdef genericTest < handle
       %   name        Name of the figure, used 
       %   score       Data to plot
       %   title_text  Title of the figure
-      %   x_label     X label of the figure
       %   y_label     Y label of the figure
       %   xstart      First X-value to plot
       if isempty(score)
@@ -109,14 +108,18 @@ classdef genericTest < handle
           xstart = 1;
       end
       detectors = obj.framesStorage.detectors;
+      dataset = obj.framesStorage.dataset;
       
       figure(figureNum) ; clf ;
       xend = size(score,2);
+      x_label = dataset.imageLabelsTitle;
+      x_ticks = dataset.imageLabels;
       plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
       ylabel(y_label) ;
       xlabel(x_label);
+      set(gca,'XTick',xstart:1:xend);
+      set(gca,'XTickLabel',x_ticks);
       title(title_text);
-      %ylim([0 100]);
       set(gca,'xtick',1:size(score,2));
 
       legendStr = cell(1,numel(detectors));

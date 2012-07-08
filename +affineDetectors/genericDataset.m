@@ -10,6 +10,8 @@ classdef genericDataset < handle
   properties (SetAccess=protected, GetAccess=public)
     datasetName = 'empty';% Set this property in the constructor
     numImages = 0 % Set in constructor
+    imageLabels; % Set in constructor, labels of images in graphs
+    imageLabelsTitle; % Set in constructor, xtitle
   end
 
   properties (SetAccess=public, GetAccess=public)

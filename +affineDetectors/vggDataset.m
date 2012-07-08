@@ -44,6 +44,9 @@ classdef vggDataset < affineDetectors.genericDataset
       else
         error('Ivalid dataset image files.');
       end
+      imageLabels = textscan(num2str(1:obj.numImages),'%s');
+      obj.imageLabels = cellstr(imageLabels{1});
+      obj.imageLabelsTitle = 'Image #';
     end
 
     function imgPath = getImagePath(obj,imgIdx)
