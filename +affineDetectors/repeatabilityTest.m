@@ -71,8 +71,10 @@ classdef repeatabilityTest < affineDetectors.genericTest
             obj.numOfCorresp(iDetector,i) = numBestMatches;
             
             if obj.rep_opts.showQualitative
-              obj.framesStorage.plotFrames(framesA,framesB,framesA_,framesB_,...
+              if islogical(obj.rep_opts.showQualitative) || sum(ismember(i,obj.rep_opts.showQualitative))
+                obj.framesStorage.plotFrames(framesA,framesB,framesA_,framesB_,...
                 iDetector,i,matchIdxs);
+              end
             end
           end
           obj.repeatibilityScore(iDetector,:) = obj.repeatibilityScore(iDetector,:) * 100;
