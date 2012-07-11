@@ -11,7 +11,7 @@ classdef genericDetector < handle
     isOk = true; % signifies if detector has been installed and runs ok on
     % this particular platform
     errMsg = ''; % If there is some failure in detector, this string stores it
-    calcDescs = false; % If the detector yields descriptors
+    calcDescs = false; % Detector is able to calculate descriptors
   end
 
   properties (SetAccess=public, GetAccess=public)

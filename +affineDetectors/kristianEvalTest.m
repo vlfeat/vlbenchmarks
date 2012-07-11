@@ -24,10 +24,10 @@ classdef kristianEvalTest < affineDetectors.genericTest
   % TODO recalc when parameters changes - define signature of test.
   
   methods
-    function obj = kristianEvalTest(resultsStorage, varargin)
+    function obj = kristianEvalTest(framesStorage, varargin)
       name = 'kristian_eval';
       %obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
-      obj = obj@affineDetectors.genericTest(resultsStorage, name);
+      obj = obj@affineDetectors.genericTest(framesStorage, name);
       
       obj.km_opts.OverlapError = 0.4;
       obj.km_opts.CalcMatches = true;
@@ -35,7 +35,7 @@ classdef kristianEvalTest < affineDetectors.genericTest
         obj.km_opts = commonFns.vl_argparse(obj.km_opts,varargin{:});
       end
       
-      if obj.km_opts.CalcMatches && ~resultsStorage.opts.calcDescriptors
+      if obj.km_opts.CalcMatches && ~framesStorage.opts.calcDescriptors
         error ('For match score test, descriptors need to be calculated.');
       end
       

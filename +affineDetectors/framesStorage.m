@@ -201,12 +201,14 @@ classdef framesStorage < handle
                       curDetector.detectPoints(obj.images{i});
             else
               [frames{i}] = curDetector.detectPoints(obj.images{i});
-              % TODO add posibility to calc descriptors of keypoints
+              fprintf('\n\t\tComputing SIFT descriptors of %d frames...',size(frames{i},2));
+              [frames{i} descriptors{i}] = ...
+                affineDetectors.helpers.calcSiftDesc(obj.images{i}, frames{i});
             end
           else
             frames{i} = curDetector.detectPoints(obj.images{i});
           end
-          fprintf(' (%d regions detected)\r',size(frames{i},2));
+          fprintf(' (%d regions detected)\n',size(frames{i},2));
         end
         
     end
