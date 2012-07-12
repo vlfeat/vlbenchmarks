@@ -15,15 +15,17 @@ classdef cmpCensure < affineDetectors.genericDetector
       obj.calcDescs = false;
       cwd=commonFns.extractDirPath(mfilename('fullpath'));
       path = fullfile(cwd,'thirdParty/censure/');
-      addpath(path);
+      %addpath(path);
       obj.binPath = fullfile(path,'censure');
       
-      obj.opts.respThr = 20;
-      obj.opts.filterRatio = sqrt(2);
+      obj.opts.respThr = 15;
+      obj.opts.filterRatio = sqrt(sqrt(2));
+      obj.opts.octRatio = sqrt(2);
       obj.opts.detectorType = 1; % Dense
       obj.opts.verbose = 0;
       obj.opts.gridRatio = 1;
       obj.opts.lineSuppThr = 10;
+      obj.opts.numPlanes = -1;
       
       obj.opts = vl_argparse(obj.opts,varargin);
       

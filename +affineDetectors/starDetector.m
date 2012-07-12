@@ -15,7 +15,6 @@ classdef starDetector < affineDetectors.genericDetector
       obj.calcDescs = false;
       cwd=commonFns.extractDirPath(mfilename('fullpath'));
       path = fullfile(cwd,'thirdParty/censure/');
-      addpath(path);
       obj.binPath = fullfile(path,'star_detector');
       
       obj.opts.n = 7;

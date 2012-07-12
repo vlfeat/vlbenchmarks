@@ -24,8 +24,8 @@ classdef repeatabilityTest < affineDetectors.genericTest
       %obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
       obj = obj@affineDetectors.genericTest(resultsStorage, name);
       
-      obj.rep_opts.overlapError = 0.4;
-      obj.rep_opts.showQualitative = false;
+      obj.rep_opts.overlapError = 0.2;
+      obj.rep_opts.showQualitative = [];
       if numel(varargin) > 0
         obj.rep_opts = commonFns.vl_argparse(obj.rep_opts,varargin{:});
       end
@@ -70,7 +70,8 @@ classdef repeatabilityTest < affineDetectors.genericTest
                 numBestMatches / min(size(framesA,2), size(framesB,2));
             obj.numOfCorresp(iDetector,i) = numBestMatches;
             
-            if obj.rep_opts.showQualitative
+            
+            if ~isempty(obj.rep_opts.showQualitative) 
               if islogical(obj.rep_opts.showQualitative) || sum(ismember(i,obj.rep_opts.showQualitative))
                 obj.framesStorage.plotFrames(framesA,framesB,framesA_,framesB_,...
                 iDetector,i,matchIdxs);
