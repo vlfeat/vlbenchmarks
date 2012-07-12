@@ -202,8 +202,11 @@ classdef framesStorage < handle
             else
               [frames{i}] = curDetector.detectPoints(obj.images{i});
               fprintf('\n\t\tComputing SIFT descriptors of %d frames...',size(frames{i},2));
+              % TODO solve how to do this with orientation - shall it be
+              % calculated for the descriptors? Depends for the type of the
+              % dataset...
               [frames{i} descriptors{i}] = ...
-                affineDetectors.helpers.calcSiftDesc(obj.images{i}, frames{i});
+                affineDetectors.helpers.calcSiftDesc(obj.images{i}, frames{i}, true);
             end
           else
             frames{i} = curDetector.detectPoints(obj.images{i});
