@@ -121,14 +121,21 @@ classdef genericTest < handle
       set(gca,'XTickLabel',x_ticks);
       title(title_text);
       set(gca,'xtick',1:size(score,2));
+      
+      maxScore = max([max(max(score)) 1]);
+      meanEndValue = mean(score(:,xend));
+      legendLocation = 'SouthEast';
+      if meanEndValue > maxScore/2
+        legendLocation = 'NorthEast';
+      end
 
       legendStr = cell(1,numel(detectors));
       for i = 1:numel(detectors) 
         legendStr{i} = detectors{i}.getName(); 
       end
-      legend(legendStr,'Location','SouthEast');
+      legend(legendStr,'Location',legendLocation);
       grid on ;
-      axis([xstart xend 0 max([max(max(score)) 1])]);
+      axis([xstart xend 0 maxScore]);
 
       if(obj.opts.SaveResults)
         datasetName = obj.framesStorage.dataset.datasetName;
