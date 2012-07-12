@@ -1,5 +1,6 @@
 % TRANSFDATASET class to wrap around the vgg affine benchmark datasets
 
+% TODO create metafiles with the configurations
 classdef transfDataset < affineDetectors.genericDataset
   properties (SetAccess=private, GetAccess=public)
     opts
@@ -157,6 +158,14 @@ classdef transfDataset < affineDetectors.genericDataset
         obj.imageLabels{i} = [num2str(zoom,'%0.2f') 'x '];
         tfs = obj.createZoom(zoom);  
         obj.genTfs{i} = obj.genTfs{i} * tfs;
+        
+        % If the image is subsampled, filter the high frequencies
+        if zoom < 1
+          sigma = 1/zoom/2;
+          filtrSize = round(6*sigma);
+          filtr = fspecial('gaussian',[filtrSize filtrSize],sigma);
+          obj.genImages{i} = imfilter(obj.image,filtr,'same');
+        end
         i = i + 1;
       end
       fprintf('Scales: %s.\n',...
