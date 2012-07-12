@@ -85,6 +85,14 @@ classdef repeatabilityTest < affineDetectors.genericTest
 
       fprintf('\n------ Repeatability test completed ---------\n');
       
+      obj.det_signatures = obj.framesStorage.det_signatures;
+      
+      obj.plotResults();
+      obj.printResults();
+
+    end
+    
+    function plotResults(obj)
       datasetName = obj.framesStorage.dataset.datasetName;
       obj.plotScores(21,'detectorEval', obj.repeatibilityScore, ...
            ['Detector repeatibility vs. image index (',datasetName,')'], ...
@@ -92,13 +100,16 @@ classdef repeatabilityTest < affineDetectors.genericTest
       obj.plotScores(22, 'numCorrespond', obj.numOfCorresp, ...
            ['Detector num. of correspondences vs. image index (',datasetName,')'], ...
            '#correspondences', 2);
-         
+    end
+    
+    function printResults(obj)
       obj.printScores(obj.repeatibilityScore,'scores.txt', 'repeatability scores');
       obj.printScores(obj.numOfCorresp,'numCorresp.txt', 'num. of correspondences');
-      
-      obj.det_signatures = obj.framesStorage.det_signatures;
-
     end
+    
+  end
+  
+  methods (Access=private)
     
     function [bestMatches,matchIdxs] = findOneToOneMatches(obj,ev,framesA,framesB)
       matches = zeros(3,0);

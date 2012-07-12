@@ -89,25 +89,35 @@ classdef kristianEvalTest < affineDetectors.genericTest
         end
 
       end
+      
+      obj.det_signatures = obj.framesStorage.det_signatures;
 
       fprintf('\n------ Kristian evaluation completed ---------\n');
-
-      % ----------------- Plot the evaluation scores ---------------------------------
-      obj.plotScores(31, 'KM_repeatability', obj.repeatibilityScore, ...
-                 'KM Detector repeatibility vs. image index', ...
-                 'Repeatibility. %', 2);
-      obj.plotScores(32, 'KM_numCorrespond', obj.numOfCorresp, ...
-                 'KM Detector num. of correspondences vs. image index', ...
-                 '#correspondences', 2);
-      if obj.km_opts.CalcMatches
-        obj.plotScores(33, 'KM_matchScore', obj.matchScore, ...
-                   'KM Detector matching score vs. image index', ...
-                   'Matching score %', 2);
-        obj.plotScores(34, 'KM_numMatches', obj.numOfMatches, ...
-                   'KM Detector num of matches vs. image index', ...
-                   '#correct matches', 2);
-      end
-
+      
+      obj.plotResults();
+      obj.printResults();
+      
+    end
+  
+    function plotResults(obj)
+          % ----------------- Plot the evaluation scores ---------------------------------
+        obj.plotScores(31, 'KM_repeatability', obj.repeatibilityScore, ...
+                   'KM Detector repeatibility vs. image index', ...
+                   'Repeatibility. %', 2);
+        obj.plotScores(32, 'KM_numCorrespond', obj.numOfCorresp, ...
+                   'KM Detector num. of correspondences vs. image index', ...
+                   '#correspondences', 2);
+        if obj.km_opts.CalcMatches
+          obj.plotScores(33, 'KM_matchScore', obj.matchScore, ...
+                     'KM Detector matching score vs. image index', ...
+                     'Matching score %', 2);
+          obj.plotScores(34, 'KM_numMatches', obj.numOfMatches, ...
+                     'KM Detector num of matches vs. image index', ...
+                     '#correct matches', 2);
+        end
+    end
+    
+    function printResults(obj)
       % -------- Print out and save the scores --------------------
       fprintf('\nOutput of Kristians benchmark:\n');
       obj.printScores(obj.repeatibilityScore,'repScore.txt', 'KM repeatability scores');
@@ -116,11 +126,7 @@ classdef kristianEvalTest < affineDetectors.genericTest
         obj.printScores(obj.matchScore,'matchScore.txt', 'KM match scores');
         obj.printScores(obj.numOfMatches,'matchesNum.txt', 'KM num. of matches');
       end
-
-      obj.det_signatures = obj.framesStorage.det_signatures;
-      
     end
-    
   end
   
 end

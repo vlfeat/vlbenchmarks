@@ -25,6 +25,9 @@ classdef genericTest < handle
     %RUNTEST
     % Do run the test and show the results.
     
+    plotResults(obj)
+    printResults(obj)
+    
   end
   
   methods
