@@ -18,19 +18,22 @@ import affineDetectors.*;
 %global tests
 
 %detectors{1} = vlFeatDOG('PeakThresh',3/255); % Default options
-detectors{1} = starDetector('response_threshold',30);
 %detectors{1} = cmpCensure('detectorType',1);
 %detectors{2} = cmpCensure('detectorType',0);
 octRatios = [1.5,2.0,2.5,3.0,4.0];
 thresholds=[35,40,40,40,40];
 i=2;
-for octRatio = octRatios
-  detectors{i} = cmpCensure('octRatio',octRatio,'respThr',thresholds(i-1));
-  detectors{i}.detectorName = ['Censure octRat=' num2str(octRatio)];
-  i = i + 1;
-end
-detectors{7} = cmpCensure('detectorType',0,'octRatio',2.5,'respThr',30);
-detectors{8} = vlFeatDOG('PeakThresh',3/255); % Default options
+%for octRatio = octRatios
+%  detectors{i} = cmpCensure('octRatio',octRatio,'respThr',thresholds(i-1));
+%  detectors{i}.detectorName = ['Censure octRat=' num2str(octRatio)];
+%  i = i + 1;
+%end
+detectors{1} = cmpCensure('detectorType',1,'octRatio',2.5,'respThr',40,'initRadius',2.5);
+detectors{1}.detectorName = 'Censure initRad= 2.5';
+detectors{2} = cmpCensure('detectorType',1,'octRatio',2.5,'respThr',40,'initRadius',3.5);
+detectors{2}.detectorName = 'Censure initRad= 3.5';
+detectors{3} = starDetector('response_threshold',30);
+%detectors{4} = vlFeatDOG('PeakThresh',3/255);
 %detectors{2} = affineDetectors.vggMser('ms',30); % Custom options
 %detectors{3} = affineDetectors.vlFeatMser(); % Default options
 %detectors{3}.detectorName = 'MSER(VLfeat)'; % You can change the default name that is
@@ -39,6 +42,12 @@ detectors{8} = vlFeatDOG('PeakThresh',3/255); % Default options
 %detectors{1} = vlFeatCovdet('AffineAdaptation',true,'Orientation',true,'Method','hessian');
 %detectors{3} = vggAffine('Detector', 'hessian');
 %detectors{3} = affineDetectors.vggAffine('Detector', 'harris');
+
+%%% Orientation test
+%detectors{1} = cmpCensure('detectorType',1,'octRatio',2.5,'respThr',40,'initRadius',2.5,'KPdef',1);
+%detectors{1}.detectorName = 'Censure with orient.';
+%detectors{2} = cmpCensure('detectorType',1,'octRatio',2.5,'respThr',40,'initRadius',2.5);
+%detectors{2}.detectorName = 'Censure';
 
 
 datasets{1} = vggDataset('category','graf');
@@ -52,7 +61,7 @@ datasets{8} = vggDataset('category','wall');
 
 datasets{9} = transfDataset('image','boat.pgm','numImages',11,'category',{'zoom'},'startZoom',1,'endZoom',0.25);
 
-for i=9
+for i=4
   % Initialise storage if it does not exist.
   storage = framesStorage(datasets{i}, 'calcDescriptors', true);
   storage.addDetectors(detectors);

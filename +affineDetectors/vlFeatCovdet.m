@@ -9,7 +9,7 @@
 
 
 classdef vlFeatCovdet < affineDetectors.genericDetector
-  properties (SetAccess=private, GetAccess=public)
+  properties (SetAccess=public, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vl_covdet_arguments
     binPath
@@ -30,11 +30,21 @@ classdef vlFeatCovdet < affineDetectors.genericDetector
       if(size(img,3)>1), img = rgb2gray(img); end
       img = single(img); % If not already in uint8, then convert
 
-      if nargout == 2
-        [frames descs] = vl_covdet(img,obj.vl_covdet_arguments{:});
-      elseif nargout == 1
-        [frames] = vl_covdet(img,obj.vl_covdet_arguments{:});
+      [path] = fileparts(obj.binPath{1}) ;
+      addpath(path);
+      clear mex;
+      try
+        if nargout == 2
+          [frames descs] = vl_covdet(img,obj.vl_covdet_arguments{:});
+        elseif nargout == 1
+          [frames] = vl_covdet(img,obj.vl_covdet_arguments{:});
+        end
+      catch err
+        rmpath(path);
+        rethrow(err);
       end
+      rmpath(path);
+      vl_setup;
        
     end
     
