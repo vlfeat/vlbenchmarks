@@ -23,8 +23,11 @@ end
 if(size(image,3)>1), image = rgb2gray(image); end
 image = single(image); % If not already in uint8, then convert
 
+%frames(3,:) = frames(3,:) * 3;
+
 [validFrames descriptors] = vl_covdet(image, 'Frames', frames,...
-    'AffineAdaptation', hasAffineShape, 'Orientation', hasOrientation);
+    'AffineAdaptation', hasAffineShape, 'Orientation', hasOrientation,...
+    'Magnif',3);
 
 end
 
