@@ -23,7 +23,7 @@ classdef vlFeatCovdet < affineDetectors.genericDetector
       obj.detectorName = 'vlFeat Covdet';
       obj.vl_covdet_arguments = varargin;
       obj.calcDescs = true;
-      obj.binPath = which('vl_covdet');
+      obj.binPath = {which('vl_covdet') which('libvl.so')};
     end
 
     function [frames descs] = detectPoints(obj,img)
@@ -39,7 +39,7 @@ classdef vlFeatCovdet < affineDetectors.genericDetector
     end
     
     function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.binPath) ';'...
+      sign = [commonFns.file_signature(obj.binPath{:}) ';'...
               evalc('disp(obj.vl_covdet_arguments)')];
     end
 
