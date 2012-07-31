@@ -26,6 +26,8 @@ classdef cmpCensure < affineDetectors.genericDetector
       obj.opts.gridRatio = 1;
       obj.opts.lineSuppThr = 10;
       obj.opts.numPlanes = -1;
+      obj.opts.initRadius = 2.5;
+      obj.opts.KPdef = 0; % Export simpts
       
       obj.opts = vl_argparse(obj.opts,varargin);
       
@@ -42,7 +44,14 @@ classdef cmpCensure < affineDetectors.genericDetector
 
       [frames] = censure(img,obj.opts);
       
-      frames = [[frames.x]; [frames.y]; [frames.s]];
+      if obj.opts.KPdef == 0
+        frames = [[frames.x]; [frames.y]; [frames.s]];
+      elseif obj.opts.KPdef == 1
+        frames = [[frames.x]; [frames.y]; [frames.s]; [frames.angle]];
+      elseif obj.opts.KPdef == 2
+        frames = [[frames.x]; [frames.y]; [frames.a11]; [frames.a12]; ...
+          [frames.a21]; [frames.a22]];
+      end
     end
     
     function sign = signature(obj)
