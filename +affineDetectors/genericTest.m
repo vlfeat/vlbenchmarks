@@ -128,7 +128,7 @@ classdef genericTest < handle
       maxScore = max([max(max(score)) 1]);
       meanEndValue = mean(score(:,xend));
       legendLocation = 'SouthEast';
-      if meanEndValue > maxScore/2
+      if meanEndValue < maxScore/2
         legendLocation = 'NorthEast';
       end
 
