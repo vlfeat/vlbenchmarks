@@ -206,7 +206,7 @@ classdef framesStorage < handle
               % calculated for the descriptors? Depends for the type of the
               % dataset...
               [frames{i} descriptors{i}] = ...
-                affineDetectors.helpers.wbsCalcSiftDesc(obj.images{i}, frames{i}, true);
+                affineDetectors.helpers.calcSiftDesc(obj.images{i}, frames{i}, true);
             end
           else
             frames{i} = curDetector.detectPoints(obj.images{i});
