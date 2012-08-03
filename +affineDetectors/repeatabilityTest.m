@@ -11,6 +11,13 @@ classdef repeatabilityTest < affineDetectors.genericTest
   %   Maximal overlap error of ellipses to be considered as
   %   correspondences.
   %
+  %   ShowQualitative :: []
+  %   Show the detected and matched frames on images with defined ids.
+  %
+  %   NormaliseFrames :: [true]
+  %   Normalise the frames to constant scale (defaults is true for detector
+  %   repeatability tests, see Mikolajczyk et. al 2005).
+  %
   
   properties
     rep_opts            % Local options of repeatabilityTest
@@ -24,7 +31,8 @@ classdef repeatabilityTest < affineDetectors.genericTest
       %obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
       obj = obj@affineDetectors.genericTest(resultsStorage, name);
       
-      obj.rep_opts.overlapError = 0.2;
+      obj.rep_opts.overlapError = 0.4;
+      obj.rep_opts.normaliseFrames = true;
       obj.rep_opts.showQualitative = [];
       if numel(varargin) > 0
         obj.rep_opts = commonFns.vl_argparse(obj.rep_opts,varargin{:});
@@ -62,7 +70,8 @@ classdef repeatabilityTest < affineDetectors.genericTest
                 helpers.cropFramesToOverlapRegion(frames{iDetector}{1},frames{iDetector}{i},...
                 tfs{i},images{1},images{i});
 
-            frameMatches = matchEllipses(framesB_, framesA);
+            frameMatches = matchEllipses(framesB_, framesA,... 
+              'NormaliseFrames',obj.rep_opts.normaliseFrames);
             [bestMatches,matchIdxs] = ...
                 obj.findOneToOneMatches(frameMatches,framesA,framesB_);
             numBestMatches = sum(bestMatches);

@@ -11,8 +11,8 @@ function result = matchEllipses(f1, f2, varargin)
 
 import affineDetectors.*;
 
-conf_.normalizeFrames = true ;
-conf = commonFns.vl_argparse(conf_, varargin) ;
+conf.normaliseFrames = true ;
+conf = commonFns.vl_argparse(conf, varargin) ;
 
 
 % eigenvalues (radii squared)
@@ -55,7 +55,8 @@ for i2 = 1:N2
 
   lhsEllipse = vggS.*vggEll2(:,i2);
   rhsEllipse = bsxfun(@times,vggEll1(:,neighs{i2}),vggS);
-  scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse)';
+  scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse,...
+    conf.normaliseFrames)';
 
 end
 
