@@ -25,7 +25,7 @@ classdef vggAffine < affineDetectors.genericDetector
     detectorType % 'hesaff' or 'haraff'
     harThresh     % See binary documentation
     hesThresh     % See binary documentation
-
+    noAngle
     binPath
   end
 
@@ -44,8 +44,9 @@ classdef vggAffine < affineDetectors.genericDetector
 
       % Parse the passed options
       opts.detector= 'hessian';
-      opts.harThresh = 20000; % original 10, documented 1000
-      opts.hesThresh = 1000; % original 200, documented 500
+      opts.harThresh = 1000; % original 10, documented 1000
+      opts.hesThresh = 500; % original 200, documented 500
+      opts.noAngle = false;
       opts = vl_argparse(opts,varargin);
 
       switch(lower(opts.detector))
@@ -59,6 +60,7 @@ classdef vggAffine < affineDetectors.genericDetector
       this.detectorName = [opts.detector '-affine(vgg)' ];
       this.harThresh = opts.harThresh;
       this.hesThresh = opts.hesThresh;
+      this.noAngle = opts.noAngle;
 
       % Check platform dependence
       cwd=commonFns.extractDirPath(mfilename('fullpath'));
@@ -100,9 +102,12 @@ classdef vggAffine < affineDetectors.genericDetector
 
       imwrite(img,imgFile);
       args = sprintf(' -%s -harThres %f -hesThres %f -i "%s" %s',...
-                     this.detectorType,this.harThresh,this.hesThresh,imgFile,desc_param);
-      binPath = this.binPath;
-      cmd = [binPath ' ' args];
+                     this.detectorType,this.harThresh,this.hesThresh,...
+                     imgFile,desc_param);
+      if this.noAngle
+        args = strcat(args,' -noangle');
+      end
+      cmd = [this.binPath ' ' args];
 
       [status,msg] = system(cmd);
       if status
