@@ -48,10 +48,10 @@ classdef vggMser < affineDetectors.genericDetector
       end
 
       % Parse the passed options
-      opts.es = 1.0;
-      opts.per = 0.01;
-      opts.ms = 30;
-      opts.mm = 10;
+      opts.es = -1;
+      opts.per = -1;
+      opts.ms = -1;
+      opts.mm = -1;
       opts = vl_argparse(opts,varargin);
 
       obj.es = opts.es;
@@ -86,8 +86,21 @@ classdef vggMser < affineDetectors.genericDetector
       featFile = [tmpName '.feat'];
 
       imwrite(img,imgFile);
-      args = sprintf(' -t 2 -es %f -per %f -ms %d -mm %d -i "%s" -o "%s"',...
-                     obj.es,obj.per,obj.ms,obj.mm,imgFile, featFile);
+      args = ' -t 2';
+      if obj.es ~= -1
+        args = sprintf('%s -es %f',args,obj.es);
+      end
+      if obj.per ~= -1
+        args = sprintf('%s -per %f',args,obj.per);
+      end
+      if obj.ms ~= -1
+        args = sprintf('%s -ms %d',args,obj.ms);
+      end
+      if obj.mm ~= -1
+        args = sprintf('%s -mm %d',args,obj.mm);
+      end
+      args = sprintf('%s -i "%s" -o "%s"',...
+                     args,imgFile, featFile);
       binPath = obj.binPath;
       cmd = [binPath ' ' args];
 
