@@ -79,8 +79,6 @@ classdef vggMser < affineDetectors.genericDetector
     function frames = detectPoints(obj,img)
       if ~obj.isOk, frames = zeros(5,0); return; end
 
-      if(size(img,3) > 1), img = rgb2gray(img); end
-
       tmpName = tempname;
       imgFile = [tmpName '.png'];
       featFile = [tmpName '.feat'];
