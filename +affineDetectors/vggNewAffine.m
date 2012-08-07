@@ -95,9 +95,9 @@ classdef vggNewAffine < affineDetectors.genericDetector
           num2str(this.opts.magnification)];
       end
 
-      imwrite(img,imgFile);
+      imwrite(uint8(img),imgFile);
       detArgs = '';
-      if this.opts.thresh > 0
+      if this.opts.thresh >= 0
         detArgs = sprintf('-thres %f ',this.opts.thresh);
       end
       detArgs = sprintf('%s-%s -i "%s" -o "%s" %s',...
