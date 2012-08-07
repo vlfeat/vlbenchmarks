@@ -72,14 +72,14 @@ classdef genericTest < handle
 
       obj.myprintf(fidOut,formatString,'Method name');
       for i = 1:size(scores,2)
-        obj.myprintf(fidOut,'  Img#%02d',i);
+        obj.myprintf(fidOut,'\tImg#%02d',i);
       end
       obj.myprintf(fidOut,'\n');
 
       for i = 1:numDetectors
         obj.myprintf(fidOut,formatString,detNames{i});
         for j = 1:size(scores,2)
-          obj.myprintf(fidOut,'  %6s',sprintf('%.2f',scores(i,j)));
+          obj.myprintf(fidOut,'\t%6s',sprintf('%.2f',scores(i,j)));
         end
         obj.myprintf(fidOut,'\n');
       end
