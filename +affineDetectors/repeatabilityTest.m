@@ -73,7 +73,7 @@ classdef repeatabilityTest < affineDetectors.genericTest
             frameMatches = matchEllipses(framesB_, framesA,... 
               'NormaliseFrames',obj.rep_opts.normaliseFrames);
             [bestMatches,matchIdxs] = ...
-                obj.findOneToOneMatches(frameMatches,framesA,framesB_);
+                helpers.findOneToOneMatches(frameMatches,framesA,framesB_,obj.rep_opts.overlapError);
             numBestMatches = sum(bestMatches);
             obj.repeatibilityScore(iDetector,i) = ...
                 numBestMatches / min(size(framesA,2), size(framesB,2));
@@ -117,44 +117,6 @@ classdef repeatabilityTest < affineDetectors.genericTest
       obj.printScores(obj.numOfCorresp,'numCorresp.txt', 'num. of correspondences');
     end
     
-  end
-  
-  methods (Access=private)
-    
-    function [bestMatches,matchIdxs] = findOneToOneMatches(obj,ev,framesA,framesB)
-      matches = zeros(3,0);
-      overlapThresh = 1 - obj.rep_opts.overlapError;
-      bestMatches = zeros(1, size(framesA, 2)) ;
-      matchIdxs = [];
-
-      for j=1:size(framesA,2)
-        numNeighs = length(ev.scores{j}) ;
-        if numNeighs > 0
-          matches = [matches, ...
-                    [j *ones(1,numNeighs) ; ev.neighs{j} ; ev.scores{j} ] ] ;
-        end
-      end
-
-      matches = matches(:,matches(3,:)>overlapThresh);
-
-      % eliminate assigment by priority, i.e. sort the matches by the score
-      [drop, perm] = sort(matches(3,:), 'descend');
-      matches = matches(:, perm);
-      % Create maps which frames has not been 'used' yet
-      availA = true(1,size(framesA,2));
-      availB = true(1,size(framesB,2));
-
-      for idx = 1:size(matches,2)
-        aIdx = matches(1,idx);
-        bIdx = matches(2,idx);
-        if(availA(aIdx) && availB(bIdx))
-          bestMatches(aIdx) = 1;
-          matchIdxs = [matchIdxs bIdx];
-          availA(aIdx) = false;
-          availB(bIdx) = false;
-        end
-      end
-    end
   end
   
 end
