@@ -12,6 +12,7 @@ function result = matchEllipses(f1, f2, varargin)
 import affineDetectors.*;
 
 conf.normaliseFrames = true ;
+conf.normaliseScale = 30 ;
 conf = commonFns.vl_argparse(conf, varargin) ;
 
 
@@ -44,7 +45,7 @@ end
 for i2 = 1:N2
   %fprintf('%.2f %%\r', i2/N2*100) ;
 
-  s = 30 / sqrt(a2(i2) / pi)  ;
+  s = conf.normaliseScale / sqrt(a2(i2) / pi)  ;
 
   canOverlap = sqrt(vl_alldist2(f2(1:2, i2), f1(1:2,:))) < 4 * sqrt(a2(i2) / pi);
   maxOverlap = min(a2(i2), a1) ./ max(a2(i2), a1) .* canOverlap ;
@@ -53,10 +54,15 @@ for i2 = 1:N2
   %S = [1 1 s^2 s^2 s^2]';
   vggS = [1 1 1/s^2 1/s^2 1/s^2 s s s s]';
 
-  lhsEllipse = vggS.*vggEll2(:,i2);
-  rhsEllipse = bsxfun(@times,vggEll1(:,neighs{i2}),vggS);
+  if conf.normaliseFrames
+    lhsEllipse = vggS.*vggEll2(:,i2);
+    rhsEllipse = bsxfun(@times,vggEll1(:,neighs{i2}),vggS);
+  else
+    lhsEllipse = vggEll2(:,i2);
+    rhsEllipse = vggEll1(:,neighs{i2});
+  end
   scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse,...
-    conf.normaliseFrames)';
+    -1)';
 
 end
 
