@@ -74,7 +74,7 @@ classdef repeatabilityTest < affineDetectors.genericTest
               'NormaliseFrames',obj.rep_opts.normaliseFrames);
             [bestMatches,matchIdxs] = ...
                 helpers.findOneToOneMatches(frameMatches,framesA,framesB_,obj.rep_opts.overlapError);
-            numBestMatches = sum(bestMatches);
+            numBestMatches = sum(bestMatches ~= 0);
             obj.repeatibilityScore(iDetector,i) = ...
                 numBestMatches / min(size(framesA,2), size(framesB,2));
             obj.numOfCorresp(iDetector,i) = numBestMatches;
