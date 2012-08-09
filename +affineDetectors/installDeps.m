@@ -12,6 +12,16 @@ sfop.installDeps();
 cmpHessian.installDeps();
 
 installKristianBenchmark();
+installCalcMD5();
+
+function installCalcMD5()
+  curDir = pwd;
+  cd(fullfile(pwd,'+commonFns','+CalcMD5'));
+  mexCmd = 'mex -O CalcMD5.c';
+  fprintf('Compiling: %s\n',mexCmd);
+  eval(mexCmd);
+  cd(curDir);
+end
 
 function installKristianBenchmark()
 
@@ -40,5 +50,11 @@ cd(installDir);
 mexCmd = 'mex -O c_eoverlap.cxx';
 fprintf('Compiling: %s\n',mexCmd);
 eval(mexCmd);
+
 cd(curDir);
+
+
+
 fprintf('Done!\n');
+end
+end
