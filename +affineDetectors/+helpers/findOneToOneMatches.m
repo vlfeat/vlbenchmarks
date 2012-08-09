@@ -1,9 +1,8 @@
-function [bestMatches,matchIdxs,scores] = findOneToOneMatches(ev,framesA,framesB,overlapError)
+function [bestMatches,scores] = findOneToOneMatches(ev,framesA,framesB,overlapError)
       matches = zeros(3,0);
       overlapThresh = 1 - overlapError;
       bestMatches = zeros(1, size(framesA, 2)) ;
       scores = zeros(1, size(framesA, 2)) ;
-      matchIdxs = [];
 
       for j=1:size(framesA,2)
         numNeighs = length(ev.scores{j}) ;
@@ -28,7 +27,6 @@ function [bestMatches,matchIdxs,scores] = findOneToOneMatches(ev,framesA,framesB
         if(availA(aIdx) && availB(bIdx))
           bestMatches(aIdx) = bIdx;
           scores(aIdx) = matches(3,idx);
-          matchIdxs = [matchIdxs bIdx];
           availA(aIdx) = false;
           availB(bIdx) = false;
         end

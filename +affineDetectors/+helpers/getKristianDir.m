@@ -1,4 +1,3 @@
 function installDir = getKristianDir()
 
-cwd = commonFns.extractDirPath(mfilename('fullpath'));
-installDir = fullfile(cwd,'..','thirdParty','repeatability');
+installDir = fullfile(pwd,'thirdParty','repeatability');

@@ -23,6 +23,7 @@ classdef repeatabilityTest < affineDetectors.genericTest
     rep_opts            % Local options of repeatabilityTest
     repeatibilityScore  % Calculated repeatability score
     numOfCorresp        % Number of correspondences 
+    reprojectedFrames;  % Cropped and reprojected frames
   end
   
   methods
@@ -44,12 +45,14 @@ classdef repeatabilityTest < affineDetectors.genericTest
       obj.repeatibilityScore(:,1)=1;
       obj.numOfCorresp = zeros(numDetectors,numImages);
       
+      obj.reprojectedFrames = cell(numDetectors,numImages);
       
     end
     
     function runTest(obj)
       import affineDetectors.*;
-      obj.framesStorage.calcFrames();
+      storage = obj.framesStorage;
+      storage.calcFrames();
       
       numDetectors = obj.framesStorage.numDetectors();
       numImages = obj.framesStorage.numImages();
@@ -58,36 +61,46 @@ classdef repeatabilityTest < affineDetectors.genericTest
       frames = obj.framesStorage.frames;
       images = obj.framesStorage.images;
       tfs = obj.framesStorage.tfs;
+      image_1 = images{1};
+      
+      showQualitative = obj.rep_opts.showQualitative;
       
       fprintf('\nRunning repeatability test on %d detectors:\n',numDetectors);
       
+      % TODO export this outer for loop into generic test
       for iDetector = 1:numDetectors
         fprintf('\nEvaluating frames from %s detector\n\n',detNames{iDetector});
         if obj.frames_has_changed(iDetector)
-          for i=2:numImages
+          norm_frames = obj.rep_opts.normaliseFrames;
+          overlap_err = obj.rep_opts.overlapError;
+          repScore = obj.repeatibilityScore(iDetector,:);
+          numCorresp = obj.numOfCorresp(iDetector,:);
+          detFrames_1 = frames{iDetector}{1};
+          detFrames = frames{iDetector};
+          repFrames = obj.reprojectedFrames{iDetector};
+          parfor i=2:numImages
             fprintf('\tEvaluating regions for image: %02d/%02d ...\n',i,numImages);
             [framesA,framesB,framesA_,framesB_] = ...
-                helpers.cropFramesToOverlapRegion(frames{iDetector}{1},frames{iDetector}{i},...
-                tfs{i},images{1},images{i});
+                helpers.cropFramesToOverlapRegion(detFrames_1,detFrames{i},...
+                tfs{i},image_1,images{i});
 
             frameMatches = matchEllipses(framesB_, framesA,... 
-              'NormaliseFrames',obj.rep_opts.normaliseFrames);
-            [bestMatches,matchIdxs] = ...
-                helpers.findOneToOneMatches(frameMatches,framesA,framesB_,obj.rep_opts.overlapError);
+              'NormaliseFrames',norm_frames);
+            bestMatches = ...
+                helpers.findOneToOneMatches(frameMatches,framesA,framesB_,overlap_err);
             numBestMatches = sum(bestMatches ~= 0);
-            obj.repeatibilityScore(iDetector,i) = ...
-                numBestMatches / min(size(framesA,2), size(framesB,2));
-            obj.numOfCorresp(iDetector,i) = numBestMatches;
+            repScore(i) = numBestMatches / min(size(framesA,2), size(framesB,2));
+            numCorresp(i) = numBestMatches;
             
-            
-            if ~isempty(obj.rep_opts.showQualitative) 
-              if islogical(obj.rep_opts.showQualitative) || sum(ismember(i,obj.rep_opts.showQualitative))
-                obj.framesStorage.plotFrames(framesA,framesB,framesA_,framesB_,...
-                iDetector,i,matchIdxs);
-              end
+            if sum(ismember(i,showQualitative))
+              % TODO write this more effectively at all... (remove frames
+              % from the list just by indexing, not creating new list)
+              repFrames{i} = {framesA framesA_; framesB framesB_; bestMatches []};
             end
           end
-          obj.repeatibilityScore(iDetector,:) = obj.repeatibilityScore(iDetector,:) * 100;
+          obj.reprojectedFrames{iDetector} = repFrames;
+          obj.repeatibilityScore(iDetector,:) = repScore(1,:) * 100;
+          obj.numOfCorresp(iDetector,:) = numCorresp(1,:);
         else
           fprintf('\tDetected regions has not changed since last evaluation.\n');
         end
@@ -97,6 +110,7 @@ classdef repeatabilityTest < affineDetectors.genericTest
       
       obj.det_signatures = obj.framesStorage.det_signatures;
       
+      obj.showQualitativeResults();
       obj.plotResults();
       obj.printResults();
 
@@ -115,6 +129,48 @@ classdef repeatabilityTest < affineDetectors.genericTest
     function printResults(obj)
       obj.printScores(obj.repeatibilityScore,'scores.txt', 'repeatability scores');
       obj.printScores(obj.numOfCorresp,'numCorresp.txt', 'num. of correspondences');
+    end
+    
+    function showQualitativeResults(obj)
+      numDetectors = obj.framesStorage.numDetectors();
+      numImages = obj.framesStorage.numImages();
+      showQualitative = obj.rep_opts.showQualitative;
+      for iDetector = 1:numDetectors
+        for i=2:numImages
+          if sum(ismember(i,showQualitative))
+            figure(iImg);
+            obj.plotReprojectedFrames(iDetector,i);
+          end
+        end
+      end
+    end
+    
+    function plotReprojectedFrames(obj,iDetector,iImg)
+      % TODO fix it with the new arguments
+      numDetectors = obj.framesStorage.numDetectors();
+      detectorName = obj.detectors{iDetector}.detectorName;
+      imageA = obj.framesStorage.images{1};
+      imageB = obj.framesStorage.images{iImg};
+      subplot(numDetectors,2,2*(iDetector-1)+1) ; imshow(imageA);
+      colormap gray ;
+      hold on ; vl_plotframe(framesA,'linewidth', 1);
+      % Plot the transformed and matched frames from B on A in blue
+      matchLogical = false(1,size(framesB_,2));
+      matchLogical(matchIdxs) = true;
+      vl_plotframe(framesB_(:,matchLogical),'b','linewidth',1);
+      % Plot the remaining frames from B on A in red
+      vl_plotframe(framesB_(:,~matchLogical),'r','linewidth',1);
+      axis equal;
+      set(gca,'xtick',[],'ytick',[]);
+      ylabel(detectorName);
+      title('Reference image detections');
+
+      subplot(numDetectors,2,2*(iDetector-1)+2) ; imshow(imageB) ;
+      hold on ; vl_plotframe(framesB,'linewidth', 1) ;axis equal; axis off;
+      %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
+      title('Transformed image detections');
+
+      drawnow;
     end
     
   end

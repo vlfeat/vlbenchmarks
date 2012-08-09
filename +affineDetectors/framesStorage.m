@@ -36,7 +36,8 @@ classdef framesStorage < handle
     opts                      % Options
     det_signatures = {};      % Last signatures of the detectors.
     dataset_signature = '';   % Last signature of the dataset.
-    det_names;              % List of classes of the detectors
+    det_names;                % List of classes of the detectors
+    
   end
   
   methods
@@ -57,10 +58,10 @@ classdef framesStorage < handle
       % CALCFRAMES Recalculate the frames when needed.
       cur_dataset_sign = obj.dataset.signature();
       newDataset = ~isequal(cur_dataset_sign, obj.dataset_signature);
-      det_num = numel(obj.detectors);
+      numDetectors = numel(obj.detectors);
       detNames = obj.detectorsNames;
       
-      fprintf('Detecting affine covariant frames using %d detectors\n',det_num);
+      fprintf('Detecting affine covariant frames using %d detectors\n',numDetectors);
       
       if newDataset
         % -------- Load the dataset ---------------------------
@@ -73,25 +74,37 @@ classdef framesStorage < handle
           obj.images{i} = imread(imagePaths{i});
           obj.tfs{i} = obj.dataset.getTransformation(i);
         end  
+     
         fprintf('Loaded %d images.\n',numImages);
       end
       
       obj.dataset_signature = cur_dataset_sign;
       
-      for det_i = 1:det_num
-        detector = obj.detectors{det_i};
+      detectors = obj.detectors;
+      det_signatures = obj.det_signatures;
+      frames = obj.frames;
+      descriptors = obj.descriptors;
+      
+      parfor det_i = 1:numDetectors
+        detector = detectors{det_i};
         det_sign = detector.signature();
-        if newDataset || ~isequal(det_sign, obj.det_signatures{det_i})
+        if newDataset || ~isequal(det_sign, det_signatures{det_i})
           fprintf('\nComputing affine covariant regions for method: %s\n\n', ...
                 detNames{det_i});
-          [ obj.frames{det_i} obj.descriptors{det_i}] = ...
-                            obj.runDetector(detector);
-          obj.det_signatures{det_i} = detector.signature();
+          [curFrames curDescriptors] = obj.runDetector(detector);
+          frames{det_i} = curFrames;
+          descriptors{det_i} = curDescriptors;
+          det_signatures{det_i} = detector.signature();
         else
           fprintf('\nAffine covariant frames of method %s are up to date.\n', ...
                 detNames{det_i});
         end;
       end
+      
+      obj.detectors = detectors;
+      obj.det_signatures = det_signatures;
+      obj.frames = frames;
+      obj.descriptors = descriptors;
       
       % -------- Output which detectors didn't work ------
       for i = 1:numel(obj.detectors),
@@ -111,13 +124,13 @@ classdef framesStorage < handle
       % ADDDETECTORS(detectors) Adds new detectors. Detectors is cell of
       % detectors objects.
       % Does not support more detectors of one class.
-      det_num = numel(detectors);
+      numDetectors = numel(detectors);
       
       if nargin == 2
         remove_duplicates = true;
       end
       
-      for i=1:det_num
+      for i=1:numDetectors
         det_name = detectors{i}.detectorName;
         [is_memb det_idx] = ismember(det_name, obj.det_names);
         if sum(is_memb)==0 || ~remove_duplicates
@@ -140,36 +153,6 @@ classdef framesStorage < handle
       numimages = obj.dataset.numImages;
     end
     
-        
-    function plotFrames(obj,framesA,framesB,framesA_,framesB_,...
-                        iDetector,iImg,matchIdxs);
-        numDetectors = numel(obj.detectors);
-        detectorName = obj.detectors{iDetector}.detectorName;
-        imageA = obj.images{1};
-        imageB = obj.images{iImg};
-        figure(iImg);
-        subplot(numDetectors,2,2*(iDetector-1)+1) ; imshow(imageA);
-        colormap gray ;
-        hold on ; vl_plotframe(framesA,'linewidth', 1);
-        % Plot the transformed and matched frames from B on A in blue
-        matchLogical = false(1,size(framesB_,2));
-        matchLogical(matchIdxs) = true;
-        vl_plotframe(framesB_(:,matchLogical),'b','linewidth',1);
-        % Plot the remaining frames from B on A in red
-        vl_plotframe(framesB_(:,~matchLogical),'r','linewidth',1);
-        axis equal;
-        set(gca,'xtick',[],'ytick',[]);
-        ylabel(detectorName);
-        title('Reference image detections');
-
-        subplot(numDetectors,2,2*(iDetector-1)+2) ; imshow(imageB) ;
-        hold on ; vl_plotframe(framesB,'linewidth', 1) ;axis equal; axis off;
-        %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
-        title('Transformed image detections');
-
-        drawnow;
-    end
-    
   end
   
   methods (Access=protected)
@@ -179,39 +162,43 @@ classdef framesStorage < handle
         assert(isa(detector,'affineDetectors.genericDetector'),...
          'Detector not an instance of genericDetector\n');
         numImages = obj.dataset.numImages;
+        images = obj.images;
         
         frames = cell(1,numImages);
         descriptors = cell(1,numImages);
 
-        curDetector = detector;
-
-        if(~curDetector.isOk)
+        if(~detector.isOk)
           fprintf('Detector: %s is not working, message: %s\n', ...
-                  curDetector.getName(), curDetector.errMsg);
+                  detector.getName(), detector.errMsg);
           frames = {};
           descriptors = {};
           return;
         end
 
-        for i = 1:numImages
+        calcDescriptors = obj.opts.calcDescriptors;
+        canCalcDescriptors = detector.calcDescs;
+        
+        parfor i = 1:numImages
           fprintf('\tComputing regions for image: %02d/%02d ...',i,numImages);
-          if obj.opts.calcDescriptors
-            if curDetector.calcDescs
-              [frames{i} descriptors{i}] = ...
-                      curDetector.detectPoints(obj.images{i});
+          if calcDescriptors
+            if canCalcDescriptors
+              [curFrames curDescriptors] = detector.detectPoints(images{i});
             else
-              [frames{i}] = curDetector.detectPoints(obj.images{i});
+              [detFrames] = detector.detectPoints(images{i});
               fprintf('\n\t\tComputing SIFT descriptors of %d frames...',size(frames{i},2));
               % TODO solve how to do this with orientation - shall it be
               % calculated for the descriptors? Depends for the type of the
               % dataset...
-              [frames{i} descriptors{i}] = ...
-                affineDetectors.helpers.calcSiftDesc(obj.images{i}, frames{i}, true);
+              [curFrames curDescriptors] = ...
+                affineDetectors.helpers.calcSiftDesc(images{i}, detFrames, true);
             end
           else
-            frames{i} = curDetector.detectPoints(obj.images{i});
+            curFrames{i} = detector.detectPoints(images{i});
+            curDescriptors = [];
           end
-          fprintf(' (%d regions detected)\n',size(frames{i},2));
+          frames{i} = curFrames;
+          descriptors{i} = curDescriptors;
+          fprintf(' (%d regions detected)\n',size(curFrames,2));
         end
         
     end
