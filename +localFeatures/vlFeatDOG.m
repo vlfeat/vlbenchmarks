@@ -11,7 +11,7 @@
 %
 %   See also: vl_sift
 
-classdef vlFeatDOG < affineDetectors.genericDetector
+classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for vl_sift
     % See help vl_sift for description of these properties
@@ -26,18 +26,18 @@ classdef vlFeatDOG < affineDetectors.genericDetector
     function obj = vlFeatDOG(varargin)
       obj.detectorName = 'DOG(vlFeat)';
       obj.vl_sift_arguments = varargin;
-      obj.calcDescs = true;
       obj.binPath = which('vl_sift');
     end
 
-    function [frames descs] = detectPoints(obj,img)
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+      img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2single(img);
 
       if nargout == 1
         [frames] = vl_sift(img,obj.vl_sift_arguments{:});
       elseif nargout == 2
-        [frames descs] = vl_sift(img,obj.vl_sift_arguments{:});
+        [frames descriptors] = vl_sift(img,obj.vl_sift_arguments{:});
       end
     end
     

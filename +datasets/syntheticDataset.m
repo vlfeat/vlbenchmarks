@@ -1,7 +1,9 @@
-% TRANSFDATASET class to wrap around the vgg affine benchmark datasets
+% SYNTHETICDATASET Synthetic image transformations dataset
+%
 
 % TODO create metafiles with the configurations
-classdef transfDataset < affineDetectors.genericDataset
+% TODO add perspective transformation, skew another types of noise etc.
+classdef syntheticDataset < affineDetectors.genericDataset
   properties (SetAccess=private, GetAccess=public)
     opts
     image

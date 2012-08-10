@@ -1,3 +1,4 @@
+function benchmarkDemo()
 % BENCHMARKDEMO Script demonstrating how to run the benchmarks for
 %   different algorithms.
 %
@@ -14,20 +15,7 @@
 %   See <a href="matlab: help affineDetectors.exampleDetector">affineDetectors.exampleDetector</a> on how to add your own detector
 
 import affineDetectors.*;
-%global storage
-%global tests
 
-%detectors{1} = vlFeatDOG('PeakThresh',3/255); % Default options
-%detectors{1} = cmpCensure('detectorType',1);
-%detectors{2} = cmpCensure('detectorType',0);
-octRatios = [1.5,2.0,2.5,3.0,4.0];
-thresholds=[35,40,40,40,40];
-i=2;
-%for octRatio = octRatios
-%  detectors{i} = cmpCensure('octRatio',octRatio,'respThr',thresholds(i-1));
-%  detectors{i}.detectorName = ['Censure octRat=' num2str(octRatio)];
-%  i = i + 1;
-%end
 detectors{1} = cmpCensure('detectorType',1,'octRatio',2.5,'respThr',40,'initRadius',2.5);
 detectors{1}.detectorName = 'Censure initRad= 2.5';
 detectors{2} = cmpCensure('detectorType',1,'octRatio',2.5,'respThr',40,'initRadius',3.5);
@@ -76,4 +64,113 @@ for i=4
   for j=1:numel(tests)
     tests{j}.runTest();
   end
+end
+
+function printScores(detectors, scores, name, outFile)
+  % PRINTSCORES
+  % Print the scores measured in the unified format to the standard 
+  % output. If outFile defined, save the results to a file as well.
+  numDetectors = numel(detectors);
+  saveResults = nargin > 3 && ~isempty(outFile);
+
+  if saveResults
+    helpers.vl_xmkdir(fileparts(outFile));
+    fH = fopen(outFile,'w');
+    fidOut = [1 fH];
+  else
+    fidOut = 1;
+  end
+
+  maxNameLen = 0;
+  detNames = cell(numDetectors,1);
+  for k = 1:numDetectors
+    detNames{k} = detectors{k}.getName();
+    maxNameLen = max(maxNameLen,length(detNames{k}));
+  end
+
+  maxNameLen = max(length('Method name'),maxNameLen);
+  obj.myprintf(fidOut,strcat('\nPriting ', name,':\n'));
+  formatString = ['%' sprintf('%d',maxNameLen) 's:'];
+
+  obj.myprintf(fidOut,formatString,'Method name');
+  for k = 1:size(scores,2)
+    obj.myprintf(fidOut,'\tImg#%02d',k);
+  end
+  obj.myprintf(fidOut,'\n');
+
+  for k = 1:numDetectors
+    myprintf(fidOut,formatString,detNames{k});
+    for l = 1:size(scores,2)
+      myprintf(fidOut,'\t%6s',sprintf('%.2f',scores(k,l)));
+    end
+    myprintf(fidOut,'\n');
+  end
+
+  if saveResults
+    fclose(fH);
+  end
+  
+  function myprintf(fids,format,varargin)
+  % MYPRINTF
+  % Helper extending printf to more outputs.
+  % Parameters:
+  %   fids    Array of output file idxs
+  %   format, varargin See fprintf.
+  for m = 1:numel(fids)
+    fprintf(fids(m),format,varargin{:});
+  end
+  end
+  
+end
+
+function plotScores(detectors, dataset, score, titleText, yLabel, outFile)
+  % PLOTSCORES
+  % Plot the scores into unified figure number figureNum. If 
+  % opts.SaveResults is true, save the figure to opts.SaveDir/outFile
+  %
+  % Parameters:
+  if isempty(score)
+    warning('No scores to plot.');
+    return
+  end
+  saveResults = nargin > 3 && ~isempty(outFile);
+
+  xstart = max([find(sum(scores) == 0, 1) + 1 1]);
+
+  figure(figureNum) ; clf ;
+  xend = size(score,2);
+  x_label = dataset.imageLabelsTitle;
+  x_ticks = dataset.transformationName;
+  plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
+  ylabel(yLabel) ;
+  xlabel(x_label);
+  set(gca,'XTick',xstart:1:xend);
+  set(gca,'XTickLabel',x_ticks);
+  title(titleText);
+  set(gca,'xtick',1:size(score,2));
+
+  maxScore = max([max(max(score)) 1]);
+  meanEndValue = mean(score(:,xend));
+  legendLocation = 'SouthEast';
+  if meanEndValue < maxScore/2
+    legendLocation = 'NorthEast';
+  end
+
+  legendStr = cell(1,numel(detectors));
+  for m = 1:numel(detectors) 
+    legendStr{m} = detectors{m}.getName(); 
+  end
+  legend(legendStr,'Location',legendLocation);
+  grid on ;
+  axis([xstart xend 0 maxScore]);
+
+  if saveResults
+    helpers.vl_xmkdir(fileparts(outFile));
+    fprintf('\nSaving figure as eps graphics: %s\n',outFile);
+    print('-depsc2', [outFile '.eps']);
+    fprintf('Saving figure as matlab figure to: %s\n',figFile);
+    saveas(gca,outFile,'fig');
+  end
+end
+
 end

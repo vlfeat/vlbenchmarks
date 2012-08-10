@@ -12,7 +12,7 @@
 %
 %   (No options available currently)
 
-classdef cmpHessian < affineDetectors.genericDetector
+classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the cmp hessian
     % binary accepts. See the binary help for explanation.
@@ -26,7 +26,7 @@ classdef cmpHessian < affineDetectors.genericDetector
     function obj = cmpHessian(varargin)
       import affineDetectors.*;
       obj.detectorName = 'CMP Hessian';
-      obj.calcDescs = true;
+      obj.calcdescriptors = true;
       if ~cmpHessian.isInstalled(),
         obj.isOk = false;
         obj.errMsg = 'cmpHessian not found installed';
@@ -55,8 +55,9 @@ classdef cmpHessian < affineDetectors.genericDetector
       obj.binPath = binPath;
     end
 
-    function [frames descs] = detectPoints(obj,img)
-      if ~obj.isOk, frames = zeros(5,0); descs = zeros(128,0); return; end
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+      img = imread(imagePath);
+      if ~obj.isOk, frames = zeros(5,0); descriptors = zeros(128,0); return; end
 
       if(size(img,3) > 1), img = rgb2gray(img); end
 
@@ -66,15 +67,14 @@ classdef cmpHessian < affineDetectors.genericDetector
 
       imwrite(img,imgFile);
       args = sprintf(' "%s" ',imgFile);
-      binPath = obj.binPath;
-      cmd = [binPath ' ' args];
+      cmd = [obj.binPath ' ' args];
 
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;
       end
       
-      [frames descs] = vl_ubcread(featFile,'format','oxford');
+      [frames descriptors] = vl_ubcread(featFile,'format','oxford');
       delete(imgFile); delete(featFile);
     end
 

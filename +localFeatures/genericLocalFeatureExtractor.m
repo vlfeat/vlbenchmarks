@@ -6,16 +6,15 @@
 %   sure it inherits this class.
 %   (see +affineDetectors/exampleDetector.m for a simple example)
 
-classdef genericDetector < handle
+classdef genericLocalFeatureExtractor < handle
   properties (SetAccess=protected, GetAccess=public)
     isOk = true; % signifies if detector has been installed and runs ok on
-    % this particular platform
-    errMsg = ''; % If there is some failure in detector, this string stores it
-    calcDescs = false; % Detector is able to calculate descriptors
+                 % this particular platform
+    detectorName % Set this property in the constructor
   end
-
-  properties (SetAccess=public, GetAccess=public)
-    detectorName % Set this property to use when plots are generated
+  
+  properties (Constant)
+    keyPrefix = 'det_'; % Prefix of the cached data key
   end
 
   methods(Abstract)
@@ -23,11 +22,13 @@ classdef genericDetector < handle
     % is expected to be used to set the options specific to that
     % detector
 
-    frames = detectPoints(obj, img)  
-    % DETECTPOINTS
-    % Expect a 3 channel(RGB) uint8 image to be
-    % passed to this function. The actual detectPoints function should
-    % handle transforming the img to grayScale/double etc.
+    [frames descriptors] = extractFeatures(obj, imagePath)
+    % EXTRACTFEATURES
+    % Expect path to the source image on which the feature extraction
+    % should be performed. For caching the results use methods
+    % cacheFeatures and loadFeatures.
+    %
+    % The frames can be of the following format:
     % Output:
     %   frames: 3 x nFrames array storing the output regions as circles
     %     or
@@ -41,8 +42,8 @@ classdef genericDetector < handle
     %   store respectively the S11, S12, S22 such that
     %   ELLIPSE = {x: x' inv(S) x = 1}.
     
-    sign = signature(obj)
-    % SIGNATURE
+    sign = getSignature(obj)
+    % GETSIGNATURE
     % Returns unique signature for detector parameters.
     %
     % This function is used for caching detected results. When the detector
@@ -50,14 +51,30 @@ classdef genericDetector < handle
  
   end
 
-  methods
-    % This function returns the name of the detector used
-    function name = getName(obj)
-      if(isempty(obj.detectorName))
-        name = class(obj);
-      else
-        name = obj.detectorName;
+  methods (Access = protected)
+    function [frames descriptors] = loadFeatures(obj, imagePath)
+      key = obj.getDataKey(imagePath);
+      data = DataCache.getData(key);
+      frames = data.frames;
+      descriptors = data.descriptors;
+    end
+    
+    function storeFeatures(obj, imagePath, frames, descriptors)
+      if nargin < 4
+        descriptors = [];
       end
+      
+      key = obj.getDataKey(imagePath);
+      data.frames = frames;
+      data.descriptors = descriptors;
+      DataCache.storeData(data,key);
+    end
+    
+    function key = getDataKey(obj, imagePath)
+      imageSignature = helpers.fileSignatue(imagePath);
+      detSignature = obj.getSignature();
+      prefix = genericLocalFeatureExtractor.keyPrefix;
+      key = strcat(prefix,detSignature,imageSignature);
     end
 
   end % ------- end of methods --------

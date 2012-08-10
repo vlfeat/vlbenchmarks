@@ -1,4 +1,4 @@
-% VGGDATASET class to wrap around the vgg affine benchmark datasets
+% VGGAFFINEDATASET class to wrap around the vgg affine benchmark datasets
 %
 %   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
 %
@@ -10,7 +10,7 @@
 %     The category within the vgg dataset, has to be one of 'bikes','trees',
 %     'graf','wall','bark','boat','leuven','ubc'
 
-classdef vggDataset < affineDetectors.genericDataset
+classdef vggAffineDataset < datasets.genericDataset
   properties (SetAccess=private, GetAccess=public)
     category
     dataDir
@@ -24,7 +24,8 @@ classdef vggDataset < affineDetectors.genericDataset
   methods
     function obj = vggDataset(varargin)
       if ~obj.isInstalled(),
-        error('Vgg dataset is not installed, download and install it using affineDetectors.vggDataset.installDeps()\n');
+        error(['Vgg dataset is not installed, download and install it'...
+          ' using affineDetectors.vggDataset.installDeps()\n']);
       end
       opts.category= 'graf';
       opts = commonFns.vl_argparse(opts,varargin);

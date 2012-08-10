@@ -8,14 +8,10 @@
 
 classdef genericDataset < handle
   properties (SetAccess=protected, GetAccess=public)
-    datasetName = 'empty';% Set this property in the constructor
+    datasetName = ''; % Set this property in the constructor
     numImages = 0 % Set in constructor
-    imageLabels; % Set in constructor, labels of images in graphs
-    imageLabelsTitle; % Set in constructor, xtitle
-  end
-
-  properties (SetAccess=public, GetAccess=public)
-    % None here
+    imageNames % Labels of images
+    transformationName % Definition of the transformations
   end
 
   methods(Abstract)
@@ -26,6 +22,7 @@ classdef genericDataset < handle
   end
   
   methods
+    
     function sign = signature(obj)
     % SIGNATURE
     % Returns unique signature for detector parameters.
@@ -42,12 +39,10 @@ classdef genericDataset < handle
     
       sign = cell2mat(sign_c);
     end
-
     
   end
 
   methods(Static)
-
     % Over-ride this function to delete data from the right location
     function cleanDeps()
       fprintf('No dependencies to delete for this dataset class\n');

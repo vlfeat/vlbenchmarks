@@ -8,7 +8,7 @@
 %   See also: vl_covdet
 
 
-classdef vlFeatCovdet < affineDetectors.genericDetector
+classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=public, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vl_covdet_arguments
@@ -22,11 +22,11 @@ classdef vlFeatCovdet < affineDetectors.genericDetector
     function obj = vlFeatCovdet(varargin)
       obj.detectorName = 'vlFeat Covdet';
       obj.vl_covdet_arguments = varargin;
-      obj.calcDescs = true;
       obj.binPath = {which('vl_covdet') which('libvl.so')};
     end
 
-    function [frames descs] = detectPoints(obj,img)
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+      img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = single(img); % If not already in uint8, then convert
 
@@ -35,7 +35,7 @@ classdef vlFeatCovdet < affineDetectors.genericDetector
       clear mex;
       try
         if nargout == 2
-          [frames descs] = vl_covdet(img,obj.vl_covdet_arguments{:});
+          [frames descriptors] = vl_covdet(img,obj.vl_covdet_arguments{:});
         elseif nargout == 1
           [frames] = vl_covdet(img,obj.vl_covdet_arguments{:});
         end

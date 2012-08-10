@@ -3,7 +3,7 @@
 %   obj = affineDetectors.vggAffine('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
-%   This class implements the genericDetector interface and wraps around the
+%   obj class implements the genericDetector interface and wraps around the
 %   vgg implementation of harris and hessian affine detectors available at:
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/extract_features2.tar.gz
 %
@@ -18,80 +18,72 @@
 %   HesThresh:: [200]
 %     Threshold for hessian maxima detection (only used when detector is 'hessian')
 
-classdef vggAffine < affineDetectors.genericDetector
+classdef vggAffine < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     % Properties below correspond to the binary downloaded
     % from vgg
-    detectorType % 'hesaff' or 'haraff'
-    harThresh     % See binary documentation
-    hesThresh     % See binary documentation
-    noAngle
+    opts
     binPath
   end
-
+  
+  properties (Constant)
+    rootInstallDir = fullfile('data','software','vggAffine','');
+    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/extract_features2.tar.gz';
+  end
+  
   methods
     % The constructor is used to set the options for vggAffine
-    function this = vggAffine(varargin)
+    function obj = vggAffine(varargin)
       import affineDetectors.*;
       import commonFns.*;
-      this.calcDescs = true;
+      obj.calcDescs = true;
 
       if ~vggAffine.isInstalled(),
-        this.isOk = false;
-        this.errMsg = 'vggAffine not found installed';
+        obj.isOk = false;
+        obj.errMsg = 'vggAffine not found installed';
         return;
       end
 
       % Parse the passed options
-      opts.detector= 'hessian';
-      opts.harThresh = 1000; % original 10, documented 1000
-      opts.hesThresh = 500; % original 200, documented 500
-      opts.noAngle = false;
-      opts = vl_argparse(opts,varargin);
+      obj.opts.detector= 'hessian';
+      obj.opts.harThresh = 1000; % original 10, documented 1000
+      obj.opts.hesThresh = 500; % original 200, documented 500
+      obj.opts.noAngle = false;
+      obj.opts = vl_argparse(opts,varargin);
 
-      switch(lower(opts.detector))
+      switch(lower(obj.opts.detector))
         case 'hessian'
-          this.detectorType = 'hesaff';
+          obj.opts.detectorType = 'hesaff';
         case 'harris'
-          this.detectorType = 'haraff';
+          obj.opts.detectorType = 'haraff';
         otherwise
           error('Invalid detector type: %s\n',opts.detector);
       end
-      this.detectorName = [opts.detector '-affine(vgg)' ];
-      this.harThresh = opts.harThresh;
-      this.hesThresh = opts.hesThresh;
-      this.noAngle = opts.noAngle;
-
+      obj.detectorName = [obj.opts.detector '-affine(vgg)' ];
+      
       % Check platform dependence
-      cwd=commonFns.extractDirPath(mfilename('fullpath'));
       machineType = computer();
-      binPath = '';
       switch(machineType)
         case  {'GLNX86'}
-          binPath = fullfile(cwd,vggAffine.rootInstallDir,'extract_features',...
+          obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
                              'extract_features_32bit.ln');
         case {'GLNXA64'}
-          binPath = fullfile(cwd,vggAffine.rootInstallDir,'extract_features',...
+          obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
                              'extract_features_64bit.ln');
         case  {'PCWIN','PCWIN64'}
-          binPath = fullfile(cwd,vggAffine.rootInstallDir,'extract_features',...
+          obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
                              'extract_features_32bit.exe');
         otherwise
-          this.isOk = false;
-          this.errMsg = sprintf('Arch: %s not supported by vggAffine',...
-                                machineType);
+          obj.isOk = false;
+          warning('Arch: %s not supported by vggAffine',machineType);
       end
-      this.binPath = binPath;
     end
 
-    function [frames descrs] = detectPoints(this,img)
-      if ~this.isOk, frames = zeros(5,0); return; end
-
-      if(size(img,3) > 1), img = rgb2gray(img); end
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+      if ~obj.isOk, frames = zeros(5,0); return; end
       
       tmpName = tempname;
-      imgFile = [tmpName '.png'];
-      outFile = [tmpName '.png.' this.detectorType];
+      outFile = [tmpName '.' obj.opts.detectorType];
       
       if nargout == 2 
         desc_param='-sift'; 
@@ -100,37 +92,34 @@ classdef vggAffine < affineDetectors.genericDetector
         desc_param = ''; 
       end;
 
-      imwrite(img,imgFile);
       args = sprintf(' -%s -harThres %f -hesThres %f -i "%s" %s',...
-                     this.detectorType,this.harThresh,this.hesThresh,...
-                     imgFile,desc_param);
-      if this.noAngle
+                     obj.opts.detectorType,obj.opts.harThresh,...
+                     obj.opts.hesThresh,imagePath,desc_param);
+      if obj.opts.noAngle
         args = strcat(args,' -noangle');
       end
-      cmd = [this.binPath ' ' args];
+      cmd = [obj.binPath ' ' args];
 
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;
       end
 
-      [frames descrs] = vl_ubcread(outFile,'format','oxford');
-      delete(imgFile); delete(outFile); delete([outFile '.params']);
+      [frames descriptors] = vl_ubcread(outFile,'format','oxford');
+      delete(outFile); delete([outFile '.params']);
     end
     
     function sign = signature(obj)
       sign = [commonFns.file_signature(obj.binPath) ';' ... 
               obj.detectorType ';' ... 
               num2str(obj.harThresh) ';' ...
-              num2str(obj.hesThresh)];
+              num2str(obj.hesThresh) ';' ...
+              num2str(obj.noAngle)];
     end
 
   end
 
-  properties (Constant)
-    rootInstallDir = 'thirdParty/vggAffine/';
-    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/extract_features2.tar.gz';
-  end
+
 
   methods (Static)
 

@@ -1,5 +1,5 @@
-classdef kristianEvalTest < affineDetectors.genericTest
-  %KRISTIANEVALTEST Kristians Mikolajczyk's affine detectors test
+classdef kristianEvalBenchmark < benchmarks.genericBenchmark
+  %KRISTIANEVALBENCHMARK Kristians Mikolajczyk's affine detectors test
   %   Implements test interface for Kristian's testing script of affine
   %   covarinat image regions (frames).
   %
@@ -7,195 +7,134 @@ classdef kristianEvalTest < affineDetectors.genericTest
   %
   %   OverlapError :: [0.4]
   %     Overlap error of the ellipses for which the repeatability is
-  %     calculated
+  %     calculated. Can be only in {0.1, 0.2, ... ,0.9}.
   %
-  %   CalcMatches :: [true]
-  %     Calculate matching score. For correct results, the frames storage
-  %     must contain descriptors. See documentation of framesStorage
   
   properties
-    km_opts             % Options of the km eval
-    repeatibilityScore  % Calculated rep. score
-    numOfCorresp        % Calculated num of corresp.
-    matchScore          % Calculated matching score.
-    numOfMatches        % Calculated number of matches.
-    imagePaths          % Paths to stored images
+    opts                % Options of the km eval
   end
   
-  % TODO recalc when parameters changes - define signature of test.
+  properties (Constant)
+    defOverlapError = 0.4;
+    repeatabilityDir = fullfile('data','software','repeatability','');
+    keyPrefix = 'kmEval_';
+    testTypeKeys = {'rep','rep+match'};
+  end
   
   methods
-    function obj = kristianEvalTest(framesStorage, varargin)
+    function obj = kristianEvalBenchmark(varargin)
       name = 'kristian_eval';
-      %obj = obj@affineDetectors.genericTest(resultsStorage, name, varargin{:});
-      obj = obj@affineDetectors.genericTest(framesStorage, name);
+      obj = obj@benchmarks.genericBenchmark(name);
       
-      obj.km_opts.OverlapError = 0.4;
-      obj.km_opts.CalcMatches = true;
+      obj.opts.OverlapError = kristianEvalBenchmark.defOverlapError;
       if numel(varargin) > 0
-        obj.km_opts = commonFns.vl_argparse(obj.km_opts,varargin{:});
+        obj.opts = commonFns.vl_argparse(obj.opts,varargin{:});
       end
       
       % Index of a value from the test results corresponding to idx*10 overlap
       % error. Kristian eval. computes only overlap errors in step of 0.1
-      overlapErr = obj.km_opts.OverlapError;
-      overlap_err_idx = round(overlapErr*10);
-      if (overlapErr*10 - overlap_err_idx) ~= 0
+      overlapErr = obj.opts.OverlapError;
+      overlapErrIdx = round(overlapErr*10);
+      if (overlapErr*10 - overlapErrIdx) ~= 0
           warning(['KM benchmark supports only limited set of overlap errors. ',...
-                   'The comparison would not be accurate.']);
+                   'Your overlap error was rounded.']);
       end
       
-      krisDir = affineDetectors.helpers.getKristianDir();
-      if(~exist(krisDir,'dir'))
-        error('Kristian''s benchmark not found, cannot run\n');
-      end
-      
-      if obj.km_opts.CalcMatches && ~framesStorage.opts.calcDescriptors
-        error ('For match score test, descriptors need to be calculated.');
-      end
-      
-      numDetectors = obj.framesStorage.numDetectors();
-      numImages = obj.framesStorage.numImages();
-      obj.repeatibilityScore = zeros(numDetectors,numImages); 
-      obj.repeatibilityScore(:,1)=1;
-      obj.numOfCorresp = zeros(numDetectors,numImages);
-      obj.matchScore = zeros(numDetectors,numImages); 
-      obj.matchScore(:,1)=1;
-      obj.numOfMatches = zeros(numDetectors,numImages);
+      if(~kristianEvalBenchmark.isInstalled())
+        disp('Kristian''s benchmark not found, installing dependencies...');
+        kristianEvalBenchmark.installDeps();
+      end      
     end
     
-    function runTest(obj)
-      numDetectors = obj.framesStorage.numDetectors();            
-      obj.framesStorage.calcFrames();
+    function [repeatability, numCorresp, matchScore, numMatches] = ...
+                testDetector(obj, detector, tf, imageAPath, imageBPath)
+      fprintf('Running kristian eval.');
       
+      imageASign = helpers.fileSignature(imageAPath);
+      imageBSign = helpers.fileSignature(imageAPath);
+      detSign = detector.getSignature();
+      testType = kristianEvalBenchmark.testTypeKeys{nargout/2};
+      keyPrefix = kristianEvalBenchmark.keyPrefix;
+      resultsKey = strcat(keyPrefix,testType,detSign,imageASign,imageBSign);
+      cachedResults = DataCache.getData(resultsKey);
       
-      numImages = obj.framesStorage.numImages();
-      detNames = obj.framesStorage.detectorsNames;
-      
-      obj.imagePaths = cell(1,numImages);
-      for image_i = 1:numImages
-        obj.imagePaths{image_i} = obj.framesStorage.dataset.getImagePath(image_i);
-      end
-      
-      fprintf('Running kristian eval on %d detectors:\n',numDetectors);
-      calcMatches = obj.km_opts.CalcMatches;
-      repScore = obj.repeatibilityScore;
-      numCorresp = obj.numOfCorresp;
-      matchScore = obj.matchScore;
-      numMatches = obj.numOfMatches;
-      hasChanges = true(numDetectors,1);
-      
-      for iDetector = 1:numDetectors
-        hasChanges(iDetector) = obj.frames_has_changed(iDetector);
-      end
-      
-      parfor iDetector = 1:numDetectors
-        fprintf('\nRunning kristians benchmark code for %s detector.\n',detNames{iDetector});
-        if hasChanges(iDetector)
-          %detFrames = frames{iDetector};
-          %detDescs = descriptors{iDetector};
-          if calcMatches
-            %[repScore(iDetector,:), numCorresp(iDetector,:), matchScore(iDetector,:), numMatches(iDetector,:)] ...
-            %        = affineDetectors.runKristianEval(detFrames,imagePaths,images,tfs, ...
-            %                          overlapErr , detDescs);
-            [repScore(iDetector,:), numCorresp(iDetector,:),... 
-             matchScore(iDetector,:), numMatches(iDetector,:)] = obj.runKristianEval(iDetector);
-          else
-          %    [repScore(iDetector,:), numCorresp(iDetector,:)] = ...
-          %        affineDetectors.runKristianEval(detFrames,imagePaths,...
-          %                        images,tfs,overlapErr);
-            [repScore(iDetector,:), numCorresp(iDetector,:)] = obj.runKristianEval(iDetector);
-          end
-        else 
-          fprintf('\nThe frames have not changed.\n');
+      if isempty(cachedResults)
+        if nargout == 4
+          [framesA descriptorsA] = detector.extractFeatures(imageAPath);
+          [framesB descriptorsB] = detector.extractFeatures(imageBPath);
+          [repeatability, numCorresp, matchScore, numMatches] = ...
+            obj.testFeatures(tf, imageAPath, imageBPath, ...
+                             framesA, framesB, descriptorsA, descriptorsB);
+        else
+          [framesA] = detector.extractFeatures(imageAPath);
+          [framesB] = detector.extractFeatures(imageBPath);
+          [repeatability, numCorresp] = ...
+            obj.testFeatures(tf, imageAPath, imageBPath, framesA, framesB);
+          matchScore = -1;
+          numMatches = -1;
         end
+        
+        results = {repeatability numCorresp matchScore numMatches};
+        DataCache.storeData(results, resultsKey);
+      else
+        [repeatability numCorresp matchScore numMatches] = cachedResults{:};
       end
       
-      obj.repeatibilityScore = repScore;
-      obj.numOfCorresp = numCorresp;
-      obj.matchScore = matchScore;
-      obj.numOfMatches = numMatches;
-      
-      obj.det_signatures = obj.framesStorage.det_signatures;
+    end
 
-      fprintf('\n------ Kristian evaluation completed ---------\n');
+    function [repeatability numCorresp matchScore numMatches] = ... 
+                testFeatures(obj, tf, imageAPath, imageBPath, ...
+                             framesA, framesB, descriptorsA, descriptorsB)
       
-      obj.plotResults();
-      obj.printResults();
-      
-    end
-  
-    function plotResults(obj)
-          % ----------------- Plot the evaluation scores ---------------------------------
-        obj.plotScores(31, 'KM_repeatability', obj.repeatibilityScore, ...
-                   'KM Detector repeatibility vs. image index', ...
-                   'Repeatibility. %', 2);
-        obj.plotScores(32, 'KM_numCorrespond', obj.numOfCorresp, ...
-                   'KM Detector num. of correspondences vs. image index', ...
-                   '#correspondences', 2);
-        if obj.km_opts.CalcMatches
-          obj.plotScores(33, 'KM_matchScore', obj.matchScore, ...
-                     'KM Detector matching score vs. image index', ...
-                     'Matching score %', 2);
-          obj.plotScores(34, 'KM_numMatches', obj.numOfMatches, ...
-                     'KM Detector num of matches vs. image index', ...
-                     '#correct matches', 2);
-        end
-    end
-    
-    function printResults(obj)
-      % -------- Print out and save the scores --------------------
-      fprintf('\nOutput of Kristians benchmark:\n');
-      obj.printScores(obj.repeatibilityScore,'repScore.txt', 'KM repeatability scores');
-      obj.printScores(obj.numOfCorresp,'corrNum.txt', 'KM num. of correspondences');
-      if obj.km_opts.CalcMatches
-        obj.printScores(obj.matchScore,'matchScore.txt', 'KM match scores');
-        obj.printScores(obj.numOfMatches,'matchesNum.txt', 'KM num. of matches');
-      end
-    end
-  end
-  
-  
-   methods (Access=protected)
-    function [repScores numOfCorresp matchScores numOfMatches] = runKristianEval(obj,iDetector)
-      frames = obj.framesStorage.frames{iDetector};
-      descriptors = obj.framesStorage.descriptors{iDetector};
-      overlapErr = obj.km_opts.OverlapError;
-      images = obj.framesStorage.images;
-      imagePaths = obj.imagePaths;
-      tfs = obj.framesStorage.tfs;
-      numImages = numel(images);
-
-      repScores = zeros(1,numel(frames)); repScores(1) = 100;
-      numOfCorresp = zeros(1,numel(frames));
-      matchScores = zeros(1,numel(frames)); matchScores(1) = 100;
-      numOfMatches = zeros(1,numel(frames));
-      
-      frames_1 = frames{1};
-      descriptors_1 = descriptors{1};
-      imagePaths_1 = imagePaths{1};
-      
-      if nargout == 2
+      if nargout == 4 && nargin == 8
         commonPart = 1;
       elseif nargout == 4
-        commonPart = 0;
+        warning('Unable to calculate match score without descriptors.');
       end
       
-      parfor i = 2:numImages
-        % [framesA,framesB,framesA_,framesB_, descrsA, descrsB] = ...
-        %  helpers.cropFramesToOverlapRegion(frames{1},frames{i},tfs{i},images{1},images{i}, ...
-        %                                    descrs{1}, descrs{i});
-        
-        fprintf('Running Kristians''s benchmark on Img#%02d/%02d\n',i,numImages);
-        [repScores(i) numOfCorresp(i) matchScores(i) numOfMatches(i)] = ...
-          affineDetectors.helpers.runRepeatability(frames_1,frames{i},...
-          descriptors_1,descriptors{i},tfs{i},imagePaths_1,...
-          imagePaths{i},commonPart,overlapErr);
-
+      if nargout == 2
+        commonPart = 0;
+        descriptorsA = [];
+        descriptorsB = [];
       end
+     
+      krisDir = kristianEvalBenchmark.repeatabilityDir;
+      tmpFile = tempname;
+      ellBFile = [tmpFile 'ellB.txt'];
+      tmpHFile = [tmpFile 'H.txt'];
+      ellAFile = [tmpFile 'ellA.txt'];
+      helpers.vggwriteell(ellAFile,frameToEllipse(framesA), descriptorsA);
+      helpers.vggwriteell(ellBFile,frameToEllipse(framesB), descriptorsB);
+      H = tf;
+      save(tmpHFile,'H','-ASCII');
+      overlap_err_idx = round(obj.opts.overlapError*10);
+
+      addpath(krisDir);
+      rehash;
+      [err, tmprepeatability, tmpnumCorresp, matchScore, numMatches] ...
+          = repeatability(ellAFile,ellBFile,tmpHFile,imageAPath,imageBPath,commonPart);
+      rmpath(krisDir);
+
+      repeatability = tmprepeatability(overlap_err_idx);
+      numCorresp = tmpnumCorresp(overlap_err_idx);
+      delete(ellAFile);
+      delete(ellBFile);
+      delete(tmpHFile);
     end
 
   end
   
+   methods (Static)
+    function cleanDeps()
+    end
+
+    function installDeps()
+    end
+
+    function result = isInstalled()
+      repeatabilityFile = fullfile(kristianEvalBenchmark.repeatabilityDir,'repeatability.m');
+      result = exist(repeatabilityFile,'file');
+    end
+   end
 end
 

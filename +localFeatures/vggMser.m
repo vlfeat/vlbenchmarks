@@ -21,18 +21,24 @@
 %
 %   MM:: [10]
 %     Minimum margin
+%
+%   noAngle:: [false]
+%     Compute rotation variant descriptors if true (no rotation esimation)
+%
+%   Magnification:: [binary default]
+%     Magnification of the measurement region for the descriptor
+%     calculation.
 
-classdef vggMser < affineDetectors.genericDetector
+classdef vggMser < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the vggMser
     % binary accepts. See the binary help for explanation.
-
-    es  % Ellipse scale
-    per % Maximum relative area
-    ms  % Minimum size of output region
-    mm  % Minimum margin
-
     binPath
+  end
+  
+    properties (Constant)
+    rootInstallDir = fullfile('data','software','vggMSER','');
+    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz';
   end
 
   methods
@@ -52,79 +58,73 @@ classdef vggMser < affineDetectors.genericDetector
       opts.per = -1;
       opts.ms = -1;
       opts.mm = -1;
-      opts = vl_argparse(opts,varargin);
-
-      obj.es = opts.es;
-      obj.per = opts.per;
-      obj.ms = opts.ms;
-      obj.mm = opts.mm;
+      obj.opts.noAngle = false;
+      obj.opts.magnification = -1;
+      obj.opts = vl_argparse(opts,varargin);
 
       % Check platform dependence
-      cwd=commonFns.extractDirPath(mfilename('fullpath'));
       machineType = computer();
-      binPath = '';
       switch(machineType)
         case  {'GLNX86','GLNXA64'}
-          binPath = fullfile(cwd,vggMser.rootInstallDir,'mser.ln');
+          obj.binPath = fullfile(vggMser.rootInstallDir,'mser.ln');
         case  {'PCWIN','PCWIN64'}
-          binPath = fullfile(cwd,vggMser.rootInstallDir,'mser.exe');
+          obj.binPath = fullfile(vggMser.rootInstallDir,'mser.exe');
         otherwise
           obj.isOk = false;
           obj.errMsg = sprintf('Arch: %s not supported by vggMser',...
                                 machineType);
       end
-      obj.binPath = binPath;
     end
 
-    function frames = detectPoints(obj,img)
+    function [frames descriptors] = extractFeatures(obj, imagePath)
       if ~obj.isOk, frames = zeros(5,0); return; end
 
       tmpName = tempname;
-      imgFile = [tmpName '.png'];
-      featFile = [tmpName '.feat'];
+      framesFile = [tmpName '.feat'];
 
-      imwrite(img,imgFile);
       args = ' -t 2';
-      if obj.es ~= -1
+      if obj.opts.es ~= -1
         args = sprintf('%s -es %f',args,obj.es);
       end
-      if obj.per ~= -1
+      if obj.opts.per ~= -1
         args = sprintf('%s -per %f',args,obj.per);
       end
-      if obj.ms ~= -1
+      if obj.opts.ms ~= -1
         args = sprintf('%s -ms %d',args,obj.ms);
       end
-      if obj.mm ~= -1
+      if obj.opts.mm ~= -1
         args = sprintf('%s -mm %d',args,obj.mm);
       end
       args = sprintf('%s -i "%s" -o "%s"',...
-                     args,imgFile, featFile);
-      binPath = obj.binPath;
-      cmd = [binPath ' ' args];
+                     args, imagePath, framesFile);
+      cmd = [obj.binPath ' ' args];
 
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;
       end
-
-      frames = obj.parseMserOutput(featFile);
-      delete(imgFile); delete(featFile);
+      
+      if nargout == 1
+        frames = obj.parseMserOutput(framesFile);
+      else
+        [ frames descriptors ] = helpers.vggCalcSiftDescriptor( imagePath, ...
+                          framesFile, obj.opts.magnification, obj.opts.noAngle );
+      end
+      
+      delete(imagePath); delete(framesFile);
     end
 
     function sign = signature(obj)
       sign = [commonFns.file_signature(obj.binPath) ';'... 
-              num2str(obj.es) ';'...
-              num2str(obj.per) ';'...
-              num2str(obj.ms) ';'...
-              num2str(obj.mm) ';'...
+              num2str(obj.opts.es) ';'...
+              num2str(obj.opts.per) ';'...
+              num2str(obj.opts.ms) ';'...
+              num2str(obj.opts.mm) ';'...
+              num2str(obj.opts.magnification) ';' ... 
+              num2str(obj.opts.noAngle) ';' ... 
               ];
     end
     
-  end
-
-  properties (Constant)
-    rootInstallDir = 'thirdParty/vggMser/';
-    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz';
   end
 
   methods (Static)
@@ -146,20 +146,20 @@ classdef vggMser < affineDetectors.genericDetector
 
     end
 
-    function frames = parseMserOutput(featFile)
-      fid = fopen(featFile,'r');
+    function frames = parseMserOutput(framesFile)
+      fid = fopen(framesFile,'r');
       if fid==-1
-        error('Could not read file: %s\n',featFile);
+        error('Could not read file: %s\n',framesFile);
       end
       [header,count] = fscanf(fid,'%f',2);
       if count~= 2,
-        error('Invalid vgg mser output in: %s\n',featFile);
+        error('Invalid vgg mser output in: %s\n',framesFile);
       end
       numPoints = header(2);
       %frames = zeros(5,numPoints);
       [frames,count] = fscanf(fid,'%f',[5 numPoints]);
       if count~=5*numPoints,
-        error('Invalid mser output in %s\n',featFile);
+        error('Invalid mser output in %s\n',framesFile);
       end
 
       % Transform the frame properly
