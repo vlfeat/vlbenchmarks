@@ -6,6 +6,6 @@
 *.mexmaci64
 *.mexglx
 *.m~
-thirdParty/
+data/
 junk/
-savedResults/
+results/
