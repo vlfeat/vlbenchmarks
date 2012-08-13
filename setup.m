@@ -5,9 +5,9 @@ function setup()
 if(exist('vl_demo','file')),
   fprintf('VLFeat already found loaded\n');
 else
-  cwd=commonFns.extractDirPath(mfilename('fullpath'));
+  cwd=fileparts(mfilename('fullpath'));
   installVersion = '0.9.14';
-  installDir = fullfile(cwd,'thirdParty');
+  installDir = fullfile(cwd,'data','software');
   vlFeatDir = fullfile(installDir,['vlfeat-' installVersion]);
   if(exist(vlFeatDir,'dir'))
     run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
