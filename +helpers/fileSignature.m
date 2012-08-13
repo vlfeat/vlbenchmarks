@@ -1,5 +1,5 @@
 function [ signature ] = fileSignature( varargin )
-%FILE_SIGNATURE Compute a file signature
+%FILESIGNATURE Compute a file signature
 %   Computes file signature based on its name and modification date.
 %   Returns a string "file_name;modification_date". The file_name
 %   is without path and the modification date is in format of matlab dir

@@ -1,7 +1,7 @@
 function install()
 % Function to install all third party dependencies
 
-affineDetectors.installDeps();
+localFeatures.installDeps();
 installVlFeat();
 
 function installVlFeat()
@@ -13,10 +13,10 @@ function installVlFeat()
     return;
   end
 
-  cwd=commonFns.extractDirPath(mfilename('fullpath'));
+  cwd=fileparts(mfilename('fullpath'));
   installVersion = '0.9.14';
   installDir = fullfile(cwd,'thirdParty');
-  commonFns.vl_xmkdir(installDir);
+  helpers.vl_xmkdir(installDir);
   vlFeatDir = fullfile(installDir,['vlfeat-' installVersion]);
 
   %If vlfeat is already downloaded, then do nothing

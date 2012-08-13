@@ -35,7 +35,7 @@ classdef syntheticDataset < affineDetectors.genericDataset
       obj.opts.maxBlur = 15;
       obj.opts.minNoise = 0.001;
       obj.opts.maxNoise = 0.01;
-      obj.opts = commonFns.vl_argparse(obj.opts,varargin);
+      obj.opts = helpers.vl_argparse(obj.opts,varargin);
       if ~iscell(obj.opts.category)
         obj.opts.category = {obj.opts.category};
       end
@@ -46,7 +46,7 @@ classdef syntheticDataset < affineDetectors.genericDataset
              category{1}));
       end
       obj.datasetName = ['transfDataset-' categoriesStr];
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      cwd = helpers.extractDirPath(mfilename('fullpath'));
       obj.numImages = obj.opts.numImages;
       [pathstr, obj.imageName, obj.imageExt] = fileparts(obj.opts.image);
       
@@ -54,8 +54,8 @@ classdef syntheticDataset < affineDetectors.genericDataset
                              categoriesStr, obj.imageName);
       obj.image = imread(fullfile(cwd,obj.rootInstallDir,obj.opts.image));
       vl_xmkdir(obj.dataDir);
-      obj.imageLabels = cell(obj.numImages,1);
-      obj.imageLabelsTitle = 'Image ';
+      obj.imageNames = cell(obj.numImages,1);
+      obj.imageNamesLabel = 'Image ';
       
       % Check if images generated
       files = dir([obj.dataDir '/img*' obj.imageExt]);

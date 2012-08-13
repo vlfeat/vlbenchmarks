@@ -16,7 +16,7 @@ installCalcMD5();
 
 function installCalcMD5()
   curDir = pwd;
-  cd(fullfile(pwd,'+commonFns','+CalcMD5'));
+  cd(fullfile(pwd,'+helpers','+CalcMD5'));
   mexCmd = 'mex -O CalcMD5.c';
   fprintf('Compiling: %s\n',mexCmd);
   eval(mexCmd);

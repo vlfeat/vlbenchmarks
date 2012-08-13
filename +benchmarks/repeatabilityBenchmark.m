@@ -27,21 +27,21 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
   properties(Constant)
     defOverlapError = 0.4;
     defNormaliseFrames = true;
-    defCacheMatches = false;
-    keyPrefix = 'repeatability_';
-    repFramesKeyPrefix = 'repFrames_';
+    defCacheReprojectedFrames = false;
+    keyPrefix = 'repeatability';
+    repFramesKeyPrefix = 'repFrames';
   end
   
   methods
     function obj = repeatabilityBenchmark(varargin)
-      name = 'repeatability';
-      obj = benchmarks.genericBenchmark(name);
+      import benchmarks.*;
+      obj.benchmarkName = 'repeatability';
       
       obj.opts.overlapError = repeatabilityBenchmark.defOverlapError;
       obj.opts.normaliseFrames = repeatabilityBenchmark.defNormaliseFrames;
       obj.opts.cacheReprojectedFrames = repeatabilityBenchmark.defCacheReprojectedFrames;
       if numel(varargin) > 0
-        obj.opts = commonFns.vl_argparse(obj.opts,varargin{:});
+        obj.opts = helpers.vl_argparse(obj.opts,varargin{:});
       end
       
     end
@@ -49,19 +49,26 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
     function [repeatability numCorresp reprojFrames bestMatches] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
 
+      import benchmarks.*;
+      import helpers.*;
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('comparing frames from det. %s and images %s and %s.',...
+          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath)));
+      
       imageASign = helpers.fileSignature(imageAPath);
-      imageBSign = helpers.fileSignature(imageAPath);
+      imageBSign = helpers.fileSignature(imageBPath);
       detSign = detector.getSignature();
       keyPrefix = repeatabilityBenchmark.keyPrefix;
       resultsKey = strcat(keyPrefix,detSign,imageASign,imageBSign);
-      cachedResults = DataCache.getData(resultsKey);
+      cachedResults = helpers.DataCache.getData(resultsKey);
       
       if isempty(cachedResults)
         [framesA] = detector.extractFeatures(imageAPath);
         [framesB] = detector.extractFeatures(imageBPath);
       
         [repeatability numCorresp reprojFrames bestMatches] = ... 
-          testFeatures(obj,tf,framesA, framesB);
+          testFeatures(obj,tf,imageAPath, imageBPath,framesA, framesB);
         
         if obj.opts.cacheReprojectedFrames
           results = {repeatability numCorresp reprojFrames bestMatches};
@@ -69,8 +76,9 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
           results = {repeatability numCorresp [] []};
         end
         
-        DataCache.storeData(results, resultsKey);
+        helpers.DataCache.storeData(results, resultsKey);
       else
+        Log.debug(obj.benchmarkName,'Results loaded from cache');
         [repeatability numCorresp reprojFrames bestMatches] = cachedResults{:};
       end
       
@@ -79,7 +87,9 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
     function [repeatability numCorresp reprojFrames bestMatches] = ... 
                 testFeatures(obj, tf, imageAPath, imageBPath, framesA, framesB)
       import benchmarks.helpers.*;
+      import helpers.*;
       
+      startTime = tic;
       normFrames = obj.opts.normaliseFrames;
       overlErr = obj.opts.overlapError;
       
@@ -91,10 +101,19 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       frameMatches = matchEllipses(repFramesB, cropFramesA,'NormaliseFrames',normFrames);
       bestMatches = findOneToOneMatches(frameMatches,cropFramesA,repFramesB,overlErr);
       numBestMatches = sum(bestMatches ~= 0);
-      repeatability = numBestMatches / min(size(framesA,2), size(framesB,2));
+      repeatability = numBestMatches / min(size(cropFramesA,2), size(cropFramesB,2));
       numCorresp = numBestMatches;
       
       reprojFrames = {cropFramesA,cropFramesB,repFramesA,repFramesB};
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('Repeatability: %g \t Num correspondences: %g',...
+        repeatability,numCorresp));
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.benchmarkName,...
+        sprintf('Score between %d/%d frames comp. in %gs',...
+        size(framesA,2),size(framesB,2),timeElapsed));
     end
   end 
     
@@ -106,7 +125,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       imageA = imread(imageAPath);
       imageB = imread(imageBPath);
       
-      [cropFramesA,cropFramesB,repFramesA,repFramesB] = reprojectedFrames;
+      [cropFramesA,cropFramesB,repFramesA,repFramesB] = reprojectedFrames{:};
       
       figure(figA); 
       imshow(imageA);

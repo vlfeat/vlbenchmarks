@@ -1,6 +1,6 @@
 % CMPHESSIAN class to wrap around the CMP Hessian Affine detector implementation
 %
-%   obj = affineDetectors.cmpHessian('Option','OptionValue',...);
+%   obj = localFeatures.cmpHessian('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
 %   This class implements the genericDetector interface and wraps around the
@@ -16,46 +16,48 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the cmp hessian
     % binary accepts. See the binary help for explanation.
-
     binPath
+  end
+  
+  properties (Constant)
+    rootInstallDir = fullfile('data','software','cmpHessian','');
+    softwareUrl = 'http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz';
   end
 
   methods
     % The constructor is used to set the options for the cmp
     % hessian binary.
     function obj = cmpHessian(varargin)
-      import affineDetectors.*;
+      import localFeatures.*;
       obj.detectorName = 'CMP Hessian';
-      obj.calcdescriptors = true;
       if ~cmpHessian.isInstalled(),
         obj.isOk = false;
-        obj.errMsg = 'cmpHessian not found installed';
-        return;
+        warning('cmpHessian not found installed');
+        cmpHessian.installDeps();
       end
 
-      % Parse the passed options
-      %opts.es = 1.0;
-      %opts.per = 0.01;
-      %opts.ms = 30;
-      %opts.mm = 10;
-      %opts = vl_argparse(opts,varargin);
-
       % Check platform dependence
-      cwd=commonFns.extractDirPath(mfilename('fullpath'));
       machineType = computer();
-      binPath = '';
       switch(machineType)
         case  {'GLNX86','GLNXA64'}
-          binPath = fullfile(cwd,cmpHessian.rootInstallDir,'hesaff');
+          obj.binPath = fullfile(cmpHessian.rootInstallDir,'hesaff');
         otherwise
           obj.isOk = false;
           obj.errMsg = sprintf('Arch: %s not supported by cmpHessian',...
                                 machineType);
       end
-      obj.binPath = binPath;
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+      
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath)));
+      
       img = imread(imagePath);
       if ~obj.isOk, frames = zeros(5,0); descriptors = zeros(128,0); return; end
 
@@ -75,29 +77,30 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
       end
       
       [frames descriptors] = vl_ubcread(featFile,'format','oxford');
-      delete(imgFile); delete(featFile);
+      delete(featFile);
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
 
-    function sign = signature(obj)
-      sign = commonFns.file_signature(obj.binPath);
+    function sign = getSignature(obj)
+      sign = helpers.fileSignature(obj.binPath);
     end
     
-  end
-
-  properties (Constant)
-    rootInstallDir = 'thirdParty/cmpHessian/';
-    softwareUrl = 'http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz';
   end
 
   methods (Static)
 
     function cleanDeps()
-      import affineDetectors.*;
+      import localFeatures.*;
 
       fprintf('\nDeleting cmpHessian from: %s ...\n',cmpHessian.rootInstallDir);
-
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,cmpHessian.rootInstallDir);
+      
+      installDir = cmpHessian.rootInstallDir;
 
       if(exist(installDir,'dir'))
         rmdir(installDir,'s');
@@ -109,15 +112,14 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
     end
 
     function installDeps()
-      import affineDetectors.*;
+      import localFeatures.*;
       if cmpHessian.isInstalled(),
         fprintf('CMP hessian is already installed\n');
         return
       end
       fprintf('Downloading cmpHessian to: %s ...\n',cmpHessian.rootInstallDir);
 
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,cmpHessian.rootInstallDir);
+      installDir = cmpHessian.rootInstallDir;
 
       try
         untar(cmpHessian.softwareUrl,installDir);
@@ -128,14 +130,13 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
       end
 
       fprintf('cmpHessian download complete, Manual compilation is needed to complete installation\n');
-      fprintf('Goto directory: +affineDetectors/%s, and run the makefile to complete the installation\n',...
+      fprintf('Goto directory: +localFeatures/%s, and run the makefile to complete the installation\n',...
               cmpHessian.rootInstallDir);
     end
 
     function response = isInstalled()
-      import affineDetectors.*;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,cmpHessian.rootInstallDir);
+      import localFeatures.*;
+      installDir = cmpHessian.rootInstallDir;
       if(exist(installDir,'dir')),  response = true;
       else response = false; end
     end

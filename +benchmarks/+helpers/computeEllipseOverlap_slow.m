@@ -3,7 +3,7 @@ function overlap =  computeEllipseOverlap_slow(vggA,vggB,normalise)
 %
 %
 
-import affineDetectors.*
+import benchmarks.*
 
 norm_arg = double(normalise);
 

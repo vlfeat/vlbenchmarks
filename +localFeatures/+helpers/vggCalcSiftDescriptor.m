@@ -18,10 +18,12 @@ function [ validFrames descriptors ] = vggCalcSiftDescriptor( imagePath, frames,
 %   NoAngle:: [false]
 %     When true, upright SIFT descriptors are calculated.
 
+import localFeatures.*;
+
 opts.magnification = 3;
 opts.noAngle = false;
 opts = vl_argparse(opts,varargin);
-
+machineType = computer();
 switch(machineType)
   case {'GLNXA64','GLNX86'}
     descrBinPath = fullfile(vggNewAffine.rootInstallDir,'compute_descriptors_2.ln');
@@ -32,18 +34,18 @@ end
 tmpName = tempname;
 outDescFile = [tmpName '.sift'];
 
-if exist('frames','file')
+if size(frames,1) == 1 && exist(frames,'file')
   framesFile = frames;
 elseif exist('frames','var')
   framesFile = [tmpName '.frames'];
-  localFeatures.helpers.writeframes(framesFile,frames,'oxford');
+  localFeatures.helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
 end
 
 descrArgs = sprintf('-sift -i "%s" -p1 "%s" -o1 "%s"', ...
                      imagePath,framesFile, outDescFile);
 
 if opts.magnification > 0
-  descrArgs = [desc_param,' -scale-mult ', num2str(opts.magnification)];
+  descrArgs = [descrArgs,' -scale-mult ', num2str(opts.magnification)];
 end
 
 if opts.noAngle

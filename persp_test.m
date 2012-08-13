@@ -12,10 +12,10 @@ img = uint8(img.*255);
 %[frms2 descs gss resp2] = vl_covdet(single(img),'Method','dog','Orientation',false,'AffineAdaptation',true, 'Magnif',1);
 %vl_plotframe(frms);
 
-vggDet = affineDetectors.vggNewAffine('detector','hessian','thresh',5000);
+vggDet = localFeatures.vggNewAffine('detector','hessian','thresh',5000);
 frms3 = vggDet.detectPoints(img);
 
-%cmpDet = affineDetectors.cmpHessian();
+%cmpDet = localFeatures.cmpHessian();
 %frms4 = cmpDet.detectPoints(img);
 
 frames1 = frms1;

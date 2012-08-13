@@ -6,7 +6,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
   %   Options:
   %
   %   OverlapError :: [0.4]
-  %     Overlap error of the ellipses for which the repeatability is
+  %     Overlap error of the ellipses for which the repScore is
   %     calculated. Can be only in {0.1, 0.2, ... ,0.9}.
   %
   
@@ -16,42 +16,51 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
   
   properties (Constant)
     defOverlapError = 0.4;
-    repeatabilityDir = fullfile('data','software','repeatability','');
-    keyPrefix = 'kmEval_';
+    repScoreDir = fullfile('data','software','repeatability','');
+    keyPrefix = 'kmEval';
     testTypeKeys = {'rep','rep+match'};
   end
   
   methods
     function obj = kristianEvalBenchmark(varargin)
-      name = 'kristian_eval';
-      obj = obj@benchmarks.genericBenchmark(name);
+      import benchmarks.*;
+      import helpers.*;
       
-      obj.opts.OverlapError = kristianEvalBenchmark.defOverlapError;
+      obj.benchmarkName = 'kristian_eval';
+      
+      obj.opts.overlapError = kristianEvalBenchmark.defOverlapError;
       if numel(varargin) > 0
-        obj.opts = commonFns.vl_argparse(obj.opts,varargin{:});
+        obj.opts = helpers.vl_argparse(obj.opts,varargin{:});
       end
       
       % Index of a value from the test results corresponding to idx*10 overlap
       % error. Kristian eval. computes only overlap errors in step of 0.1
-      overlapErr = obj.opts.OverlapError;
+      overlapErr = obj.opts.overlapError;
       overlapErrIdx = round(overlapErr*10);
       if (overlapErr*10 - overlapErrIdx) ~= 0
-          warning(['KM benchmark supports only limited set of overlap errors. ',...
-                   'Your overlap error was rounded.']);
+          Log.warn(obj.benchmarkName,...
+            ['KM benchmark supports only limited set of overlap errors. ',...
+             'Your overlap error was rounded.']);
       end
       
       if(~kristianEvalBenchmark.isInstalled())
-        disp('Kristian''s benchmark not found, installing dependencies...');
+        Log.warn(obj.benchmarkName,...
+          'Kristian''s benchmark not found, installing dependencies...');
         kristianEvalBenchmark.installDeps();
       end      
     end
     
-    function [repeatability, numCorresp, matchScore, numMatches] = ...
+    function [repScore, numCorresp, matchScore, numMatches] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
-      fprintf('Running kristian eval.');
+      import helpers.*;
+      import benchmarks.*;
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('comparing frames from det. %s and images %s and %s.',...
+          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath)));
       
       imageASign = helpers.fileSignature(imageAPath);
-      imageBSign = helpers.fileSignature(imageAPath);
+      imageBSign = helpers.fileSignature(imageBPath);
       detSign = detector.getSignature();
       testType = kristianEvalBenchmark.testTypeKeys{nargout/2};
       keyPrefix = kristianEvalBenchmark.keyPrefix;
@@ -62,64 +71,86 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
         if nargout == 4
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
-          [repeatability, numCorresp, matchScore, numMatches] = ...
+          [repScore, numCorresp, matchScore, numMatches] = ...
             obj.testFeatures(tf, imageAPath, imageBPath, ...
                              framesA, framesB, descriptorsA, descriptorsB);
         else
           [framesA] = detector.extractFeatures(imageAPath);
           [framesB] = detector.extractFeatures(imageBPath);
-          [repeatability, numCorresp] = ...
+          [repScore, numCorresp] = ...
             obj.testFeatures(tf, imageAPath, imageBPath, framesA, framesB);
           matchScore = -1;
           numMatches = -1;
         end
         
-        results = {repeatability numCorresp matchScore numMatches};
+        results = {repScore numCorresp matchScore numMatches};
         DataCache.storeData(results, resultsKey);
       else
-        [repeatability numCorresp matchScore numMatches] = cachedResults{:};
+        Log.debug(obj.benchmarkName,'results loaded from cache');
+        
+        [repScore numCorresp matchScore numMatches] = cachedResults{:};
       end
       
     end
 
-    function [repeatability numCorresp matchScore numMatches] = ... 
-                testFeatures(obj, tf, imageAPath, imageBPath, ...
-                             framesA, framesB, descriptorsA, descriptorsB)
+    function [repScore numCorresp matchScore numMatches] = ... 
+               testFeatures(obj, tf, imageAPath, imageBPath, ...
+                 framesA, framesB, descriptorsA, descriptorsB)
+      
+      import benchmarks.*;
+      import helpers.*;
+      
+      startTime = tic;
       
       if nargout == 4 && nargin == 8
-        commonPart = 1;
+        commonPart = 0;
       elseif nargout == 4
-        warning('Unable to calculate match score without descriptors.');
+        Log.warn('Unable to calculate match score without descriptors.');
       end
       
       if nargout == 2
-        commonPart = 0;
+        commonPart = 1;
         descriptorsA = [];
         descriptorsB = [];
       end
      
-      krisDir = kristianEvalBenchmark.repeatabilityDir;
+      krisDir = kristianEvalBenchmark.repScoreDir;
       tmpFile = tempname;
       ellBFile = [tmpFile 'ellB.txt'];
       tmpHFile = [tmpFile 'H.txt'];
       ellAFile = [tmpFile 'ellA.txt'];
-      helpers.vggwriteell(ellAFile,frameToEllipse(framesA), descriptorsA);
-      helpers.vggwriteell(ellBFile,frameToEllipse(framesB), descriptorsB);
+      ellAFrames = localFeatures.helpers.frameToEllipse(framesA);
+      ellBFrames = localFeatures.helpers.frameToEllipse(framesB);
+      localFeatures.helpers.vggwriteell(ellAFile,ellAFrames, descriptorsA);
+      localFeatures.helpers.vggwriteell(ellBFile,ellBFrames, descriptorsB);
       H = tf;
       save(tmpHFile,'H','-ASCII');
       overlap_err_idx = round(obj.opts.overlapError*10);
 
       addpath(krisDir);
       rehash;
-      [err, tmprepeatability, tmpnumCorresp, matchScore, numMatches] ...
+      [err, tmprepScore, tmpnumCorresp, matchScore, numMatches] ...
           = repeatability(ellAFile,ellBFile,tmpHFile,imageAPath,imageBPath,commonPart);
       rmpath(krisDir);
 
-      repeatability = tmprepeatability(overlap_err_idx);
+      repScore = tmprepScore(overlap_err_idx)./100;
       numCorresp = tmpnumCorresp(overlap_err_idx);
       delete(ellAFile);
       delete(ellBFile);
       delete(tmpHFile);
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('Repeatability: %g \t Num correspondences: %g',...
+        repScore,numCorresp));
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('Match score: %g \t Num matches: %g',...
+        matchScore,numMatches));
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.benchmarkName, ... 
+        sprintf('Score between %d/%d frames comp. in %gs',...
+        size(framesA,2),size(framesB,2),timeElapsed));
     end
 
   end
@@ -132,8 +163,9 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
     end
 
     function result = isInstalled()
-      repeatabilityFile = fullfile(kristianEvalBenchmark.repeatabilityDir,'repeatability.m');
-      result = exist(repeatabilityFile,'file');
+      import benchmarks.*;
+      repScoreFile = fullfile(kristianEvalBenchmark.repScoreDir,'repeatability.m');
+      result = exist(repScoreFile,'file');
     end
    end
 end

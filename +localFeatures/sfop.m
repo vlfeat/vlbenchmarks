@@ -3,7 +3,7 @@
 %   obj = affineDetectors.sfop('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
-%   This class implements the genericDetector interface and wraps around
+%   obj class implements the genericDetector interface and wraps around
 %   the implementation of SFOP available at:
 %   http://www.ipb.uni-bonn.de/index.php?id=220#software
 %
@@ -23,39 +23,45 @@ classdef sfop < affineDetectors.genericDetector
 
   methods
     % The constructor is used to set the options for vggAffine
-    function this = sfop(varargin)
+    function obj = sfop(varargin)
       import affineDetectors.*;
 
-      if ~this.isInstalled(),
-        this.isOk = false;
-        this.errMsg = 'SFOP not found installed';
+      if ~obj.isInstalled(),
+        obj.isOk = false;
+        obj.errMsg = 'SFOP not found installed';
         return;
       end
 
-      this.sfop_varargin = varargin;
+      obj.sfop_varargin = varargin;
     end
 
-    function frames = detectPoints(this,img)
-      if ~this.isOk, frames = zeros(5,0); return; end
+    function frames = extractFrames(obj,imagePath)
+      import helpers.*;
+      if ~obj.isOk, frames = zeros(5,0); return; end
 
-      %if(size(img,3) > 1), img = rgb2gray(img); end
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath)));      
 
       tmpName = tempname;
-      imgFile = [tmpName '.png'];
       outFile = [tmpName '.points'];
 
-      imwrite(img,imgFile);
       savePwd = pwd;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      sfop_varargin = this.sfop_varargin;
-      cd(fullfile(cwd,this.rootInstallDir,'sfop-0.9','matlab'));
-      sfop(imgFile,outFile,sfop_varargin{:});
+      cwd = fileparts(mfilename('fullpath'));
+      sfop_varargin = obj.sfop_varargin;
+      cd(fullfile(cwd,obj.rootInstallDir,'sfop-0.9','matlab'));
+      sfop(imagePath,outFile,sfop_varargin{:});
       cd(savePwd);
 
       frames = affineDetectors.vggMser.parseMserOutput(outFile);
       % Above output uses the same output format as vggMser
 
-      delete(imgFile); delete(outFile);
+      delete(outFile);
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));
     end
   end
 
@@ -71,7 +77,7 @@ classdef sfop < affineDetectors.genericDetector
 
       fprintf('Deleting SFOP from: %s ...\n',sfop.rootInstallDir);
 
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      cwd = fileparts(mfilename('fullpath'));
       installDir = fullfile(cwd,sfop.rootInstallDir);
 
       if(exist(installDir,'dir'))
@@ -91,7 +97,7 @@ classdef sfop < affineDetectors.genericDetector
       end
       fprintf('Downloading SFOP to: %s ...\n',sfop.rootInstallDir);
 
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      cwd = fileparts(mfilename('fullpath'));
       installDir = fullfile(cwd,sfop.rootInstallDir);
 
       try
@@ -107,7 +113,7 @@ classdef sfop < affineDetectors.genericDetector
 
     function response = isInstalled()
       import affineDetectors.*;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      cwd = fileparts(mfilename('fullpath'));
       installDir = fullfile(cwd,sfop.rootInstallDir);
       if(exist(installDir,'dir')),  response = true;
       else response = false; end

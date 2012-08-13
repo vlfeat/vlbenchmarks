@@ -11,7 +11,7 @@ classdef genericDataset < handle
     datasetName = ''; % Set this property in the constructor
     numImages = 0 % Set in constructor
     imageNames % Labels of images
-    transformationName % Definition of the transformations
+    imageNamesLabel % Definition of the transformations
   end
 
   methods(Abstract)
@@ -33,7 +33,7 @@ classdef genericDataset < handle
       sign_c = cell(1,obj.numImages);
       for i=1:obj.numImages
         img_fname = obj.getImagePath(i);
-        img_sign = commonFns.file_signature(img_fname);
+        img_sign = helpers.fileSignature(img_fname);
         sign_c{i} = [img_sign ';'];
       end
     

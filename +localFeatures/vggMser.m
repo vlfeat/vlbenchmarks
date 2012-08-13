@@ -1,6 +1,6 @@
 % VGGMSER class to wrap around the VGG MSER implementation
 %
-%   obj = affineDetectors.vggMser('Option','OptionValue',...);
+%   obj = localFeatures.vggMser('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
 %   This class implements the genericDetector interface and wraps around the
@@ -34,6 +34,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
     % The properties below correspond to parameters for the vggMser
     % binary accepts. See the binary help for explanation.
     binPath
+    opts
   end
   
     properties (Constant)
@@ -45,22 +46,22 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
     % The constructor is used to set the options for the vgg
     % mser binary.
     function obj = vggMser(varargin)
-      import affineDetectors.*;
+      import localFeatures.*;
       obj.detectorName = 'MSER(vgg)';
       if ~vggMser.isInstalled(),
         obj.isOk = false;
-        obj.errMsg = 'vggMser not found installed';
-        return;
+        warning('vggMser not found installed');
+        vggMser.installDeps();
       end
 
       % Parse the passed options
-      opts.es = -1;
-      opts.per = -1;
-      opts.ms = -1;
-      opts.mm = -1;
+      obj.opts.es = -1;
+      obj.opts.per = -1;
+      obj.opts.ms = -1;
+      obj.opts.mm = -1;
       obj.opts.noAngle = false;
       obj.opts.magnification = -1;
-      obj.opts = vl_argparse(opts,varargin);
+      obj.opts = vl_argparse(obj.opts,varargin);
 
       % Check platform dependence
       machineType = computer();
@@ -77,23 +78,32 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      import localFeatures.*;
       if ~obj.isOk, frames = zeros(5,0); return; end
+
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+      
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath)));       
 
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
 
       args = ' -t 2';
       if obj.opts.es ~= -1
-        args = sprintf('%s -es %f',args,obj.es);
+        args = sprintf('%s -es %f',args,obj.opts.es);
       end
       if obj.opts.per ~= -1
-        args = sprintf('%s -per %f',args,obj.per);
+        args = sprintf('%s -per %f',args,obj.opts.per);
       end
       if obj.opts.ms ~= -1
-        args = sprintf('%s -ms %d',args,obj.ms);
+        args = sprintf('%s -ms %d',args,obj.opts.ms);
       end
       if obj.opts.mm ~= -1
-        args = sprintf('%s -mm %d',args,obj.mm);
+        args = sprintf('%s -mm %d',args,obj.opts.mm);
       end
       args = sprintf('%s -i "%s" -o "%s"',...
                      args, imagePath, framesFile);
@@ -108,14 +118,22 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
         frames = obj.parseMserOutput(framesFile);
       else
         [ frames descriptors ] = helpers.vggCalcSiftDescriptor( imagePath, ...
-                          framesFile, obj.opts.magnification, obj.opts.noAngle );
+                          framesFile, 'Magnification', obj.opts.magnification, ...
+                          'NoAngle', obj.opts.noAngle );
       end
       
-      delete(imagePath); delete(framesFile);
+      delete(framesFile);
+
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
 
-    function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.binPath) ';'... 
+    function sign = getSignature(obj)
+      sign = [helpers.fileSignature(obj.binPath) ';'... 
               num2str(obj.opts.es) ';'...
               num2str(obj.opts.per) ';'...
               num2str(obj.opts.ms) ';'...
@@ -128,23 +146,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
   end
 
   methods (Static)
-
-    function cleanDeps()
-      import affineDetectors.*;
-
-      fprintf('\nDeleting vggMser from: %s ...\n',vggMser.rootInstallDir);
-
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggMser.rootInstallDir);
-
-      if(exist(installDir,'dir'))
-        rmdir(installDir,'s');
-        fprintf('Vgg mser installation deleted\n');
-      else
-        fprintf('Vgg mser not installed, nothing to delete\n');
-      end
-
-    end
 
     function frames = parseMserOutput(framesFile)
       fid = fopen(framesFile,'r');
@@ -172,17 +173,32 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       fclose(fid);
 
     end
+    
+    function cleanDeps()
+      import localFeatures.*;
+
+      fprintf('\nDeleting vggMser from: %s ...\n',vggMser.rootInstallDir);
+
+      installDir = vggMser.rootInstallDir;
+
+      if(exist(installDir,'dir'))
+        rmdir(installDir,'s');
+        fprintf('Vgg mser installation deleted\n');
+      else
+        fprintf('Vgg mser not installed, nothing to delete\n');
+      end
+
+    end
 
     function installDeps()
-      import affineDetectors.*;
+      import localFeatures.*;
       if vggMser.isInstalled(),
         fprintf('Detector vggMser is already installed\n');
         return
       end
       fprintf('Downloading vggMser to: %s ...\n',vggMser.rootInstallDir);
-
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggMser.rootInstallDir);
+      
+      installDir = vggMser.rootInstallDir;
 
       try
         untar(vggMser.softwareUrl,installDir);
@@ -196,9 +212,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
     end
 
     function response = isInstalled()
-      import affineDetectors.*;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggMser.rootInstallDir);
+      import localFeatures.*;
+      installDir = vggMser.rootInstallDir;
       if(exist(installDir,'dir')),  response = true;
       else response = false; end
     end

@@ -13,7 +13,7 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
     function obj = starDetector(varargin)
       obj.detectorName = 'Star Detector';
       obj.calcDescs = false;
-      cwd=commonFns.extractDirPath(mfilename('fullpath'));
+      cwd=fileparts(mfilename('fullpath'));
       path = fullfile(cwd,'thirdParty/censure/');
       obj.binPath = fullfile(path,'star_detector');
       
@@ -27,6 +27,14 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+      
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath))); 
+
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img);
@@ -34,10 +42,17 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
       [frames] = star_detector(img,obj.opts);
       
       frames = [[frames.x]; [frames.y]; [frames.s]];
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));      
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
     
-    function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.binPath) ';'...
+    function sign = getSignature(obj)
+      sign = [helpers.fileSignature(obj.binPath) ';'...
               evalc('disp(obj.opts)')];
     end
 

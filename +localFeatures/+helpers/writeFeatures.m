@@ -1,5 +1,5 @@
-function [f,d] = ubcframes(file, frames, descriptors, varargin)
-% UBWRITE Write frames data files
+function writeFeatures(file, frames, descriptors, varargin)
+% WRITEFEATURES Write frames data files
 
 opts.verbosity = 0 ;
 opts.format = 'oxford' ;
@@ -45,7 +45,7 @@ switch opts.format
     % Record format: x, y, a, b, c such that x' [a b ; b c] x = 1
     frames  = localFeatures.helpers.frameToEllipse(frames);
     frames(1:2,:) = frames(1:2,:) - 1 ; % change from matlab origin
-    frames(3:5,:) = inv2x2(f(3:5,:)) ; % Inverse the shape matrix
+    frames(3:5,:) = inv2x2(frames(3:5,:)) ; % Inverse the shape matrix
     
     if descrLen == 0
       fprintf(g,'%g %g %g %g %g\n',frames);

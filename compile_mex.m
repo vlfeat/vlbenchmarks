@@ -1,3 +1,3 @@
-affineDetectors.compile_mex();
+localFeatures.compile_mex();
 
 fprintf('\nCompilation finished\n');

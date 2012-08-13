@@ -28,7 +28,7 @@ function vl_xmkdir(path, varargin)
 
 opts.pretend = false ;
 opts.verbose = false ;
-opts = commonFns.vl_argparse(opts,varargin) ;
+opts = vl_argparse(opts,varargin) ;
 
 opts.verbose = opts.verbose | opts.pretend ;
 
@@ -58,7 +58,7 @@ name = [name ext] ;
 % stops.
 
 if ~strcmp(subPath, path)
-  commonFns.vl_xmkdir(subPath, varargin{:}) ;
+  helpers.vl_xmkdir(subPath, varargin{:}) ;
 end
 
 % name is empty if path = '*/'

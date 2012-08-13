@@ -2,7 +2,7 @@
 %
 %   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
 %
-%   obj = affineDetectors.vggDataset('Option','OptionValue',...)
+%   obj = localFeatures.vggAffineDataset('Option','OptionValue',...)
 %
 %   Following options are supported:
 %
@@ -17,24 +17,27 @@ classdef vggAffineDataset < datasets.genericDataset
     imgExt
   end
 
-  properties (SetAccess=public, GetAccess=public)
-    % None here
+  properties (Constant)
+    rootInstallDir = fullfile('data','datasets','vggAffineDataset','');
+    allCategories = {'bikes','trees','graf','wall','bark',...
+                     'boat','leuven','ubc'};
+    rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
   end
 
+  
   methods
-    function obj = vggDataset(varargin)
+    function obj = vggAffineDataset(varargin)
       if ~obj.isInstalled(),
-        error(['Vgg dataset is not installed, download and install it'...
-          ' using affineDetectors.vggDataset.installDeps()\n']);
+        warning('Vgg dataset is not installed');
+        datasets.vggAffineDataset.installDeps();
       end
       opts.category= 'graf';
-      opts = commonFns.vl_argparse(opts,varargin);
+      opts = helpers.vl_argparse(opts,varargin);
       assert(ismember(opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg dataset: %s\n',opts.category));
-      obj.datasetName = ['vggDataset-' opts.category];
+      obj.datasetName = ['vggAffineDataset-' opts.category];
       obj.category= opts.category;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      obj.dataDir = fullfile(cwd,obj.rootInstallDir,opts.category);
+      obj.dataDir = fullfile(obj.rootInstallDir,opts.category,'');
       obj.numImages = 6;
       ppm_files = dir(fullfile(obj.dataDir,'img*.ppm'));
       pgm_files = dir(fullfile(obj.dataDir,'img*.pgm'));
@@ -46,8 +49,8 @@ classdef vggAffineDataset < datasets.genericDataset
         error('Ivalid dataset image files.');
       end
       imageLabels = textscan(num2str(1:obj.numImages),'%s');
-      obj.imageLabels = cellstr(imageLabels{1});
-      obj.imageLabelsTitle = 'Image #';
+      obj.imageNames = cellstr(imageLabels{1});
+      obj.imageNamesLabel = 'Image #';
     end
 
     function imgPath = getImagePath(obj,imgIdx)
@@ -65,20 +68,12 @@ classdef vggAffineDataset < datasets.genericDataset
 
   end
 
-  properties (Constant)
-    rootInstallDir = 'datasets/vggDataset/';
-    allCategories = {'bikes','trees','graf','wall','bark',...
-                     'boat','leuven','ubc'};
-    rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
-  end
-
   methods (Static)
     function cleanDeps()
-      import affineDetectors.*;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggDataset.rootInstallDir);
+      import datasets.*;
+      installDir = vggAffineDataset.rootInstallDir;
 
-      fprintf('\nDeleting vgg dataset in: %s \n',vggDataset.rootInstallDir);
+      fprintf('\nDeleting vgg dataset in: %s \n',vggAffineDataset.rootInstallDir);
       if(exist(installDir,'dir'))
         rmdir(installDir,'s');
         fprintf('Vgg dataset deleted\n');
@@ -90,24 +85,23 @@ classdef vggAffineDataset < datasets.genericDataset
     end
 
     function installDeps()
-      import affineDetectors.*;
-      if(vggDataset.isInstalled()),
-        fprintf('VggDataset already installed, nothing to do\n');
+      import datasets.*;
+      if(vggAffineDataset.isInstalled()),
+        fprintf('vggAffineDataset already installed, nothing to do\n');
         return;
       end
 
-      fprintf('Downloading vgg dataset to: %s \n',vggDataset.rootInstallDir);
+      fprintf('Downloading vgg dataset to: %s \n',vggAffineDataset.rootInstallDir);
 
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggDataset.rootInstallDir);
+      installDir = vggAffineDataset.rootInstallDir;
 
-      allCategories = vggDataset.allCategories;
+      allCategories = vggAffineDataset.allCategories;
       for i = 1:numel(allCategories)
         curCategory = allCategories{i};
         fprintf('  Downloading %s dataset ...\n',curCategory);
-        downloadUrl = [vggDataset.rootUrl curCategory '.tar.gz'];
+        downloadUrl = [vggAffineDataset.rootUrl curCategory '.tar.gz'];
         outDir = fullfile(installDir,curCategory);
-        commonFns.vl_xmkdir(outDir);
+        helpers.vl_xmkdir(outDir);
         untar(downloadUrl,outDir);
       end
 
@@ -116,12 +110,11 @@ classdef vggAffineDataset < datasets.genericDataset
     end
 
     function response = isInstalled()
-      import affineDetectors.*;
+      import datasets.*;
       response = false;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggDataset.rootInstallDir);
-      for i = 1:numel(vggDataset.allCategories)
-        curCategory = vggDataset.allCategories{i};
+      installDir = vggAffineDataset.rootInstallDir;
+      for i = 1:numel(vggAffineDataset.allCategories)
+        curCategory = vggAffineDataset.allCategories{i};
         tmpDir = fullfile(installDir,curCategory);
         if(~exist(tmpDir,'dir')), return; end
       end

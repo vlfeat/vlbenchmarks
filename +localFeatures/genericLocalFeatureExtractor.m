@@ -4,12 +4,15 @@
 %   It inherits from the handle class, so that means you can maintain state
 %   inside an object of this class. If you have to add your own detector make
 %   sure it inherits this class.
-%   (see +affineDetectors/exampleDetector.m for a simple example)
+%   (see +localFeatures/exampleDetector.m for a simple example)
 
 classdef genericLocalFeatureExtractor < handle
   properties (SetAccess=protected, GetAccess=public)
     isOk = true; % signifies if detector has been installed and runs ok on
                  % this particular platform
+  end
+  
+  properties (SetAccess=public, GetAccess=public)
     detectorName % Set this property in the constructor
   end
   
@@ -52,28 +55,46 @@ classdef genericLocalFeatureExtractor < handle
   end
 
   methods (Access = protected)
-    function [frames descriptors] = loadFeatures(obj, imagePath)
-      key = obj.getDataKey(imagePath);
-      data = DataCache.getData(key);
-      frames = data.frames;
-      descriptors = data.descriptors;
+    function [frames descriptors] = loadFeatures(obj, imagePath,loadDescriptors)
+      import helpers.*;
+      
+      key = obj.getDataKey(imagePath,loadDescriptors);
+      data = helpers.DataCache.getData(key);
+      if ~isempty(data)
+        frames = data.frames;
+        descriptors = data.descriptors;
+        if loadDescriptors
+          Log.debug(obj.detectorName,'Frames and descriptors loaded from cache');
+        else
+          Log.debug(obj.detectorName,'Frames loaded from cache');
+        end
+      else
+        frames = [];
+        descriptors = [];
+      end
     end
     
     function storeFeatures(obj, imagePath, frames, descriptors)
-      if nargin < 4
+      hasDescriptors = true;
+      if nargin < 4 || isempty(descriptors)
         descriptors = [];
+        hasDescriptors = false;
       end
       
-      key = obj.getDataKey(imagePath);
+      key = obj.getDataKey(imagePath, hasDescriptors);
       data.frames = frames;
       data.descriptors = descriptors;
-      DataCache.storeData(data,key);
+      helpers.DataCache.storeData(data,key);
     end
     
-    function key = getDataKey(obj, imagePath)
-      imageSignature = helpers.fileSignatue(imagePath);
+    function key = getDataKey(obj, imagePath, hasDescriptors)
+      import localFeatures.*;
+      imageSignature = helpers.fileSignature(imagePath);
       detSignature = obj.getSignature();
       prefix = genericLocalFeatureExtractor.keyPrefix;
+      if hasDescriptors
+        prefix = strcat(prefix,'+desc');
+      end
       key = strcat(prefix,detSignature,imageSignature);
     end
 

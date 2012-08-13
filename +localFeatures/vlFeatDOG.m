@@ -30,6 +30,14 @@ classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+      
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath)));       
+      
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2single(img);
@@ -39,10 +47,17 @@ classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
       elseif nargout == 2
         [frames descriptors] = vl_sift(img,obj.vl_sift_arguments{:});
       end
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));      
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
     
-    function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.binPath) ';'...
+    function sign = getSignature(obj)
+      sign = [helpers.fileSignature(obj.binPath) ';'...
               evalc('disp(obj.vl_sift_arguments)')];
     end
 

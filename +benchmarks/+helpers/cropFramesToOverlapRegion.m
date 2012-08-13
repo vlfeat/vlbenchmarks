@@ -3,10 +3,10 @@ function [framesA,framesB,framesA_,framesB_,descrsA, descrsB] = ...
 % This function transforms ellipses in A to B (and vice versa), and crops
 % them according to their visibility in the transformed frames.
 
-  import affineDetectors.*;
+  import benchmarks.*;
 
-  framesA = helpers.frameToEllipse(framesA) ;
-  framesB = helpers.frameToEllipse(framesB) ;
+  framesA = localFeatures.helpers.frameToEllipse(framesA) ;
+  framesB = localFeatures.helpers.frameToEllipse(framesB) ;
 
   framesA_ = helpers.warpEllipse(tfs,framesA) ;
   framesB_ = helpers.warpEllipse(inv(tfs),framesB) ;

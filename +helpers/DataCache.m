@@ -33,7 +33,7 @@ classdef DataCache
   %       last recently used data if exceedes.
   
   properties (Constant)
-    maxDataSize = 2*1024^2; % Max. size of data in cache in Bytes
+    maxDataSize = 500*1024^2; % Max. size of data in cache in Bytes
     dataPath = fullfile(pwd,'data','cache',''); % Cached data storage
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
@@ -45,6 +45,7 @@ classdef DataCache
     function data = getData(key)
       % data = GETDATA(key) Get data from the cache indexed by string key.
       %   If the data has not been found, returns [];
+      import helpers.DataCache;
       dataFile = DataCache.buildDataFileName(key);
 
       if exist(dataFile,'file')
@@ -68,6 +69,7 @@ classdef DataCache
 
     function storeData(data, key)
       % STOREDATA(DATA,KEY) - Store data DATA identified by key KEY.
+      import helpers.DataCache;
       dataFile = DataCache.buildDataFileName(key);
 
       packedData.key = key;
@@ -90,6 +92,7 @@ classdef DataCache
 
     function removeData(key)
       % REMOVEDATA(KEY) - Remove data defined by KEY from the cache.
+      import helpers.DataCache;
       dataFile = DataCache.buildDataFileName(key);
       if exist(dataFile,'file')
         if ~DataCache.isLocked(dataFile)
@@ -107,6 +110,7 @@ classdef DataCache
       %CLEACACHE() - Check the overall size of the cached data and delete
       %   last recently used data if it exceedes the allowed size 
       %   DataCache.maxDataSize.
+      import helpers.DataCache;
       maxDataSizeBytes = DataCache.maxDataSize;
       
       dataFiles = dir(fullfile(DataCache.dataPath,'*.m'));
@@ -136,15 +140,17 @@ classdef DataCache
   methods (Static, Access=protected)
     
     function dataFile = buildDataFileName(key)
-      hash = commonFns.CalcMD5.CalcMD5(key);
+      import helpers.*;
+      hash = CalcMD5.CalcMD5(key);
       dataFile = fullfile(DataCache.dataPath,strcat(hash,'.mat'));
     end
     
     function updateModificationDate(fileName)
-      commonFns.touch(fileName);
+      helpers.touch(fileName);
     end
     
     function lockFile(fileName)
+      import helpers.DataCache;
       if DataCache.lockFiles
         lockFileName = strcat(fileName,'.lock');
         lockFile = fopen(lockFileName,'w');
@@ -153,6 +159,7 @@ classdef DataCache
     end
     
     function unlockFile(fileName)
+      import helpers.DataCache;
       if DataCache.lockFiles
         lockFileName = strcat(fileName,'.lock');
         if exist(lockFileName,'file')
@@ -164,6 +171,7 @@ classdef DataCache
     end
     
     function locked = isLocked(fileName)
+      import helpers.DataCache;
       if DataCache.lockFiles
         lockFileName = strcat(fileName,'.lock');
         locked = exist(lockFileName,'file');

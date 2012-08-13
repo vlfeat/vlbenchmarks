@@ -1,6 +1,6 @@
 % VGGAFFINE class to wrap around the VGG affine co-variant detectors.
 %
-%   obj = affineDetectors.vggAffine('Option','OptionValue',...);
+%   obj = localFeatures.vggAffine('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
 %   obj class implements the genericDetector interface and wraps around the
@@ -34,14 +34,13 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
   methods
     % The constructor is used to set the options for vggAffine
     function obj = vggAffine(varargin)
-      import affineDetectors.*;
-      import commonFns.*;
-      obj.calcDescs = true;
+      import localFeatures.*;
+      import helpers.*;
 
       if ~vggAffine.isInstalled(),
         obj.isOk = false;
-        obj.errMsg = 'vggAffine not found installed';
-        return;
+        warning('vggAffine not found installed');
+        vggAffine.installDeps();
       end
 
       % Parse the passed options
@@ -49,7 +48,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       obj.opts.harThresh = 1000; % original 10, documented 1000
       obj.opts.hesThresh = 500; % original 200, documented 500
       obj.opts.noAngle = false;
-      obj.opts = vl_argparse(opts,varargin);
+      obj.opts = vl_argparse(obj.opts,varargin);
 
       switch(lower(obj.opts.detector))
         case 'hessian'
@@ -80,7 +79,15 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+
       if ~obj.isOk, frames = zeros(5,0); return; end
+
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath)));       
       
       tmpName = tempname;
       outFile = [tmpName '.' obj.opts.detectorType];
@@ -92,9 +99,9 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
         desc_param = ''; 
       end;
 
-      args = sprintf(' -%s -harThres %f -hesThres %f -i "%s" %s',...
-                     obj.opts.detectorType,obj.opts.harThresh,...
-                     obj.opts.hesThresh,imagePath,desc_param);
+      args = sprintf(' -o1 "%s" -%s -harThres %f -hesThres %f -i "%s" %s',...
+                     outFile, obj.opts.detectorType, obj.opts.harThresh,...
+                     obj.opts.hesThresh, imagePath, desc_param);
       if obj.opts.noAngle
         args = strcat(args,' -noangle');
       end
@@ -107,29 +114,33 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
 
       [frames descriptors] = vl_ubcread(outFile,'format','oxford');
       delete(outFile); delete([outFile '.params']);
+
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));      
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
     
-    function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.binPath) ';' ... 
-              obj.detectorType ';' ... 
-              num2str(obj.harThresh) ';' ...
-              num2str(obj.hesThresh) ';' ...
-              num2str(obj.noAngle)];
+    function sign = getSignature(obj)
+      sign = [helpers.fileSignature(obj.binPath) ';' ... 
+              obj.opts.detectorType ';' ... 
+              num2str(obj.opts.harThresh) ';' ...
+              num2str(obj.opts.hesThresh) ';' ...
+              num2str(obj.opts.noAngle)];
     end
 
   end
 
-
-
   methods (Static)
 
     function cleanDeps()
-      import affineDetectors.*;
+      import localFeatures.*;
 
       fprintf('\nDeleting vggAffine from: %s ...\n',vggAffine.rootInstallDir);
 
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggAffine.rootInstallDir);
+      installDir = vggAffine.rootInstallDir;
 
       if(exist(installDir,'dir'))
         rmdir(installDir,'s');
@@ -141,15 +152,14 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
     end
 
     function installDeps()
-      import affineDetectors.*;
+      import localFeatures.*;
       if vggAffine.isInstalled(),
         fprintf('Detector vggAffine is already installed\n');
         return
       end
       fprintf('Downloading vggAffine to: %s ...\n',vggAffine.rootInstallDir);
 
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggAffine.rootInstallDir);
+      installDir = vggAffine.rootInstallDir;
 
       try
         untar(vggAffine.softwareUrl,installDir);
@@ -163,9 +173,8 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
     end
 
     function response = isInstalled()
-      import affineDetectors.*;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggAffine.rootInstallDir);
+      import localFeatures.*;
+      installDir = vggAffine.rootInstallDir;
       if(exist(installDir,'dir')),  response = true;
       else response = false; end
     end

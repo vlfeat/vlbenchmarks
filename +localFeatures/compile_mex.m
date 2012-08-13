@@ -1,6 +1,6 @@
 function compile_mex()
 
-cwd=commonFns.extractDirPath(mfilename('fullpath'));
+cwd=fileparts(mfilename('fullpath'));
 
 mexCmds=cell(0,1);
 

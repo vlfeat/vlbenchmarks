@@ -1,16 +1,15 @@
 function clean()
 % Function to clean all third party dependencies
 
-affineDetectors.cleanDeps();
+localFeatures.cleanDeps();
 cleanVlFeat();
 
 function cleanVlFeat()
 
   fprintf('\n----- Deleting vlfeat -----\n');
 
-  cwd=commonFns.extractDirPath(mfilename('fullpath'));
   installVersion = '0.9.14';
-  installDir = fullfile(cwd,'thirdParty');
+  installDir = fullfile('data','software','');
   vlFeatDir = fullfile(installDir,['vlfeat-' installVersion]);
 
   if(exist(vlFeatDir,'dir'))

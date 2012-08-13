@@ -38,8 +38,8 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
   methods
     % The constructor is used to set the options for vggNewAffine
     function obj = vggNewAffine(varargin)
-      import affineDetectors.*;
-      import commonFns.*;
+      import localFeatures.*;
+      import helpers.*;
       obj.calcDescs = true;
 
       if ~vggNewAffine.isInstalled(),
@@ -80,7 +80,16 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      import localFeatures.*;
       if ~obj.isOk, frames = zeros(5,0); return; end
+
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath))); 
       
       noAngle = obj.opts.noAngle;
       
@@ -124,11 +133,18 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       end
       
       delete(framesFile);
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));      
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
     
-    function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.detBinPath) ';' ... 
-              commonFns.file_signature(obj.descrBinPath) ';' ... 
+    function sign = getSignature(obj)
+      sign = [helpers.fileSignature(obj.detBinPath) ';' ... 
+              helpers.fileSignature(obj.descrBinPath) ';' ... 
               obj.opts.detectorType ';' ... 
               num2str(obj.opts.magnification) ';' ... 
               num2str(obj.opts.noAngle) ';' ... 
@@ -140,8 +156,8 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
   methods (Static)
 
     function response = isInstalled()
-      import affineDetectors.*;
-      cwd = commonFns.extractDirPath(mfilename('fullpath'));
+      import localFeatures.*;
+      cwd = helpers.extractDirPath(mfilename('fullpath'));
       installDir = fullfile(cwd,vggNewAffine.rootInstallDir);
       if(exist(installDir,'dir')),  response = true;
       else response = false; end

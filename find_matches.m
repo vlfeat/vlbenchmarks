@@ -4,7 +4,7 @@ function [ frames1Matches frames2Matches ] = find_matches( frames1, frames2, ove
 
 % TODO do it more optimally, there is I think no need to compute it twice..
 
-import affineDetectors.*;
+import localFeatures.*;
 
 res2to1 = matchEllipses(frames1, frames2, 'NormaliseFrames', false);
 [frames2Matches.matches,matchIdxs2to1,frames2Matches.scores] = helpers.findOneToOneMatches(res2to1,frames2,frames1,overlapError);

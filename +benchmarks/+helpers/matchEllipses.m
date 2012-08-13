@@ -9,11 +9,11 @@ function result = matchEllipses(f1, f2, varargin)
 %
 %  Author:: Andrea Vedaldi
 
-import affineDetectors.*;
+import benchmarks.*;
 
 conf.normaliseFrames = true ;
 conf.normaliseScale = 30 ;
-conf = commonFns.vl_argparse(conf, varargin) ;
+conf = helpers.vl_argparse(conf, varargin) ;
 
 
 % eigenvalues (radii squared)

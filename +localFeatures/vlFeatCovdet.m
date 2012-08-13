@@ -26,30 +26,35 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
+      import helpers.*;
+      
+      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      if numel(frames) > 0; return; end;
+      
+      startTime = tic;
+      Log.info(obj.detectorName,...
+        sprintf('computing frames for image %s.',getFileName(imagePath)));
+      
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = single(img); % If not already in uint8, then convert
-
-      [path] = fileparts(obj.binPath{1}) ;
-      addpath(path);
-      clear mex;
-      try
-        if nargout == 2
-          [frames descriptors] = vl_covdet(img,obj.vl_covdet_arguments{:});
-        elseif nargout == 1
-          [frames] = vl_covdet(img,obj.vl_covdet_arguments{:});
-        end
-      catch err
-        rmpath(path);
-        rethrow(err);
+      
+      if nargout == 2
+        [frames descriptors] = vl_covdet(img,obj.vl_covdet_arguments{:});
+      elseif nargout == 1
+        [frames] = vl_covdet(img,obj.vl_covdet_arguments{:});
       end
-      rmpath(path);
-      vl_setup;
-       
+      
+      timeElapsed = toc(startTime);
+      Log.debug(obj.detectorName, ... 
+        sprintf('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed));
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
     
-    function sign = signature(obj)
-      sign = [commonFns.file_signature(obj.binPath{:}) ';'...
+    function sign = getSignature(obj)
+      sign = [helpers.fileSignature(obj.binPath{:}) ';'...
               evalc('disp(obj.vl_covdet_arguments)')];
     end
 

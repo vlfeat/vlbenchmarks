@@ -1,4 +1,4 @@
-import affineDetectors.*;
+import localFeatures.*;
 
 datasetNames = {'graf','wall','bikes','bark','trees'};
 
