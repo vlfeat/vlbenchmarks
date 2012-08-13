@@ -1,6 +1,6 @@
 % STARDETECTOR
 
-classdef starDetector < affineDetectors.genericDetector
+classdef starDetector < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=public, GetAccess=public)
     opts
   end
@@ -26,7 +26,8 @@ classdef starDetector < affineDetectors.genericDetector
       obj.opts = vl_argparse(obj.opts,varargin);
     end
 
-    function frames = detectPoints(obj,img)
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+      img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img);
 

@@ -1,12 +1,26 @@
-function [ frames descriptors ] = vggCalcSiftDescriptor( imagePath, framesFile, magnification, noAngle )
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+function [ validFrames descriptors ] = vggCalcSiftDescriptor( imagePath, frames, varargin )
+%VGGCALCSIFTDESCRIPTORS Calc SIFT descriptors with VGG binary
+%   [validFrames descriptors] = vggCalcSiftDescriptor( imagePath, frames,... )
+%   Calculates descriptors of frames on an input image image using the vgg
+%   'compute_descriptors_2.ln'. Variable frames can be matrix of frames or
+%   filename of frames file. Variable validFrames then contains valid
+%   frames for which descriptors were succesfully computed.
+%
+%   vggCalcSiftDescriptor( imagePath, frames, 'OptionName', OptionValue,...)
+%   Specify further options.
+%
+%   Supported options:
+%
+%   Magnification:: [3]
+%     Magnification factor of the regions size which is used for descriptor
+%     calculation.
+%
+%   NoAngle:: [false]
+%     When true, upright SIFT descriptors are calculated.
 
-if nargin < 3
-  noAngle = false;
-elseif nargin < 2
-  magnification = -1;
-end
+opts.magnification = 3;
+opts.noAngle = false;
+opts = vl_argparse(opts,varargin);
 
 switch(machineType)
   case {'GLNXA64','GLNX86'}
@@ -18,14 +32,21 @@ end
 tmpName = tempname;
 outDescFile = [tmpName '.sift'];
 
+if exist('frames','file')
+  framesFile = frames;
+elseif exist('frames','var')
+  framesFile = [tmpName '.frames'];
+  localFeatures.helpers.writeframes(framesFile,frames,'oxford');
+end
+
 descrArgs = sprintf('-sift -i "%s" -p1 "%s" -o1 "%s"', ...
                      imagePath,framesFile, outDescFile);
 
-if magnification > 0
-  descrArgs = [desc_param,' -scale-mult ', num2str(magnification)];
+if opts.magnification > 0
+  descrArgs = [desc_param,' -scale-mult ', num2str(opts.magnification)];
 end
 
-if noAngle
+if opts.noAngle
   descrArgs = strcat(descrArgs,' -noangle');
 end             
 
@@ -35,7 +56,7 @@ descrCmd = [descrBinPath ' ' descrArgs];
 if status
   error('%d: %s: %s', status, descrCmd, msg) ;
 end
-[frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
+[validFrames descriptors] = vl_ubcread(outDescFile,'format','oxford');
 delete(outDescFile);
 
 end

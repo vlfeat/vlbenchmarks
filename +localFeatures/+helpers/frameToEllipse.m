@@ -9,18 +9,18 @@ if isempty(f)
 end
 
 switch size(f, 1)
-  case 2+1
+  case 2+1 % Disc
     g(1:2,:) = f(1:2,:); % The coordinates
     g([3 5],:) =  [1;1] * (f(3,:) .* f(3,:)) ;
   
-  case 2+2
+  case 2+2 % Oriented disc
     g(1:2,:) = f(1:2,:); % The coordinates
     g([3 5],:) =  [1;1] * (f(3,:) .* f(3,:)) ;
 
-  case 2+3
+  case 2+3 % Ellipse (unoriented)
     g = f ;
 
-  case 2+4
+  case 2+4 % Oriented ellipse - remove orientation
     g(1:2,:) = f(1:2,:); % The coordinates
     for k=1:size(f,2)
       A = reshape(f(3:6,k)',2,2)';
