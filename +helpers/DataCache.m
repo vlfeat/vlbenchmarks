@@ -37,7 +37,7 @@ classdef DataCache
     dataPath = fullfile(pwd,'data','cache',''); % Cached data storage
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
-    lockFiles = true; % Prevent removal of accessed data, for SMP
+    lockFiles = false; % Prevent removal of accessed data, for SMP
   end
   
   methods (Static)

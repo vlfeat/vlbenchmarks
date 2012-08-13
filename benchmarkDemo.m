@@ -13,6 +13,7 @@ detectors{2}.detectorName = 'VLFeat MSER'; % used in the plot legend by modifyin
 detectors{3} = cmpHessian();
 detectors{4} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
 detectors{5} = vggAffine('Detector', 'hessian');
+detectors{6} = vggNewAffine('Detector', 'hessian');
 
 %% Define dataset
 
@@ -66,6 +67,14 @@ figure(1); clf; plotScores(detectors, dataset, repeatability.*100, ...
 printScores(detectors, numCorresp, 'Number of correspondences');
 figure(2); clf; plotScores(detectors, dataset, numCorresp, ...
  'Number of correspondences', 'Number of correspondences');
+
+printScores(detectors, matchScore, 'Match Score');
+figure(3); clf; plotScores(detectors, dataset, matchScore, ...
+ 'Match Score', 'Match Score');
+
+printScores(detectors, numMatches, 'Num of matches');
+figure(4); clf; plotScores(detectors, dataset, numMatches, ...
+ 'Num of matches', 'Num of matches');
 
 
 %% Helper functions

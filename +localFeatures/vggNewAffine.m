@@ -40,7 +40,6 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
     function obj = vggNewAffine(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.calcDescs = true;
 
       if ~vggNewAffine.isInstalled(),
         obj.isOk = false;
@@ -68,7 +67,6 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       % Check platform dependence
       machineType = computer();
       obj.detBinPath = '';
-      obj.descrBinPath = '';
       switch(machineType)
         case {'GLNXA64','GLNX86'}
           obj.detBinPath = fullfile(vggNewAffine.rootInstallDir,'detect_points_2.ln');
@@ -113,7 +111,8 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       
       if nargout ==2
         [ frames descriptors ] = helpers.vggCalcSiftDescriptor( imagePath, ...
-                                  framesFile, obj.opts.magnification, noAngle );
+                                  framesFile, 'Magnification', obj.opts.magnification,...
+                                  'NoAngle', noAngle );
       else
         % read the frames in own way because the output files are not
         % correct (descr. size is set to 1 even when it is zero...).
@@ -144,7 +143,6 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
     
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.detBinPath) ';' ... 
-              helpers.fileSignature(obj.descrBinPath) ';' ... 
               obj.opts.detectorType ';' ... 
               num2str(obj.opts.magnification) ';' ... 
               num2str(obj.opts.noAngle) ';' ... 
@@ -157,8 +155,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
 
     function response = isInstalled()
       import localFeatures.*;
-      cwd = helpers.extractDirPath(mfilename('fullpath'));
-      installDir = fullfile(cwd,vggNewAffine.rootInstallDir);
+      installDir = vggNewAffine.rootInstallDir;
       if(exist(installDir,'dir')),  response = true;
       else response = false; end
     end
