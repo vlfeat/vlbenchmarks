@@ -1,12 +1,11 @@
-% GENERICDATASET Abstract class for a generic dataset for evaluating
-% affine detectors.
+% GENERICTRANSFDATASET Abstract class for a generic dataset with images of 
+% known linear geometric transformation for evaluating affine detectors.
 %
 %   It inherits from the handle class, so that means you can
 %   maintain state inside an object of this class. If you have to add your
 %   own dataset, make sure it inherits from this class
-%   (see +affineDetectors/vggDataset.m for a example)
 
-classdef genericDataset < handle
+classdef genericTransfDataset < handle
   properties (SetAccess=protected, GetAccess=public)
     datasetName = ''; % Set this property in the constructor
     numImages = 0 % Set in constructor

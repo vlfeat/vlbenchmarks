@@ -10,7 +10,7 @@
 %     The category within the vgg dataset, has to be one of 'bikes','trees',
 %     'graf','wall','bark','boat','leuven','ubc'
 
-classdef vggAffineDataset < datasets.genericDataset
+classdef vggAffineDataset < datasets.genericTransfDataset
   properties (SetAccess=private, GetAccess=public)
     category
     dataDir
