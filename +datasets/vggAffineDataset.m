@@ -27,9 +27,11 @@ classdef vggAffineDataset < datasets.genericTransfDataset
   
   methods
     function obj = vggAffineDataset(varargin)
+      import datasets.*;
+      import helpers.*;
       if ~obj.isInstalled(),
-        warning('Vgg dataset is not installed');
-        datasets.vggAffineDataset.installDeps();
+        Log.warn('VggAffine','Vgg Affine dataset is not installed');
+        vggAffineDataset.installDeps();
       end
       opts.category= 'graf';
       opts = helpers.vl_argparse(opts,varargin);
@@ -80,8 +82,6 @@ classdef vggAffineDataset < datasets.genericTransfDataset
       else
         fprintf('Vgg dataset not installed, nothing to delete\n');
       end
-
-
     end
 
     function installDeps()
