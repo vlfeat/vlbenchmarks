@@ -56,7 +56,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       import benchmarks.*;
       
       Log.info(obj.benchmarkName,...
-        sprintf('comparing frames from det. %s and images %s and %s.',...
+        sprintf('Comparing frames from det. %s and images %s and %s.',...
           detector.detectorName,getFileName(imageAPath),getFileName(imageBPath)));
       
       imageASign = helpers.fileSignature(imageAPath);
@@ -99,6 +99,10 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       
       import benchmarks.*;
       import helpers.*;
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('Computing kristian eval benchmark between %d/%d frames.',...
+          size(framesA,2),size(framesB,2)));
       
       startTime = tic;
       

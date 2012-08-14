@@ -53,7 +53,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       import helpers.*;
       
       Log.info(obj.benchmarkName,...
-        sprintf('comparing frames from det. %s and images %s and %s.',...
+        sprintf('Comparing frames from det. %s and images %s and %s.',...
           detector.detectorName,getFileName(imageAPath),getFileName(imageBPath)));
       
       imageASign = helpers.fileSignature(imageAPath);
@@ -78,8 +78,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
         
         helpers.DataCache.storeData(results, resultsKey);
       else
-        Log.debug(obj.benchmarkName,'Results loaded from cache');
         [repeatability numCorresp reprojFrames bestMatches] = cachedResults{:};
+        Log.debug(obj.benchmarkName,'Results loaded from cache');
       end
       
     end
@@ -88,6 +88,10 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
                 testFeatures(obj, tf, imageAPath, imageBPath, framesA, framesB)
       import benchmarks.helpers.*;
       import helpers.*;
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('Computing repeatability between %d/%d frames.',...
+          size(framesA,2),size(framesB,2)));
       
       startTime = tic;
       normFrames = obj.opts.normaliseFrames;
