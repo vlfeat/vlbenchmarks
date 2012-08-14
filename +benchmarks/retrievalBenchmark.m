@@ -73,7 +73,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       
       % Compute average precisions
       queriesAp = zeros(numQueries,1);
-      for q = 1:numQueries
+      parfor q = 1:numQueries
         Log.info(obj.benchmarkName, ...
           sprintf('Computing query %d/%d.',q,numQueries));
         query = dataset.getQuery(q);
@@ -117,7 +117,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       Log.info(benchmarkName,...
         sprintf('Computing %d-nearest neighbours of %d descriptors.',...
         k,qNumDescriptors));
-      parfor descIdx = 1:qNumDescriptors
+      for descIdx = 1:qNumDescriptors
         desc = single(qDescriptors(:,descIdx));
         [index, dists(:,descIdx)] = vl_kdtreequery(kdtree, allDescriptors,...
           desc, kdtArgs{:}) ;
