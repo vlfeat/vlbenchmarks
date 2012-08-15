@@ -75,7 +75,7 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor
     
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath) ';'...
-              evalc('disp(obj.vl_mser_arguments)')];
+              helpers.struct2str(obj.opts)];
     end
 
   end

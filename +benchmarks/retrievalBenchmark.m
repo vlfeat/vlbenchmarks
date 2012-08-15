@@ -31,11 +31,12 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       startTime = tic;
       
       % Try to load data from cache
+      testSignature = detector.getSignature;
       detSignature = detector.getSignature;
       imagesSignature = dataset.getImagesSignature();
       queriesSignature = dataset.getQueriesSignature();
-      resultsKey = strcat(obj.resultsKeyPrefix, detSignature,...
-        imagesSignature, queriesSignature);
+      resultsKey = strcat(obj.resultsKeyPrefix, testSignature, ...
+        detSignature, imagesSignature, queriesSignature);
       results = DataCache.getData(resultsKey);
       if ~isempty(results)
         [mAP, queriesAp] = results{:};
@@ -155,6 +156,10 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       Log.info(benchmarkName,...
         sprintf('Computed average precision is: %f',ap));
       
+    end
+    
+    function signature = getSignature(obj)
+      signature = helpers.struct2str(obj.opts);
     end
     
   end

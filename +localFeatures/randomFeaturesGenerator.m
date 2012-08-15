@@ -73,8 +73,8 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 
-    function sign = getSignature(obj)
-      sign = evalc('disp(obj.opts)');
+    function signature = getSignature(obj)
+      signature = helpers.struct2str(obj.opts);
     end
     
   end

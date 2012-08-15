@@ -55,7 +55,7 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
     
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              evalc('disp(obj.vl_covdet_arguments)')];
+              helpers.struct2str(obj.opts)];
     end
 
   end
