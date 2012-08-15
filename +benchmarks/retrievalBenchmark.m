@@ -9,7 +9,8 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
     defK = 100;
     defMaxComparisonsFactor = inf;
     resultsKeyPrefix = 'retreivalResults';
-    kdtreeKeyPrefix = 'kdtree_';
+    kdtreeKeyPrefix = 'kdtree';
+    datasetFeaturesKeyPrefix = 'datasetFeatures';
   end
   
   methods
@@ -17,6 +18,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       obj.benchmarkName = 'RetrBenchmark';
       obj.opts.k = obj.defK;
       obj.opts.maxComparisonsFactor = obj.defMaxComparisonsFactor;
+      obj.opts.maxNumQueries = inf;
       obj.opts = vl_argparse(obj.opts,varargin);
     end
     
@@ -42,26 +44,37 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       end
       
       numImages = dataset.numImages;
-      numQueries = dataset.numQueries;
+      numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
       
       % Retreive features of all images
-      frames = cell(numImages,1);
-      descriptors = cell(numImages,1);
-      featStartTime = tic;
-      parfor imgIdx = 1:numImages
-        imagePath = dataset.getImagePath(imgIdx);
-        [frames{imgIdx} descriptors{imgIdx}] = detector.extractFeatures(imagePath);
+      featuresKey = strcat(obj.datasetFeaturesKeyPrefix, detSignature,...
+        imagesSignature);
+      features = DataCache.getData(featuresKey);
+      if isempty(features)
+        % Compute the features
+        frames = cell(numImages,1);
+        descriptors = cell(numImages,1);
+        featStartTime = tic;
+        parfor imgIdx = 1:numImages
+          imagePath = dataset.getImagePath(imgIdx);
+          [frames{imgIdx} descriptors{imgIdx}] = detector.extractFeatures(imagePath);
+        end
+        Log.debug(obj.benchmarkName,...
+            sprintf('Features computed in %fs.',toc(featStartTime)));
+        DataCache.storeData({frames, descriptors},featuresKey);
+      else 
+        [frames descriptors] = features{:};
+        Log.debug(obj.benchmarkName,'Features loaded from cache.');
       end
-      Log.debug(obj.benchmarkName,...
-          sprintf('Features obtained in %fs.',toc(featStartTime)));
       
       % Compute the KDTree
       kdtreeKey = strcat(obj.kdtreeKeyPrefix,detector.getSignature(),...
         dataset.getImagesSignature());
       kdtree = DataCache.getData(kdtreeKey);
       if isempty(kdtree)
+        allFeaturesNum = size([descriptors{:}],2);
         Log.info(obj.benchmarkName, ...
-          sprintf('Building kdtree of %d features.',allFramesNum));
+          sprintf('Building kdtree of %d features.',allFeaturesNum));
         kdStartTime = tic;
         kdtree = vl_kdtreebuild(single([descriptors{:}]));
         Log.debug(obj.benchmarkName,...
@@ -83,13 +96,13 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       mAP = mean(queriesAp);
       Log.debug(obj.benchmarkName,...
           sprintf('mAP computed in %fs.',toc(startTime)));
-      Log.info(benchmarkName,sprintf('Computed mAP is: %f',mAP));
+      Log.info(obj.benchmarkName,sprintf('Computed mAP is: %f',mAP));
       
-      results = {mAp, queriesAp};
+      results = {mAP, queriesAp};
       DataCache.storeData(results, resultsKey);
     end
    
-    function [ap rankedList] = evalQuery(obj,descriptors, kdtree, query)
+    function [ap rankedList pr] = evalQuery(obj,descriptors, kdtree, query)
       import helpers.*;
       import benchmarks.*;
       
@@ -128,9 +141,13 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       end
       
       votes= vl_binsum( zeros(numImages,1), repmat( dists(end,:), k, 1 ) - dists, nnImgIds );
-      [temp, rankedList]= sort( votes./sqrt(numDescriptors), 'descend' ); 
+      votes = votes./sqrt(numDescriptors);
+      [temp, rankedList]= sort( votes, 'descend' ); 
       
-      ap = retrievalBenchmark.computeAp(query, rankedList);
+      %ap = retrievalBenchmark.philbinComputeAp(query, rankedList);
+      [precision recall info]  = retrievalBenchmark.calcPR(query, votes);
+      ap = info.ap;
+      pr = {precision recall info};
       
       Log.debug(benchmarkName,...
         sprintf('AP calculated in %fs.',toc(startTime)));
@@ -144,7 +161,17 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
   
   methods(Static)
     
-    function ap = computeAp(query, rankedList)
+    function [precision recall info] = calcPR(query, scores)
+      y = - ones(1, numel(scores)) ;
+      y(query.good) = 1 ;
+      y(query.ok) = 1 ;
+      y(query.junk) = 0 ;
+      y(query.imageId) = 0 ; % ooops ?
+
+      [precision recall info] = vl_pr(y, scores);
+    end
+    
+    function ap = philbinComputeAp(query, rankedList)
       oldRecall = 0.0;
       oldPrecision = 1.0;
       ap = 0.0;
