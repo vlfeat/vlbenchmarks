@@ -1,4 +1,4 @@
-function retreivalBenchmarkDemo()
+function [mAP mAPs] = retreivalBenchmarkDemo()
 
 %% Define Local features detectors
 
@@ -22,12 +22,16 @@ dataset = vggRetrievalDataset('category','oxbuild_lite');
 
 import benchmarks.*;
 
-retBenchmark = retrievalBenchmark();
+retBenchmark = retrievalBenchmark('MaxComparisonsFactor',100);
 
 %% Run the benchmark
-detector = detectors{1}; % CMP hessian
+numDetectors = numel(detectors);
+mAP = zeros(numDetectors,1);
+mAPs = cell(numDetectors,1);
 
-mAP = retBenchmark.evalDetector(detector, dataset);
+for d=1:numDetectors
+  [mAP(d) mAPs{d}]  = retBenchmark.evalDetector(detectors{d}, dataset);
+end
 
 
 %% Show scores
