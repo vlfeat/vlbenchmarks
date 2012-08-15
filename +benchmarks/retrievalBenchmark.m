@@ -91,6 +91,8 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
    
     function [ap rankedList] = evalQuery(obj,descriptors, kdtree, query)
       import helpers.*;
+      import benchmarks.*;
+      
       startTime = tic;
       benchmarkName = obj.benchmarkName;
       k = obj.opts.k;
@@ -128,7 +130,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       votes= vl_binsum( zeros(numImages,1), repmat( dists(end,:), k, 1 ) - dists, nnImgIds );
       [temp, rankedList]= sort( votes./sqrt(numDescriptors), 'descend' ); 
       
-      ap = obj.computeAp(query, rankedList);
+      ap = retrievalBenchmark.computeAp(query, rankedList);
       
       Log.debug(benchmarkName,...
         sprintf('AP calculated in %fs.',toc(startTime)));
