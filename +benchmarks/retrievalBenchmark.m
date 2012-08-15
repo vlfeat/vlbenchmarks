@@ -31,7 +31,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       startTime = tic;
       
       % Try to load data from cache
-      testSignature = detector.getSignature;
+      testSignature = obj.getSignature;
       detSignature = detector.getSignature;
       imagesSignature = dataset.getImagesSignature();
       queriesSignature = dataset.getQueriesSignature();
@@ -117,7 +117,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       end
       
       qImgId = query.imageId;
-      qDescriptors = descriptors{qImgId};
+      qDescriptors = single(descriptors{qImgId});
       qNumDescriptors = size(descriptors{qImgId},2);
       allDescriptors = single([descriptors{:}]);
       
@@ -127,21 +127,15 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
         numDescriptors','UniformOutput',false);
       imageIdxs = [imageIdxs{:}];
       
-      dists = zeros(k,qNumDescriptors);
-      nnImgIds = zeros(k,qNumDescriptors);
-      
       Log.info(benchmarkName,...
         sprintf('Computing %d-nearest neighbours of %d descriptors.',...
         k,qNumDescriptors));
-      for descIdx = 1:qNumDescriptors
-        desc = single(qDescriptors(:,descIdx));
-        [index, dists(:,descIdx)] = vl_kdtreequery(kdtree, allDescriptors,...
-          desc, kdtArgs{:}) ;
-        nnImgIds(:,descIdx) = imageIdxs(index);
-        Log.trace(benchmarkName,sprintf('Desc. %d done.',descIdx));
-      end
+      [indexes, dists] = vl_kdtreequery(kdtree, allDescriptors,...
+        qDescriptors, kdtArgs{:}) ;
+      nnImgIds = imageIdxs(indexes);
       
-      votes= vl_binsum( zeros(numImages,1), repmat( dists(end,:), k, 1 ) - dists, nnImgIds );
+      votes= vl_binsum( single(zeros(numImages,1)),...
+        repmat( dists(end,:), k, 1 ) - dists, nnImgIds );
       votes = votes./sqrt(numDescriptors);
       [temp, rankedList]= sort( votes, 'descend' ); 
       
