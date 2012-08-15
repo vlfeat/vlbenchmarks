@@ -53,13 +53,22 @@ classdef genericLocalFeatureExtractor < handle
     % parameters had changed, the signature must be different as well.
  
   end
+  
+  methods (Access = public)
+    function deleteCachedFeatures(obj,imagePath,loadDescriptors)
+      import helpers.*;
+      
+      key = obj.getDataKey(imagePath,loadDescriptors);
+      data = DataCache.removeData(key);
+    end
+  end
 
   methods (Access = protected)
     function [frames descriptors] = loadFeatures(obj, imagePath,loadDescriptors)
       import helpers.*;
       
       key = obj.getDataKey(imagePath,loadDescriptors);
-      data = helpers.DataCache.getData(key);
+      data = DataCache.getData(key);
       if ~isempty(data)
         frames = data.frames;
         descriptors = data.descriptors;
