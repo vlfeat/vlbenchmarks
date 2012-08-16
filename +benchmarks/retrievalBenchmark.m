@@ -22,6 +22,97 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       obj.opts = vl_argparse(obj.opts,varargin);
     end
     
+    function [res] = findApproxFactor(obj, detector, dataset)
+      import helpers.*;
+      
+      % Get image features
+      [frames descriptors] = obj.getAllDatasetFeatures(dataset, detector);
+      
+      % Get first N descriptors
+      qFeatNum = 10000;
+      featNum =  100000;
+      descriptors = [descriptors{:}]; 
+      randSelection = randsample(size(descriptors,2),featNum);
+      size(descriptors)
+      descriptors = descriptors(:,randSelection);
+      queryDescs = single(descriptors(:,1:qFeatNum));
+      dbDescriptors = single(descriptors(:,qFeatNum+1:featNum));
+      clear frames;
+      clear descriptors;
+      
+      Log.info(obj.benchmarkName,...
+        sprintf('Building kdtree on %d features.',size(dbDescriptors,2)));
+      kdStartTime = tic;
+      kdtree = vl_kdtreebuild(single(dbDescriptors));
+      Log.debug(obj.benchmarkName,...
+        sprintf('Kdtree built in %fs.',toc(kdStartTime)));
+      
+      k = obj.opts.k;
+      Log.info(obj.benchmarkName,...
+        sprintf('Computing ground truth.',size(dbDescriptors,2)));
+      [indexes, dists] = obj.yaelKnn(dbDescriptors, queryDescs, k);
+      %[indexes, dists] = vl_kdtreequery(kdtree,dbDescriptors,queryDescs,...
+      %    'NumNeighbors', k);
+      
+      maxNumSteps = 10;
+      minApproxF = 1;
+      maxApproxF = 100;
+      
+      appFactors = linspace(1,150,20);
+      maxNumSteps = numel(appFactors);
+      
+      
+      approxFactors = zeros(1,maxNumSteps);
+      missingFeatRatio = zeros(1,maxNumSteps);
+      idxError = zeros(1,maxNumSteps);
+      featDistRatio = zeros(1,maxNumSteps);
+      distRatio = zeros(1,maxNumSteps);
+      
+      
+      for i = 1:maxNumSteps
+        %approxFactor = (maxApproxF - minApproxF) / 2;
+        approxFactor = appFactors(i);
+        Log.info(obj.benchmarkName,...
+           sprintf('Computing approx with f=%f',approxFactor));
+        [appIdxs, appDists] = vl_kdtreequery(kdtree,dbDescriptors,queryDescs,...
+          'NumNeighbors', k, 'MaxComparisons',k*approxFactor);
+        for j = 1:qFeatNum
+          [isfnd locs] = ismember(appIdxs(:,j),indexes(:,j));
+          missingFeatRatio(i) = missingFeatRatio(i) + k - sum(isfnd);
+        
+          matches = locs(locs~=0);
+          mAppDists = appDists(isfnd);
+          mDists = dists(matches);
+        
+          errs = mDists(mAppDists ~= 0)./mAppDists(mAppDists ~= 0);
+          featDistRatio(i) = featDistRatio(i) + sum(errs)/k;
+        end
+        
+        missingFeatRatio(i) = missingFeatRatio(i) / qFeatNum;
+        featDistRatio(i) = featDistRatio(i) / qFeatNum;
+        
+        idxError(i) = mean(mean(appIdxs ~= indexes));
+        
+        distRatio(i) = mean(mean(dists(appDists ~= 0) ./ appDists(appDists ~= 0)));
+      end
+      
+      figure(1); clf; grid on; hold on;
+      plot(appFactors, missingFeatRatio); title('Number of missing features per query');
+      
+      figure(2); clf; grid on; hold on;
+      plot(appFactors, featDistRatio); title('Average distance ratio between same features');
+
+      figure(3); clf; grid on; hold on;
+      plot(appFactors, idxError); title('% of wrong indexes');
+      
+      
+      figure(4); clf; grid on; hold on;
+      plot(appFactors, distRatio); title('Distance ratio');
+      
+      res = {appFactors,missingFeatRatio,featDistRatio,idxError,distRatio};
+      
+    end
+    
     function [mAP queriesAp ] = evalDetector(obj, detector, dataset)
       import helpers.*;
       
