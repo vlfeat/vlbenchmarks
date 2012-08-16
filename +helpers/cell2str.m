@@ -1,4 +1,4 @@
-function str = struct2str(s,separator)
+function str = cell2str(c,separator)
 % STRUCT2STR Convert structure to a string
 %   String is formated as ($ as separator):
 %     field1_name$filed2_name...$s(1).field1_name$...$s(n).field1_name
@@ -9,8 +9,8 @@ if nargin == 1
   separator = ';';
 end
   
-names=fieldnames(s);
-values=struct2cell(s);
- 
-str = helpers.cell2str([names' reshape(values,1,[])], separator);
+chars = cellfun(@mat2str,reshape(c,1,[]),'UniformOutput',false);
+chars(2,:) = {separator};
+chars(2,end) = {''};
+str = [chars{:}];
 end
