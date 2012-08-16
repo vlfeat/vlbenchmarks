@@ -44,48 +44,29 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
         return;
       end
       
-      numImages = dataset.numImages;
-      numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
-      
       % Retreive features of all images
-      featuresKey = strcat(obj.datasetFeaturesKeyPrefix, detSignature,...
-        imagesSignature);
-      features = DataCache.getData(featuresKey);
-      if isempty(features)
-        % Compute the features
-        frames = cell(numImages,1);
-        descriptors = cell(numImages,1);
-        featStartTime = tic;
-        parfor imgIdx = 1:numImages
-          imagePath = dataset.getImagePath(imgIdx);
-          [frames{imgIdx} descriptors{imgIdx}] = detector.extractFeatures(imagePath);
-        end
-        Log.debug(obj.benchmarkName,...
-            sprintf('Features computed in %fs.',toc(featStartTime)));
-        DataCache.storeData({frames, descriptors},featuresKey);
-      else 
-        [frames descriptors] = features{:};
-        Log.debug(obj.benchmarkName,'Features loaded from cache.');
-      end
+      [frames descriptors] = obj.getAllDatasetFeatures(dataset, detector);
       
       % Compute the KDTree
-      kdtreeKey = strcat(obj.kdtreeKeyPrefix,detector.getSignature(),...
-        dataset.getImagesSignature());
-      kdtree = DataCache.getData(kdtreeKey);
-      if isempty(kdtree)
-        allFeaturesNum = size([descriptors{:}],2);
-        Log.info(obj.benchmarkName, ...
-          sprintf('Building kdtree of %d features.',allFeaturesNum));
-        kdStartTime = tic;
-        kdtree = vl_kdtreebuild(single([descriptors{:}]));
-        Log.debug(obj.benchmarkName,...
-          sprintf('Kdtree built in %fs.',toc(kdStartTime)));
-        DataCache.storeData(kdtree,kdtreeKey);
-      else
-        Log.debug(obj.benchmarkName,'Kdtree loaded from cache.');
-      end
+      %kdtreeKey = strcat(obj.kdtreeKeyPrefix,detector.getSignature(),...
+      %  dataset.getImagesSignature());
+      %kdtree = DataCache.getData(kdtreeKey);
+      %if isempty(kdtree)
+      %  allFeaturesNum = size([descriptors{:}],2);
+      %  Log.info(obj.benchmarkName, ...
+      %    sprintf('Building kdtree of %d features.',allFeaturesNum));
+      %  kdStartTime = tic;
+      %  kdtree = vl_kdtreebuild(single([descriptors{:}]));
+      %  Log.debug(obj.benchmarkName,...
+      %    sprintf('Kdtree built in %fs.',toc(kdStartTime)));
+      %  DataCache.storeData(kdtree,kdtreeKey);
+      %else
+      %  Log.debug(obj.benchmarkName,'Kdtree loaded from cache.');
+      %end
+      kdtree = [];
       
       % Compute average precisions
+      numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
       queriesAp = zeros(numQueries,1);
       parfor q = 1:numQueries
         Log.info(obj.benchmarkName, ...
@@ -130,8 +111,10 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       Log.info(benchmarkName,...
         sprintf('Computing %d-nearest neighbours of %d descriptors.',...
         k,qNumDescriptors));
-      [indexes, dists] = vl_kdtreequery(kdtree, allDescriptors,...
-        qDescriptors, kdtArgs{:}) ;
+      %[indexes, dists] = vl_kdtreequery(kdtree, allDescriptors,...
+      %  qDescriptors, kdtArgs{:}) ;
+      [indexes, dists] = obj.yaelKnn(allDescriptors, qDescriptors, k);
+      
       nnImgIds = imageIdxs(indexes);
       
       votes= vl_binsum( single(zeros(numImages,1)),...
@@ -156,6 +139,34 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       signature = helpers.struct2str(obj.opts);
     end
     
+    function [frames descriptors] = getAllDatasetFeatures(obj,dataset, detector)
+      import helpers.*;
+      numImages = dataset.numImages;
+      
+      % Retreive features of all images
+      detSignature = detector.getSignature;
+      imagesSignature = dataset.getImagesSignature();
+      featKeyPrefix = obj.datasetFeaturesKeyPrefix;
+      featuresKey = strcat(featKeyPrefix, detSignature,imagesSignature);
+      features = DataCache.getData(featuresKey);
+      if isempty(features)
+        % Compute the features
+        frames = cell(numImages,1);
+        descriptors = cell(numImages,1);
+        featStartTime = tic;
+        parfor imgIdx = 1:numImages
+          imagePath = dataset.getImagePath(imgIdx);
+          [frames{imgIdx} descriptors{imgIdx}] = detector.extractFeatures(imagePath);
+        end
+        Log.debug(obj.benchmarkName,...
+            sprintf('Features computed in %fs.',toc(featStartTime)));
+        DataCache.storeData({frames, descriptors},featuresKey);
+      else 
+        [frames descriptors] = features{:};
+        Log.debug(obj.benchmarkName,'Features loaded from cache.');
+      end
+    end
+    
   end
   
   methods(Static)
@@ -170,6 +181,14 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
       [precision recall info] = vl_pr(y, scores);
     end
     
+    function [indexes dists] = yaelKnn(features, qFeatures, k)
+      yaelPath = fullfile('data','software','yael_v277','matlab','');
+      addpath(yaelPath);
+      [indexes, dists] = yael_nn(single(features), single(qFeatures), ...
+        min(k, size(qFeatures,2)));
+      rmpath(yaelPath);
+    end
+
     function ap = philbinComputeAp(query, rankedList)
       oldRecall = 0.0;
       oldPrecision = 1.0;
