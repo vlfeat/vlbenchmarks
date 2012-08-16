@@ -91,6 +91,18 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       
       tmpName = tempname;
       outFile = [tmpName '.' obj.opts.detectorType];
+      tempImageCreated = false;
+      
+      [path filename ext] = fileparts(imagePath);
+      % Convert jpeg images to png (jpeg not supported).
+      if strcmp(ext,'.jpg') || strcmp(ext,'.jpeg')
+        Log.debug(obj.detectorName,sprintf('converting jpeg->png.'));
+        im = imread(imagePath);
+        imagePath = [tmpName '.png'];
+        imwrite(im,imagePath);
+        tempImageCreated = true;
+        clear im;
+      end
       
       if nargout == 2 
         desc_param='-sift'; 
@@ -114,6 +126,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
 
       [frames descriptors] = vl_ubcread(outFile,'format','oxford');
       delete(outFile); delete([outFile '.params']);
+      if tempImageCreated, delete(imagePath); end;
 
       timeElapsed = toc(startTime);
       Log.debug(obj.detectorName, ... 
