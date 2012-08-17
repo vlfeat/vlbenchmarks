@@ -24,8 +24,9 @@ classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
     % See help vl_sift for possible parameters
     % This varargin is passed directly to vl_sift
     function obj = vlFeatDOG(varargin)
-      obj.detectorName = 'DOG(vlFeat)';
-      obj.vl_sift_arguments = varargin;
+      detectorName = 'DOG(vlFeat)';
+      obj = obj@localFeatures.genericLocalFeatureExtractor(detectorName,varargin);
+      obj.vl_sift_arguments = obj.configureLogger(obj.detectorName,varargin);
       obj.binPath = which('vl_sift');
     end
 
@@ -35,8 +36,7 @@ classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));       
+      obj.info('computing frames for image %s.',getFileName(imagePath));
       
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
@@ -49,9 +49,8 @@ classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
       end
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));      
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

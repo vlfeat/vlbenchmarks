@@ -3,7 +3,8 @@
 
 % TODO create metafiles with the configurations
 % TODO add perspective transformation, skew another types of noise etc.
-classdef syntheticDataset < affineDetectors.genericTransfDataset
+classdef syntheticDataset < affineDetectors.genericTransfDataset ...
+     & helpers.Logger
   properties (SetAccess=private, GetAccess=public)
     opts
     image
@@ -60,14 +61,14 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
       % Check if images generated
       files = dir([obj.dataDir '/img*' obj.imageExt]);
       if numel(files) == obj.numImages
-        fprintf('Transformations "%s" of image "%s" already exist.\n',...
+       obj.debug('Transformations "%s" of image "%s" already exist.\n',...
           categoriesStr,obj.imageName);
         obj.doGenerate = false;
       else
         obj.doGenerate = true;
         
         % Generate transformed images and save them
-        fprintf('Generating trnasformations "%s" of image "%s"...\n',...
+        obj.info('Generating trnasformations "%s" of image "%s"...\n',...
         categoriesStr,obj.imageName);
         obj.genImages = cell(1,obj.numImages);
         obj.genImages(:) = {obj.image};
@@ -128,7 +129,7 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
       if numel(fileNames) > 0
         for fn=1:numel(fileNames)
           delete(fullfile(path,fileNames{fn}));
-          fprintf('Deleted file %s.\n',fileNames{fn});
+          obj.debug('Deleted file %s.\n',fileNames{fn});
         end
       end
     end
@@ -148,7 +149,7 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
         end
         i = i + 1;
       end
-      fprintf('Rotations: %s.\n',...
+      obj.debug('Rotations: %s.\n',...
         [sprintf('%g°, ',angles(1:end-1)) num2str(angles(end))]);
     end
     
@@ -170,7 +171,7 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
         end
         i = i + 1;
       end
-      fprintf('Scales: %s.\n',...
+      obj.debug('Scales: %s.\n',...
         [sprintf('%g, ',zooms(1:end-1)) num2str(zooms(end))]);
     end
     
@@ -185,7 +186,7 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
         end
         i = i + 1;
       end
-      fprintf('Image noise sigmas: %s.\n',...
+      obj.debug('Image noise sigmas: %s.\n',...
         [sprintf('%g, ',sigmas(1:end-1)) num2str(sigmas(end))]);
     end
     
@@ -202,7 +203,7 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
         end
         i = i + 1;
       end
-      fprintf('Image blur sigmas: %s.\n',...
+      obj.debug('Image blur sigmas: %s.\n',...
         [sprintf('%g, ',sigmas(1:end-1)) num2str(sigmas(end))]);
     end
     
@@ -212,7 +213,7 @@ classdef syntheticDataset < affineDetectors.genericTransfDataset
         imageFileName = fullfile(obj.dataDir,imgName);
         obj.genImages{i} = obj.geomTransfImage(i);
         imwrite(obj.genImages{i},imageFileName);
-        fprintf('Image "%s" generated and saved\n',imgName);
+        obj.info('Image "%s" generated and saved\n',imgName);
       end
     end
 

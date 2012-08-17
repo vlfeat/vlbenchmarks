@@ -1,6 +1,6 @@
 % vggRetrievalDataset 
 
-classdef vggRetrievalDataset < datasets.genericDataset
+classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger
   properties (SetAccess=protected, GetAccess=public)
     category;
     dataDir;
@@ -18,7 +18,7 @@ classdef vggRetrievalDataset < datasets.genericDataset
       import datasets.*;
       import helpers.*;
       if ~obj.isInstalled(),
-        Log.warn('VggRetreival','Vgg retreival dataset is not installed');
+        obj.warn('Vgg retreival dataset is not installed');
         vggRetrievalDataset.installDeps();
       end
       opts.category= obj.allCategories{1};
@@ -40,7 +40,7 @@ classdef vggRetrievalDataset < datasets.genericDataset
       if imgIdx >= 1 && imgIdx <= obj.numImages
         imgPath = fullfile(obj.dataDir,obj.imdb.images.names{imgIdx});
       else
-        helpers.Log.error(obj.datasetName,'Out of bounds idx\n');
+        obj.error('Out of bounds idx\n');
       end
     end
     
@@ -48,7 +48,7 @@ classdef vggRetrievalDataset < datasets.genericDataset
       if queryIdx >= 1 && queryIdx <= obj.numQueries
         query = obj.imdb.queries(queryIdx);
       else
-        helpers.Log.error(obj.datasetName,'Out of bounds idx\n');
+        obj.error('Out of bounds idx');
       end
     end
     
@@ -127,7 +127,7 @@ classdef vggRetrievalDataset < datasets.genericDataset
       names = dir(fullfile(gtPath,'*_query.txt'));
       names = {names.name} ;
       if numel(names) == 0
-        helpers.Log.warn(['No queries in ',gtPath]);
+        obj.warn('No queries in %s',gtPath);
       end
       for i = 1:numel(names)
         base = names{i} ;

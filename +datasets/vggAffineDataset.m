@@ -10,7 +10,7 @@
 %     The category within the vgg dataset, has to be one of 'bikes','trees',
 %     'graf','wall','bark','boat','leuven','ubc'
 
-classdef vggAffineDataset < datasets.genericTransfDataset
+classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger
   properties (SetAccess=private, GetAccess=public)
     category
     dataDir
@@ -30,11 +30,11 @@ classdef vggAffineDataset < datasets.genericTransfDataset
       import datasets.*;
       import helpers.*;
       if ~obj.isInstalled(),
-        Log.warn('VggAffine','Vgg Affine dataset is not installed');
+        obj.warn('Vgg Affine dataset is not installed');
         vggAffineDataset.installDeps();
       end
       opts.category= 'graf';
-      opts = helpers.vl_argparse(opts,varargin);
+      [opts varargin] = vl_argparse(opts,varargin);
       assert(ismember(opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg dataset: %s\n',opts.category));
       obj.datasetName = ['vggAffineDataset-' opts.category];

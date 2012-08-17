@@ -1,4 +1,4 @@
-classdef repeatabilityBenchmark < benchmarks.genericBenchmark
+classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
   %REPEATABILITYTEST Calc repeatability score of aff. cov. detectors test.
   %   repeatabilityTest(resultsStorage,'OptionName',optionValue,...)
   %   constructs an object for calculating repeatability score. 
@@ -41,9 +41,9 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       obj.opts.normaliseFrames = repeatabilityBenchmark.defNormaliseFrames;
       obj.opts.cacheReprojectedFrames = repeatabilityBenchmark.defCacheReprojectedFrames;
       if numel(varargin) > 0
-        obj.opts = helpers.vl_argparse(obj.opts,varargin{:});
+        [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
       end
-      
+      obj.configureLogger(obj.benchmarkName,varargin);
     end
     
     function [repeatability numCorresp reprojFrames bestMatches] = ...
@@ -52,9 +52,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       import benchmarks.*;
       import helpers.*;
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Comparing frames from det. %s and images %s and %s.',...
-          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath)));
+      obj.info('Comparing frames from det. %s and images %s and %s.',...
+          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath));
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
@@ -79,7 +78,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
         helpers.DataCache.storeData(results, resultsKey);
       else
         [repeatability numCorresp reprojFrames bestMatches] = cachedResults{:};
-        Log.debug(obj.benchmarkName,'Results loaded from cache');
+        obj.debug('Results loaded from cache');
       end
       
     end
@@ -89,9 +88,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       import benchmarks.helpers.*;
       import helpers.*;
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Computing repeatability between %d/%d frames.',...
-          size(framesA,2),size(framesB,2)));
+      obj.info('Computing repeatability between %d/%d frames.',...
+          size(framesA,2),size(framesB,2));
       
       startTime = tic;
       normFrames = obj.opts.normaliseFrames;
@@ -110,14 +108,11 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark
       
       reprojFrames = {cropFramesA,cropFramesB,repFramesA,repFramesB};
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Repeatability: %g \t Num correspondences: %g',...
-        repeatability,numCorresp));
+      obj.info('Repeatability: %g \t Num correspondences: %g',repeatability,numCorresp);
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.benchmarkName,...
-        sprintf('Score between %d/%d frames comp. in %gs',...
-        size(framesA,2),size(framesB,2),timeElapsed));
+      obj.debug('Score between %d/%d frames comp. in %gs',size(framesA,2), ...
+        size(framesB,2),timeElapsed);
     end
   end 
     

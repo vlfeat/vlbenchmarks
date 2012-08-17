@@ -28,26 +28,24 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       
       obj.benchmarkName = 'kristian_eval';
       
+      if(~kristianEvalBenchmark.isInstalled())
+        obj.warn('Kristian''s benchmark not found, installing dependencies...');
+        kristianEvalBenchmark.installDeps();
+      end    
+      
       obj.opts.overlapError = kristianEvalBenchmark.defOverlapError;
-      if numel(varargin) > 0
-        obj.opts = helpers.vl_argparse(obj.opts,varargin{:});
-      end
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
       % Index of a value from the test results corresponding to idx*10 overlap
       % error. Kristian eval. computes only overlap errors in step of 0.1
       overlapErr = obj.opts.overlapError;
       overlapErrIdx = round(overlapErr*10);
       if (overlapErr*10 - overlapErrIdx) ~= 0
-          Log.warn(obj.benchmarkName,...
-            ['KM benchmark supports only limited set of overlap errors. ',...
+          obj.warn(['KM benchmark supports only limited set of overlap errors. ',...
              'Your overlap error was rounded.']);
       end
-      
-      if(~kristianEvalBenchmark.isInstalled())
-        Log.warn(obj.benchmarkName,...
-          'Kristian''s benchmark not found, installing dependencies...');
-        kristianEvalBenchmark.installDeps();
-      end      
+       
+      obj.configureLogger(obj.benchmarkName,varargin);
     end
     
     function [repScore, numCorresp, matchScore, numMatches] = ...
@@ -55,9 +53,8 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       import helpers.*;
       import benchmarks.*;
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Comparing frames from det. %s and images %s and %s.',...
-          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath)));
+      obj.info('Comparing frames from det. %s and images %s and %s.',...
+          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath));
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
@@ -86,7 +83,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
         results = {repScore numCorresp matchScore numMatches};
         DataCache.storeData(results, resultsKey);
       else
-        Log.debug(obj.benchmarkName,'results loaded from cache');
+        obj.debug('Results loaded from cache');
         
         [repScore numCorresp matchScore numMatches] = cachedResults{:};
       end
@@ -100,16 +97,15 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       import benchmarks.*;
       import helpers.*;
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Computing kristian eval benchmark between %d/%d frames.',...
-          size(framesA,2),size(framesB,2)));
+      obj.info('Computing kristian eval benchmark between %d/%d frames.',...
+          size(framesA,2),size(framesB,2));
       
       startTime = tic;
       
       if nargout == 4 && nargin == 8
         commonPart = 0;
       elseif nargout == 4
-        Log.warn('Unable to calculate match score without descriptors.');
+        obj.warn('Unable to calculate match score without descriptors.');
       end
       
       if nargout == 2
@@ -143,18 +139,13 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       delete(ellBFile);
       delete(tmpHFile);
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Repeatability: %g \t Num correspondences: %g',...
-        repScore,numCorresp));
+      obj.info('Repeatability: %g \t Num correspondences: %g',repScore,numCorresp);
       
-      Log.info(obj.benchmarkName,...
-        sprintf('Match score: %g \t Num matches: %g',...
-        matchScore,numMatches));
+      obj.info('Match score: %g \t Num matches: %g',matchScore,numMatches);
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.benchmarkName, ... 
-        sprintf('Score between %d/%d frames comp. in %gs',...
-        size(framesA,2),size(framesB,2),timeElapsed));
+      obj.debug('Score between %d/%d frames comp. in %gs',...
+        size(framesA,2),size(framesB,2),timeElapsed);
     end
 
   end

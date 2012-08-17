@@ -29,7 +29,7 @@
 %     Magnification of the measurement region for the descriptor
 %     calculation.
 
-classdef vggMser < localFeatures.genericLocalFeatureExtractor
+classdef vggMser < localFeatures.genericLocalFeatureExtractor 
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the vggMser
     % binary accepts. See the binary help for explanation.
@@ -50,7 +50,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       obj.detectorName = 'MSER(vgg)';
       if ~vggMser.isInstalled(),
         obj.isOk = false;
-        warning('vggMser not found installed');
+        obj.warn('vggMser not found installed');
         vggMser.installDeps();
       end
 
@@ -61,7 +61,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       obj.opts.mm = -1;
       obj.opts.noAngle = false;
       obj.opts.magnification = -1;
-      obj.opts = vl_argparse(obj.opts,varargin);
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       % Check platform dependence
       machineType = computer();
@@ -75,6 +75,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
           obj.errMsg = sprintf('Arch: %s not supported by vggMser',...
                                 machineType);
       end
+      
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -86,8 +88,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));       
+      obj.info('computing frames for image %s.',getFileName(imagePath));
 
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
@@ -125,9 +126,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       delete(framesFile);
 
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

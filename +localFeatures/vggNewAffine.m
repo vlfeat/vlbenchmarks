@@ -52,7 +52,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       obj.opts.thresh = -1;
       obj.opts.noAngle = false;
       obj.opts.magnification = -1;
-      obj.opts = vl_argparse(obj.opts,varargin);
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       switch(lower(obj.opts.detector))
         case 'hessian'
@@ -75,6 +75,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
           obj.errMsg = sprintf('Arch: %s not supported by vggNewAffine',...
                                 machineType);
       end
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -86,8 +87,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
 
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath))); 
+      obj.info('computing frames for image %s.',getFileName(imagePath)); 
       
       noAngle = obj.opts.noAngle;
       
@@ -134,19 +134,19 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       delete(framesFile);
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));      
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end
     
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.detBinPath) ';' ... 
-              obj.opts.detectorType ';' ... 
-              num2str(obj.opts.magnification) ';' ... 
-              num2str(obj.opts.noAngle) ';' ... 
-              num2str(obj.opts.thresh)];
+      signList = {helpers.fileSignature(obj.detBinPath) ... 
+                  obj.opts.detectorType ... 
+                  num2str(obj.opts.magnification) ... 
+                  num2str(obj.opts.noAngle) ... 
+                  num2str(obj.opts.thresh)};
+      sign = helpers.cell2str(signList);
     end
 
   end

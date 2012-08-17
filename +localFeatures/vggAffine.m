@@ -36,10 +36,9 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
     function obj = vggAffine(varargin)
       import localFeatures.*;
       import helpers.*;
-
       if ~vggAffine.isInstalled(),
         obj.isOk = false;
-        warning('vggAffine not found installed');
+        warn('vggAffine not found installed');
         vggAffine.installDeps();
       end
 
@@ -48,7 +47,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       obj.opts.harThresh = 1000; % original 10, documented 1000
       obj.opts.hesThresh = 500; % original 200, documented 500
       obj.opts.noAngle = false;
-      obj.opts = vl_argparse(obj.opts,varargin);
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       switch(lower(obj.opts.detector))
         case 'hessian'
@@ -76,6 +75,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
           obj.isOk = false;
           warning('Arch: %s not supported by vggAffine',machineType);
       end
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -86,8 +86,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       if ~obj.isOk, frames = zeros(5,0); return; end
 
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));       
+      obj.info('computing frames for image %s.',getFileName(imagePath));
       
       tmpName = tempname;
       outFile = [tmpName '.' obj.opts.detectorType];
@@ -96,7 +95,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       [path filename ext] = fileparts(imagePath);
       % Convert jpeg images to png (jpeg not supported).
       if strcmp(ext,'.jpg') || strcmp(ext,'.jpeg')
-        Log.debug(obj.detectorName,sprintf('converting jpeg->png.'));
+        obj.debug(obj.detectorName,sprintf('converting jpeg->png.'));
         im = imread(imagePath);
         imagePath = [tmpName '.png'];
         imwrite(im,imagePath);
@@ -129,9 +128,8 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       if tempImageCreated, delete(imagePath); end;
 
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));      
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

@@ -11,6 +11,8 @@ end
   
 chars = cellfun(@mat2str,reshape(c,1,[]),'UniformOutput',false);
 chars(2,:) = {separator};
-chars(2,end) = {''};
+if ~isempty(chars)
+  chars(2,end) = {''};
+end
 str = [chars{:}];
 end

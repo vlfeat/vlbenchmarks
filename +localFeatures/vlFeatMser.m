@@ -33,7 +33,7 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor
       obj.opts.magnification = 3;
       obj.opts.noAngle = false;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      obj.vl_mser_arguments = varargin;
+      obj.vl_mser_arguments = obj.configureLogger(obj.detectorName,varargin);
       obj.binPath = which('vl_mser');
     end
 
@@ -44,8 +44,7 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));       
+      obj.info('computing frames for image %s.',getFileName(imagePath));
       
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
@@ -66,17 +65,17 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor
       end
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end
     
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath) ';'...
-              helpers.struct2str(obj.opts)];
-            % TODO add here the program arguments
+      signList = {helpers.fileSignature(obj.binPath), ...
+                  helpers.struct2str(obj.opts), ...
+                  helpers.cell2str(obj.vl_mser_arguments)};
+      sign = helpers.cell2str(signList);
     end
 
   end

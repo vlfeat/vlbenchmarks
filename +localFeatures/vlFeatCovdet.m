@@ -21,7 +21,7 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
     % The varargin is passed directly to vl_mser
     function obj = vlFeatCovdet(varargin)
       obj.detectorName = 'vlFeat Covdet';
-      obj.vl_covdet_arguments = varargin;
+      obj.vl_covdet_arguments = obj.configureLogger(obj.detectorName,varargin);
       obj.binPath = {which('vl_covdet') which('libvl.so')};
     end
 
@@ -32,8 +32,7 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));
+      obj.info('computing frames for image %s.',getFileName(imagePath));
       
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
@@ -46,9 +45,8 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
       end
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

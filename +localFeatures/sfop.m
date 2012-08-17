@@ -12,7 +12,7 @@
 %   (the above file only exists once you have installed all the third party
 %   software using installDeps command)
 
-classdef sfop < affineDetectors.genericDetector
+classdef sfop < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     % Properties below correspond to the binary downloaded
     % from vgg
@@ -25,23 +25,22 @@ classdef sfop < affineDetectors.genericDetector
     % The constructor is used to set the options for vggAffine
     function obj = sfop(varargin)
       import affineDetectors.*;
-
+      obj = obj@localFeatures.genericLocalFeatureExtractor('SFOP',varargin);
       if ~obj.isInstalled(),
         obj.isOk = false;
         obj.errMsg = 'SFOP not found installed';
         return;
       end
 
-      obj.sfop_varargin = varargin;
+      obj.sfop_varargin = obj.configureLogger(obj.detectorName,varargin);
     end
 
-    function frames = extractFrames(obj,imagePath)
+    function [frames descriptors] = extractFrames(obj,imagePath)
       import helpers.*;
       if ~obj.isOk, frames = zeros(5,0); return; end
 
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));      
+      obj.info('computing frames for image %s.',getFileName(imagePath));
 
       tmpName = tempname;
       outFile = [tmpName '.points'];
@@ -59,9 +58,8 @@ classdef sfop < affineDetectors.genericDetector
       delete(outFile);
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
     end
   end
 

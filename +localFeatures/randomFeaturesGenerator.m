@@ -1,7 +1,7 @@
 % RANDOMFEATURESGENERATOR class to wrap around the CMP Hessian Affine detector
 % implementatio
 
-classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
+classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor 
   properties (SetAccess=private, GetAccess=public)
     opts
   end
@@ -16,19 +16,20 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
     % hessian binary.
     function obj = randomFeaturesGenerator(varargin)
       import localFeatures.*;
-      obj.detectorName = 'Random features';
+      detectorName = 'Random features';
+      obj = obj@localFeatures.genericLocalFeatureExtractor(detectorName,varargin);
+      obj.opts.featuresDensity = 0.0005; % Number of features  per pixel
       
-      opts.featuresDensity = 0.0005; % Number of features  per pixel
+      obj.opts.frameType = obj.ORIENTED_DISC;
+      obj.opts.maxScale = 30;
+      obj.opts.minScale = 1;
       
-      opts.frameType = obj.ORIENTED_DISC;
-      opts.maxScale = 30;
-      opts.minScale = 1;
-      
-      opts.descSize = 128;
-      opts.descMaxValue = 128;
-      opts.descMinValue = 0;
-      opts.descInteger = false;
-      obj.opts = vl_argparse(opts,varargin);
+      obj.opts.descSize = 128;
+      obj.opts.descMaxValue = 128;
+      obj.opts.descMinValue = 0;
+      obj.opts.descInteger = false;
+      [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -37,8 +38,7 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
       
-      Log.info(obj.detectorName,...
-        sprintf('generating frames for image %s.',getFileName(imagePath)));
+      obj.info('generating frames for image %s.',getFileName(imagePath));
       
       img = imread(imagePath);
       imgSize = size(img);

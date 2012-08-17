@@ -6,7 +6,7 @@
 %   sure it inherits this class.
 %   (see +localFeatures/exampleDetector.m for a simple example)
 
-classdef genericLocalFeatureExtractor < handle
+classdef genericLocalFeatureExtractor < handle & helpers.Logger
   properties (SetAccess=protected, GetAccess=public)
     isOk = true; % signifies if detector has been installed and runs ok on
                  % this particular platform
@@ -17,7 +17,7 @@ classdef genericLocalFeatureExtractor < handle
   end
   
   properties (Constant)
-    keyPrefix = 'det_'; % Prefix of the cached data key
+    featuresKeyPrefix = 'frames'; % Prefix of the cached features key
   end
 
   methods(Abstract)
@@ -58,24 +58,23 @@ classdef genericLocalFeatureExtractor < handle
     function deleteCachedFeatures(obj,imagePath,loadDescriptors)
       import helpers.*;
       
-      key = obj.getDataKey(imagePath,loadDescriptors);
-      data = DataCache.removeData(key);
+      key = obj.getFeaturesKey(imagePath,loadDescriptors);
+      DataCache.removeData(key);
     end
   end
 
   methods (Access = protected)
-    function [frames descriptors] = loadFeatures(obj, imagePath,loadDescriptors)
+    function [frames descriptors] = loadFeatures(obj,imagePath,loadDescriptors)
       import helpers.*;
       
-      key = obj.getDataKey(imagePath,loadDescriptors);
+      key = obj.getFeaturesKey(imagePath,loadDescriptors);
       data = DataCache.getData(key);
       if ~isempty(data)
-        frames = data.frames;
-        descriptors = data.descriptors;
+        [frames, descriptors] = data{:};
         if loadDescriptors
-          Log.debug(obj.detectorName,'Frames and descriptors loaded from cache');
+          obj.debug('Frames and descriptors loaded from cache');
         else
-          Log.debug(obj.detectorName,'Frames loaded from cache');
+          obj.debug('Frames loaded from cache');
         end
       else
         frames = [];
@@ -90,21 +89,20 @@ classdef genericLocalFeatureExtractor < handle
         hasDescriptors = false;
       end
       
-      key = obj.getDataKey(imagePath, hasDescriptors);
-      data.frames = frames;
-      data.descriptors = descriptors;
-      helpers.DataCache.storeData(data,key);
+      key = obj.getFeaturesKey(imagePath, hasDescriptors);
+      helpers.DataCache.storeData({frames,descriptors},key);
     end
     
-    function key = getDataKey(obj, imagePath, hasDescriptors)
+    function key = getFeaturesKey(obj, imagePath, hasDescriptors)
       import localFeatures.*;
+      import helpers.*;
       imageSignature = helpers.fileSignature(imagePath);
       detSignature = obj.getSignature();
-      prefix = genericLocalFeatureExtractor.keyPrefix;
+      prefix = genericLocalFeatureExtractor.featuresKeyPrefix;
       if hasDescriptors
-        prefix = strcat(prefix,'+desc');
+        prefix = strcat(prefix,'Desc');
       end
-      key = strcat(prefix,detSignature,imageSignature);
+      key = cell2str({prefix,detSignature,imageSignature});
     end
 
   end % ------- end of methods --------

@@ -11,8 +11,8 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
 
   methods
     function obj = starDetector(varargin)
-      obj.detectorName = 'Star Detector';
-      obj.calcDescs = false;
+      detectorName = 'Star Detector';
+      obj = obj@localFeatures.genericLocalFeatureExtractor(detectorName,varargin);
       cwd=fileparts(mfilename('fullpath'));
       path = fullfile(cwd,'thirdParty/censure/');
       obj.binPath = fullfile(path,'star_detector');
@@ -23,7 +23,8 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
       obj.opts.line_threshold_binarized = 8;
       obj.opts.verbose = 0;
       
-      obj.opts = vl_argparse(obj.opts,varargin);
+      [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -32,8 +33,7 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath))); 
+      obj.info('computing frames for image %s.',getFileName(imagePath)); 
 
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
@@ -44,9 +44,8 @@ classdef starDetector < localFeatures.genericLocalFeatureExtractor
       frames = [[frames.x]; [frames.y]; [frames.s]];
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
-        sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));      
+      obj.debug('Frames of image %s computed in %gs',...
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

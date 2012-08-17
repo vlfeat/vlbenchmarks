@@ -32,7 +32,7 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
       obj.detectorName = 'CMP Hessian';
       if ~cmpHessian.isInstalled(),
         obj.isOk = false;
-        warning('cmpHessian not found installed');
+        obj.warn('cmpHessian not found installed');
         cmpHessian.installDeps();
       end
 
@@ -46,6 +46,7 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
           obj.errMsg = sprintf('Arch: %s not supported by cmpHessian',...
                                 machineType);
       end
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -55,8 +56,7 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      Log.info(obj.detectorName,...
-        sprintf('computing frames for image %s.',getFileName(imagePath)));
+      obj.info('computing frames for image %s.',getFileName(imagePath));
       
       img = imread(imagePath);
       if ~obj.isOk, frames = zeros(5,0); descriptors = zeros(128,0); return; end
@@ -80,7 +80,7 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
       delete(featFile);
       
       timeElapsed = toc(startTime);
-      Log.debug(obj.detectorName, ... 
+      obj.debug(obj.detectorName, ... 
         sprintf('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed));
       
