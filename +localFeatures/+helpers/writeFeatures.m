@@ -51,8 +51,12 @@ switch opts.format
       fprintf(g,'%g %g %g %g %g\n',frames);
       fclose(g) ;
     else
-      fclose(g) ;
-      dlmwrite(filename, [frames ; descriptors], 'delimiter', ' ', '-append');
+      for i=1:size(frames,2)
+        fprintf(g,'%g ', frames(:,i)');
+        fprintf(g,'%g ', descriptors(:,i)');
+        fprintf(g,'\n');
+      end
+
     end
     
 end
