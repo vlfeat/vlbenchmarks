@@ -27,11 +27,6 @@ vggEll2 = helpers.ellToVgg(f2,e2,eigVec2);
 a1 = pi * sqrt(prod(e1,1)) ;
 a2 = pi * sqrt(prod(e2,1)) ;
 
-% radius enclosing circle
-r1 = sqrt(e1(2,:)) ;
-r2 = sqrt(e2(2,:)) ;
-
-N1 = size(f1,2) ;
 N2 = size(f2,2) ;
 neighs = cell(1,N2) ;
 scores = cell(1,N2) ;
@@ -61,8 +56,7 @@ for i2 = 1:N2
     lhsEllipse = vggEll2(:,i2);
     rhsEllipse = vggEll1(:,neighs{i2});
   end
-  scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse,...
-    -1)';
+  scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse,-1)';
   
 end
 
