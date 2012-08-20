@@ -61,7 +61,6 @@ classdef Logger < handle
   
   methods (Access = protected)
     function log(obj, level, varargin)
-      import helpers.Log;
       if level <= obj.verboseLevel
         obj.displayLog(level,varargin{:});
       end

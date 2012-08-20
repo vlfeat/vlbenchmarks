@@ -33,7 +33,7 @@ classdef DataCache
   %       last recently used data if exceedes.
   
   properties (Constant)
-    maxDataSize = 500*1024^2; % Max. size of data in cache in Bytes
+    maxDataSize = 2000*1024^2; % Max. size of data in cache in Bytes
     dataPath = fullfile(pwd,'data','cache',''); % Cached data storage
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
@@ -113,7 +113,7 @@ classdef DataCache
       import helpers.DataCache;
       maxDataSizeBytes = DataCache.maxDataSize;
       
-      dataFiles = dir(fullfile(DataCache.dataPath,'*.m'));
+      dataFiles = dir(fullfile(DataCache.dataPath,'*.mat'));
       dataModDates = [dataFiles.datenum];
       dataSizes = [dataFiles.bytes];
       dataNames = {dataFiles.name};
@@ -127,10 +127,13 @@ classdef DataCache
       
       filesToDelete = sortedDataNames(sumDataSizes > maxDataSizeBytes);
       
-      for fileName=filesToDelete
-        % If file is locked it will be probably updated soon
-        if ~DataCache.isLocked(dataFile)
-          delete(fullfile(DataCache.dataPath,fileName{:}));
+      if ~isempty(filesToDelete)
+        fprintf('Deleting the oldest %d files from cache...\n',numel(filesToDelete));
+        for fileName=filesToDelete
+          % If file is locked it will be probably updated soon
+          if ~DataCache.isLocked(fileName)
+            delete(fullfile(DataCache.dataPath,fileName{:}));
+          end
         end
       end
     end
@@ -164,8 +167,6 @@ classdef DataCache
         lockFileName = strcat(fileName,'.lock');
         if exist(lockFileName,'file')
           delete(lockFileName); 
-        else
-          warning(strcat('File ',lockFileName,' is not locked.'));
         end
       end
     end
