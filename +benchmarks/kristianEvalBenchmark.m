@@ -121,8 +121,8 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       ellAFile = [tmpFile 'ellA.txt'];
       ellAFrames = localFeatures.helpers.frameToEllipse(framesA);
       ellBFrames = localFeatures.helpers.frameToEllipse(framesB);
-      localFeatures.helpers.vggwriteell(ellAFile,ellAFrames, descriptorsA);
-      localFeatures.helpers.vggwriteell(ellBFile,ellBFrames, descriptorsB);
+      localFeatures.helpers.writeFeatures(ellAFile,ellAFrames, descriptorsA);
+      localFeatures.helpers.writeFeatures(ellBFile,ellBFrames, descriptorsB);
       H = tf;
       save(tmpHFile,'H','-ASCII');
       overlap_err_idx = round(obj.opts.overlapError*10);

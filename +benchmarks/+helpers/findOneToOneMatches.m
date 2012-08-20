@@ -1,32 +1,33 @@
-function [bestMatches,scores] = findOneToOneMatches(ev,framesA,framesB,overlapError)
-      matches = zeros(3,0);
+function bestMatches = findOneToOneMatches(ev,numFramesA,numFramesB,overlapError)
+      corresp = zeros(3,0);
       overlapThresh = 1 - overlapError;
-      bestMatches = zeros(1, size(framesA, 2)) ;
-      scores = zeros(1, size(framesA, 2)) ;
-
-      for j=1:size(framesA,2)
+      bestMatches = zeros(3, numFramesA) ;
+      
+      for j=1:numFramesA
         numNeighs = length(ev.scores{j}) ;
         if numNeighs > 0
-          matches = [matches, ...
-                    [j *ones(1,numNeighs) ; ev.neighs{j} ; ev.scores{j} ] ] ;
+          corresp = [corresp, ...
+                    [j *ones(1,numNeighs) ; ev.neighs{j} ; ...
+                     ev.scores{j}] ] ;
         end
       end
 
-      matches = matches(:,matches(3,:)>overlapThresh);
+      corresp = corresp(:,corresp(3,:)>overlapThresh);
 
-      % eliminate assigment by priority, i.e. sort the matches by the score
-      [drop, perm] = sort(matches(3,:), 'descend');
-      matches = matches(:, perm);
+      % eliminate assigment by priority, i.e. sort the corresp by the score
+      % sort by the ellipse overlaps for repeatability
+      [drop, perm] = sort(corresp(3,:), 'descend');
+      corresp = corresp(:, perm);
       % Create maps which frames has not been 'used' yet
-      availA = true(1,size(framesA,2));
-      availB = true(1,size(framesB,2));
+      availA = true(1,numFramesA);
+      availB = true(1,numFramesB);
 
-      for idx = 1:size(matches,2)
-        aIdx = matches(1,idx);
-        bIdx = matches(2,idx);
+      for idx = 1:size(corresp,2)
+        aIdx = corresp(1,idx);
+        bIdx = corresp(2,idx);
         if(availA(aIdx) && availB(bIdx))
-          bestMatches(aIdx) = bIdx;
-          scores(aIdx) = matches(3,idx);
+          bestMatches(1,aIdx) = bIdx;
+          bestMatches(2,aIdx) = corresp(3,idx); % Overlap
           availA(aIdx) = false;
           availB(bIdx) = false;
         end

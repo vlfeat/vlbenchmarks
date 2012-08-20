@@ -12,9 +12,9 @@ function result = matchEllipses(f1, f2, varargin)
 import benchmarks.*;
 
 conf.normaliseFrames = true ;
-conf.normaliseScale = 30 ;
+conf.normalisedScale = 30 ;
+conf.circleMinOverlap = 0.3;
 conf = helpers.vl_argparse(conf, varargin) ;
-
 
 % eigenvalues (radii squared)
 [e1,eigVec1] = helpers.ellipseEigen(f1) ;
@@ -45,12 +45,12 @@ end
 for i2 = 1:N2
   %fprintf('%.2f %%\r', i2/N2*100) ;
 
-  s = conf.normaliseScale / sqrt(a2(i2) / pi)  ;
+  s = conf.normalisedScale / sqrt(a2(i2) / pi)  ;
 
   canOverlap = sqrt(vl_alldist2(f2(1:2, i2), f1(1:2,:))) < 4 * sqrt(a2(i2) / pi);
   maxOverlap = min(a2(i2), a1) ./ max(a2(i2), a1) .* canOverlap ;
-  neighs{i2} = find(maxOverlap > 0.3) ;
-
+  neighs{i2} = find(maxOverlap > conf.circleMinOverlap) ;
+  
   %S = [1 1 s^2 s^2 s^2]';
   vggS = [1 1 1/s^2 1/s^2 1/s^2 s s s s]';
 
@@ -63,7 +63,7 @@ for i2 = 1:N2
   end
   scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse,...
     -1)';
-
+  
 end
 
 result.neighs = neighs ;

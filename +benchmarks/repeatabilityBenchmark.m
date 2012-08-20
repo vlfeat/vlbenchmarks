@@ -1,9 +1,7 @@
 classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
-  %REPEATABILITYTEST Calc repeatability score of aff. cov. detectors test.
+  %REPEATABILITYBENCHMARK Calc repeatability score of im. features detector
   %   repeatabilityTest(resultsStorage,'OptionName',optionValue,...)
   %   constructs an object for calculating repeatability score. 
-  %
-  %   Score is calculated when method runTest is invoked.
   %
   %   Options:
   %
@@ -29,7 +27,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
     defNormaliseFrames = true;
     defCacheReprojectedFrames = false;
     keyPrefix = 'repeatability';
-    repFramesKeyPrefix = 'repFrames';
+    reprojFramesKeyPrefix = 'reprojectedFrames';
   end
   
   methods
@@ -46,7 +44,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       obj.configureLogger(obj.benchmarkName,varargin);
     end
     
-    function [repeatability numCorresp reprojFrames bestMatches] = ...
+    function [repeatability numCorresp bestMatches reprojFrames] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
 
       import benchmarks.*;
@@ -58,32 +56,31 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
       detSign = detector.getSignature();
-      keyPrefix = repeatabilityBenchmark.keyPrefix;
-      resultsKey = strcat(keyPrefix,detSign,imageASign,imageBSign);
-      cachedResults = helpers.DataCache.getData(resultsKey);
+      resultsKey = cell2str({obj.keyPrefix,detSign,imageASign,imageBSign});
+      cachedResults = DataCache.getData(resultsKey);
       
       if isempty(cachedResults)
         [framesA] = detector.extractFeatures(imageAPath);
         [framesB] = detector.extractFeatures(imageBPath);
       
-        [repeatability numCorresp reprojFrames bestMatches] = ... 
+        [repeatability numCorresp bestMatches reprojFrames] = ... 
           testFeatures(obj,tf,imageAPath, imageBPath,framesA, framesB);
         
         if obj.opts.cacheReprojectedFrames
-          results = {repeatability numCorresp reprojFrames bestMatches};
+          results = {repeatability numCorresp bestMatches reprojFrames };
         else
           results = {repeatability numCorresp [] []};
         end
         
         helpers.DataCache.storeData(results, resultsKey);
       else
-        [repeatability numCorresp reprojFrames bestMatches] = cachedResults{:};
+        [repeatability numCorresp bestMatches reprojFrames] = cachedResults{:};
         obj.debug('Results loaded from cache');
       end
       
     end
    
-    function [repeatability numCorresp reprojFrames bestMatches] = ... 
+    function [repeatability numCorresp bestMatches reprojFrames] = ... 
                 testFeatures(obj, tf, imageAPath, imageBPath, framesA, framesB)
       import benchmarks.helpers.*;
       import helpers.*;
@@ -97,16 +94,36 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       
       imageA = imread(imageAPath);
       imageB = imread(imageBPath);
-      [cropFramesA,cropFramesB,repFramesA,repFramesB] = ...
-        cropFramesToOverlapRegion(framesA,framesB,tf,imageA,imageB);
+      imageASize = size(imageA);
+      imageBSize = size(imageB);
+      clear imageA;
+      clear imageB;
+      
+      framesA = localFeatures.helpers.frameToEllipse(framesA) ;
+      framesB = localFeatures.helpers.frameToEllipse(framesB) ;
+      
+      [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
+      [visibleFramesA visibleFramesB] = framesInOverlapRegions(framesA, ...
+        reprojFramesA, framesB, reprojFramesB, imageASize, imageBSize);
+      
+      framesA = framesA(:,visibleFramesA);
+      reprojFramesA = reprojFramesA(:,visibleFramesA);
+      framesB = framesB(:,visibleFramesB);
+      reprojFramesB = reprojFramesB(:,visibleFramesB);
 
-      frameMatches = matchEllipses(repFramesB, cropFramesA,'NormaliseFrames',normFrames);
-      bestMatches = findOneToOneMatches(frameMatches,cropFramesA,repFramesB,overlErr);
-      numBestMatches = sum(bestMatches ~= 0);
-      repeatability = numBestMatches / min(size(cropFramesA,2), size(cropFramesB,2));
+      % Find all ellipse matches
+      frameMatches = matchEllipses(reprojFramesB, framesA,'NormaliseFrames',normFrames);
+      
+      % Find the best one-to-one matches
+      nA = size(framesA,2);
+      nB = size(reprojFramesB,2);
+      bestMatches = findOneToOneMatches(frameMatches,nA,nB,overlErr);
+      
+      numBestMatches = sum(bestMatches(1,:) ~= 0);
+      repeatability = numBestMatches / min(size(framesA,2), size(framesB,2));
       numCorresp = numBestMatches;
       
-      reprojFrames = {cropFramesA,cropFramesB,repFramesA,repFramesB};
+      reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
       
       obj.info('Repeatability: %g \t Num correspondences: %g',repeatability,numCorresp);
       
@@ -124,16 +141,16 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       imageA = imread(imageAPath);
       imageB = imread(imageBPath);
       
-      [cropFramesA,cropFramesB,repFramesA,repFramesB] = reprojectedFrames{:};
+      [framesA,framesB,reprojFramesA,reprojFramesB] = reprojectedFrames{:};
       
       figure(figA); 
       imshow(imageA);
       colormap gray ;
-      hold on ; vl_plotframe(cropFramesA,'linewidth', 1);
+      hold on ; vl_plotframe(framesA,'linewidth', 1);
       % Plot the transformed and matched frames from B on A in blue
-      vl_plotframe(repFramesB(:,bestMatches~=0),'b','linewidth',1);
+      vl_plotframe(reprojFramesB(:,bestMatches(1,:)~=0),'b','linewidth',1);
       % Plot the remaining frames from B on A in red
-      vl_plotframe(repFramesB(:,bestMatches==0),'r','linewidth',1);
+      vl_plotframe(reprojFramesB(:,bestMatches(1,:)==0),'r','linewidth',1);
       axis equal;
       set(gca,'xtick',[],'ytick',[]);
       title('Reference image detections');
