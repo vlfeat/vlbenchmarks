@@ -116,11 +116,21 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger
       [dists, perm] = sort(dists(:),'ascend');
 
       % Create maps which frames has not been 'used' yet
-      availA = true(1,numFramesA);
-      availB = true(1,numFramesB);
+
       overlThresh = 1 - overlErr;
 
+      [aIdx bIdx] = ind2sub([numFramesA, numFramesB],perm(1:numel(dists)));
+      edges = [aIdx bIdx];
+      
+      tic
+      matches = benchmarks.helpers.greedyBipartiteMatching(numFramesA, numFramesB, edges);
+      toc
+      
+      tic
       obj.info('Looking for one-to-one matches')
+      availA = true(1,numFramesA);
+      availB = true(1,numFramesB);
+      toMatch = min(numFramesA, numFramesB);
       for idx = 1:numel(dists)
         [aIdx bIdx] = ind2sub([numFramesA, numFramesB],perm(idx));
         if(availA(aIdx) && availB(bIdx))
@@ -136,11 +146,13 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger
           end
           availA(aIdx) = false;
           availB(bIdx) = false;
-          if sum(availA) == 0 || sum(availB) == 0
+          toMatch = toMatch - 1;
+          if toMatch == 0
             break;
           end
         end
       end
+      toc
       
       numMatches = sum(bestMatches(1,:) ~= 0);
       matchingScore = numMatches / min(size(framesA,2), size(framesB,2));
