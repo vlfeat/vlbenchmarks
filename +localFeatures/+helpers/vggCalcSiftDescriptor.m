@@ -61,5 +61,10 @@ end
 [validFrames descriptors] = vl_ubcread(outDescFile,'format','oxford');
 delete(outDescFile);
 
+% Remove the magnification from frames scale
+factor = opts.magnification^2;
+validFrames(3:5,:) = validFrames(3:5,:) .* factor;
+
+
 end
 
