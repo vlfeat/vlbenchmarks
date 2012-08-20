@@ -74,14 +74,14 @@ void mexFunction(int nlhs,       mxArray *plhs[],
     for (i = 0; i < numEdges; ++i) {
         int aIdx = (int)(*startNodes++) - 1;
         int bIdx = (int)(*endNodes++) - 1;
-        mexPrintf("edge %i %i\n",aIdx,bIdx);
-        if (aIdx < 0 || aIdx >= numNodesA || bIdx < 0 || aIdx >= numNodesB) {
+        if (aIdx < 0 || aIdx >= numNodesA || bIdx < 0 || bIdx >= numNodesB) {
+            mexPrintf("Invalid Edge from %d to %d.\n",aIdx,bIdx);
             mexErrMsgTxt("Invalid edge.\n");
             return;
         }
         if (nodeAAvail[aIdx] && nodeBAvail[bIdx]){
             /* Save the match */
-            matches[aIdx] = bIdx + 1;
+            matches[aIdx] = (double)(bIdx + 1);
             nodeAAvail[aIdx] = 0;
             nodeBAvail[bIdx] = 0;
             matchedNodes ++;

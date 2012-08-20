@@ -87,9 +87,6 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger
       import benchmarks.helpers.*;
       import helpers.*;
       
-      obj.info('Computing repeatability between %d/%d frames.',...
-          size(framesA,2),size(framesB,2));
-      
       startTime = tic;
       normFrames = obj.opts.normaliseFrames;
       overlErr = obj.opts.overlapError;
@@ -103,56 +100,38 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger
       framesA(3:5,:) = framesA(3:5,:).*magFactor;
       reprojFramesB(3:5,:) = reprojFramesB(3:5,:).*magFactor;
       
-      % Find all ellipses with enough overlap
+      % Find all ellipses with sufficient overlap
+      obj.info('Computing overlaps between %d/%d frames.',...
+          size(framesA,2),size(framesB,2));
       frameMatches = matchEllipses(reprojFramesB, framesA,'NormaliseFrames',normFrames);
+
+      % Calculate the one-to-one matches based on distances in descriptor
+      % domain
       numFramesA = size(framesA,2);
       numFramesB = size(reprojFramesB,2);
-
-      bestMatches = zeros(3, numFramesA) ;
+      bestMatches = zeros(2, numFramesA) ;
       
       obj.info('Computing cross distances between all descriptors');
       dists = vl_alldist2(single(descriptorsA),single(descriptorsB));
       obj.info('Sorting distances')
       [dists, perm] = sort(dists(:),'ascend');
 
-      % Create maps which frames has not been 'used' yet
-
       overlThresh = 1 - overlErr;
 
       [aIdx bIdx] = ind2sub([numFramesA, numFramesB],perm(1:numel(dists)));
       edges = [aIdx bIdx];
-      
-      tic
+     
+      obj.info('Computing matching');
       matches = benchmarks.helpers.greedyBipartiteMatching(numFramesA, numFramesB, edges);
-      toc
       
-      tic
-      obj.info('Looking for one-to-one matches')
-      availA = true(1,numFramesA);
-      availB = true(1,numFramesB);
-      toMatch = min(numFramesA, numFramesB);
-      for idx = 1:numel(dists)
-        [aIdx bIdx] = ind2sub([numFramesA, numFramesB],perm(idx));
-        if(availA(aIdx) && availB(bIdx))
-          [hasCorresp bCorresp] = ismember(bIdx,frameMatches.neighs{aIdx});
-          if hasCorresp && frameMatches.scores{aIdx}(bCorresp) > overlThresh
-            bestMatches(1,aIdx) = bIdx;
-            if hasCorresp
-              bestMatches(2,aIdx) = frameMatches.scores{aIdx}(bCorresp);
-            else 
-              bestMatches(2,aIdx) = 0;
-            end
-            bestMatches(3,aIdx) = dists(idx); % Descriptor distance
-          end
-          availA(aIdx) = false;
-          availB(bIdx) = false;
-          toMatch = toMatch - 1;
-          if toMatch == 0
-            break;
-          end
+      for aIdx=1:numFramesA
+        bIdx = matches(aIdx);
+        [hasCorresp bCorresp] = ismember(bIdx,frameMatches.neighs{aIdx});
+        if hasCorresp && frameMatches.scores{aIdx}(bCorresp) > overlThresh
+          bestMatches(1,aIdx) = bIdx;
+          bestMatches(2,aIdx) = frameMatches.scores{aIdx}(bCorresp);
         end
       end
-      toc
       
       numMatches = sum(bestMatches(1,:) ~= 0);
       matchingScore = numMatches / min(size(framesA,2), size(framesB,2));
