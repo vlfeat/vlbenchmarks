@@ -12,8 +12,8 @@
 %   Detector:: ['hessian']
 %     One of 'hessian' or 'harris' to select what type of corner detector to use
 %
-%   thresh:: [10]
-%     Threshold for harris corner detection (only used when detector is 'harris')
+%   threshold:: [-1]
+%     Cornerness threshold.
 %
 %   noAngle:: [false]
 %     Compute rotation variant descriptors if true (no rotation esimation)
@@ -49,7 +49,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
 
       % Parse the passed options
       obj.opts.detector= 'hessian';
-      obj.opts.thresh = -1;
+      obj.opts.threshold = -1;
       obj.opts.noAngle = false;
       obj.opts.magnification = -1;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
@@ -95,8 +95,8 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       framesFile = [tmpName '.' obj.opts.detectorType];
       
       detArgs = '';
-      if obj.opts.thresh >= 0
-        detArgs = sprintf('-thres %f ',obj.opts.thresh);
+      if obj.opts.threshold >= 0
+        detArgs = sprintf('-thres %f ',obj.opts.threshold);
       end
       detArgs = sprintf('%s-%s -i "%s" -o "%s" %s',...
                      detArgs, obj.opts.detectorType,...
@@ -142,10 +142,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
     
     function sign = getSignature(obj)
       signList = {helpers.fileSignature(obj.detBinPath) ... 
-                  obj.opts.detectorType ... 
-                  num2str(obj.opts.magnification) ... 
-                  num2str(obj.opts.noAngle) ... 
-                  num2str(obj.opts.thresh)};
+                  helpers.struct2str(obj.opts)};
       sign = helpers.cell2str(signList);
     end
 
