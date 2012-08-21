@@ -86,7 +86,11 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
       if ~obj.isOk, frames = zeros(5,0); return; end
 
       startTime = tic;
-      obj.info('computing frames for image %s.',getFileName(imagePath));
+      if nargout == 1
+        obj.info('Computing frames of image %s.',getFileName(imagePath));
+      else
+        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+      end
       
       tmpName = tempname;
       outFile = [tmpName '.' obj.opts.detectorType];

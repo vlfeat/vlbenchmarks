@@ -56,7 +56,11 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      obj.info('computing frames for image %s.',getFileName(imagePath));
+      if nargout == 1
+        obj.info('Computing frames of image %s.',getFileName(imagePath));
+      else
+        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+      end
       
       img = imread(imagePath);
       if ~obj.isOk, frames = zeros(5,0); descriptors = zeros(128,0); return; end

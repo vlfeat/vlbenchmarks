@@ -88,7 +88,11 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      obj.info('computing frames for image %s.',getFileName(imagePath));
+      if nargout == 1
+        obj.info('Computing frames of image %s.',getFileName(imagePath));
+      else
+        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+      end
 
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
