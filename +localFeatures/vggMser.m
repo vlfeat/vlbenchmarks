@@ -60,7 +60,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       obj.opts.ms = -1;
       obj.opts.mm = -1;
       obj.opts.noAngle = false;
-      obj.opts.magnification = -1;
+      obj.opts.magnification = 3;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       % Check platform dependence

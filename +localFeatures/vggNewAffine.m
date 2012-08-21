@@ -18,7 +18,7 @@
 %   noAngle:: [false]
 %     Compute rotation variant descriptors if true (no rotation esimation)
 %
-%   Magnification:: [binary default]
+%   Magnification:: [3]
 %     Magnification of the measurement region for the descriptor
 %     calculation.
 %
@@ -51,7 +51,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       obj.opts.detector= 'hessian';
       obj.opts.threshold = -1;
       obj.opts.noAngle = false;
-      obj.opts.magnification = -1;
+      obj.opts.magnification = 3;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       switch(lower(obj.opts.detector))

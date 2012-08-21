@@ -63,7 +63,7 @@ delete(outDescFile);
 
 % Remove the magnification from frames scale
 factor = opts.magnification^2;
-validFrames(3:5,:) = validFrames(3:5,:) .* factor;
+validFrames(3:5,:) = validFrames(3:5,:) ./ factor;
 
 
 end
