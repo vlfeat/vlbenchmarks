@@ -296,8 +296,6 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
 
       end
     end
-  end
-
-  
+  end  
 end
 

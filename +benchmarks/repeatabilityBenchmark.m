@@ -36,6 +36,11 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
         [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
       end
       obj.configureLogger(obj.benchmarkName,varargin);
+      
+      if ~obj.isInstalled()
+        obj.warn('Benchmark not installed.');
+        obj.installDeps();
+      end
     end
     
     function [repeatability numCorresp bestCorresp reprojFrames] = ...
@@ -166,7 +171,23 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       signature = struct2str(obj.opts);
     end
     
-  end 
+  end
     
+  methods (Static)
+    function res = isInstalled()
+      helpInstaller = helpers.Installer();
+      benchmHelpInstaller = benchmarks.helpers.Installer();
+      res = helpInstaller.isInstalled() && benchmHelpInstaller.isInstalled();
+    end
+    
+    function installDeps()
+      fprintf('Installing dependencies of Matching Benchmark.\n');
+      helpInstaller = helpers.Installer();
+      benchmHelpInstaller = benchmarks.helpers.Installer();
+      helpInstaller.installDeps();
+      benchmHelpInstaller.installDeps();
+    end
+  end
+  
 end
 
