@@ -13,10 +13,6 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
   %   Normalise the frames to constant scale (defaults is true for detector
   %   repeatability tests, see Mikolajczyk et. al 2005).
   %
-  %   CacheReprojectedFrames :: [false]
-  %   Store reprojected frames and best matches. When false saves amount of
-  %   data stored in cache but does not allow to plot matches afterwards.
-  %
   
   properties
     opts                % Local options of repeatabilityTest
@@ -25,7 +21,6 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
   properties(Constant)
     defOverlapError = 0.4;
     defNormaliseFrames = true;
-    defCacheReprojectedFrames = false;
     keyPrefix = 'repeatability';
     reprojFramesKeyPrefix = 'reprojectedFrames';
   end
@@ -37,7 +32,6 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       
       obj.opts.overlapError = repeatabilityBenchmark.defOverlapError;
       obj.opts.normaliseFrames = repeatabilityBenchmark.defNormaliseFrames;
-      obj.opts.cacheReprojectedFrames = repeatabilityBenchmark.defCacheReprojectedFrames;
       if numel(varargin) > 0
         [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
       end
@@ -55,8 +49,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
-      detSign = detector.getSignature();
-      resultsKey = cell2str({obj.keyPrefix,detSign,imageASign,imageBSign});
+      resultsKey = cell2str({obj.keyPrefix, obj.getSignature(), ...
+        detector.getSignature(), imageASign, imageBSign});
       cachedResults = DataCache.getData(resultsKey);
       
       if isempty(cachedResults)
@@ -66,11 +60,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
         [repeatability numCorresp bestMatches reprojFrames] = ... 
           testFeatures(obj,tf,imageAPath, imageBPath,framesA, framesB);
         
-        if obj.opts.cacheReprojectedFrames
-          results = {repeatability numCorresp bestMatches reprojFrames };
-        else
-          results = {repeatability numCorresp [] []};
-        end
+        results = {repeatability numCorresp bestMatches reprojFrames };
         
         helpers.DataCache.storeData(results, resultsKey);
       else
@@ -131,38 +121,13 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
       obj.debug('Score between %d/%d frames comp. in %gs',size(framesA,2), ...
         size(framesB,2),timeElapsed);
     end
-  end 
     
-  methods (Static)
-      
-    function plotFrameMatches(reprojectedFrames, bestMatches,...
-                              imageAPath, imageBPath, figA, figB)
-      
-      imageA = imread(imageAPath);
-      imageB = imread(imageBPath);
-      
-      [framesA,framesB,reprojFramesA,reprojFramesB] = reprojectedFrames{:};
-      
-      figure(figA); 
-      imshow(imageA);
-      colormap gray ;
-      hold on ; vl_plotframe(framesA,'linewidth', 1);
-      % Plot the transformed and matched frames from B on A in blue
-      vl_plotframe(reprojFramesB(:,bestMatches(1,:)~=0),'b','linewidth',1);
-      % Plot the remaining frames from B on A in red
-      vl_plotframe(reprojFramesB(:,bestMatches(1,:)==0),'r','linewidth',1);
-      axis equal;
-      set(gca,'xtick',[],'ytick',[]);
-      title('Reference image detections');
-
-      figure(figB); 
-      imshow(imageB) ;
-      hold on ; vl_plotframe(framesB,'linewidth', 1); axis equal; axis off;
-      %vl_plotframe(framesA_, 'b', 'linewidth', 1) ;
-      title('Transformed image detections');
+    function signature = getSignature(obj)
+      import helpers.*;
+      signature = struct2str(obj.opts);
     end
     
-  end
-  
+  end 
+    
 end
 

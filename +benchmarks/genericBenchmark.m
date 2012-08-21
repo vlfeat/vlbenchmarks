@@ -8,5 +8,10 @@ classdef genericBenchmark < handle & helpers.Logger
     benchmarkName         % Name of the test shown in the results
   end
  
+  
+  methods
+    signature = getSignature(obj)
+    % GETSIGNATURE Get signature of the benchmark settings
+  end
 end
 
