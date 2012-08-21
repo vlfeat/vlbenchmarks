@@ -1,4 +1,5 @@
-classdef retrievalBenchmark < benchmarks.genericBenchmark
+classdef retrievalBenchmark < benchmarks.genericBenchmark ...
+    & helpers.GenericInstaller
   %RETREIVALBENCHMARK
   
   properties
@@ -295,6 +296,10 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark
         j = j + 1;
 
       end
+    end
+    
+    function deps = getDependencies()
+      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
   end  
 end

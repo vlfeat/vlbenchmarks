@@ -12,30 +12,32 @@
 %   (the above file only exists once you have installed all the third party
 %   software using installDeps command)
 
-classdef sfop < localFeatures.genericLocalFeatureExtractor
+classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     % Properties below correspond to the binary downloaded
     % from vgg
     sfop_varargin % See SFOP documentation for parameters, in the file:
                   % sfop-0.9/matlab/sfopParams.m
-
   end
 
+  properties (Constant)
+    rootInstallDir = fullfile('data','software','sfop','');
+    softwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-0.9.tar.gz';
+  end
+  
   methods
     % The constructor is used to set the options for vggAffine
     function obj = sfop(varargin)
       import affineDetectors.*;
-      obj = obj@localFeatures.genericLocalFeatureExtractor('SFOP',varargin);
       if ~obj.isInstalled(),
-        obj.isOk = false;
-        obj.errMsg = 'SFOP not found installed';
-        return;
+        obj.installDeps();
       end
 
       obj.sfop_varargin = obj.configureLogger(obj.detectorName,varargin);
     end
 
-    function [frames descriptors] = extractFrames(obj,imagePath)
+    function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       if ~obj.isOk, frames = zeros(5,0); return; end
 
@@ -65,60 +67,18 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
     end
-  end
-
-  properties (Constant)
-    rootInstallDir = 'thirdParty/sfop/';
-    softwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-0.9.tar.gz';
+    
+    function signature = getSignature(obj)
+      import helpers.*;
+    end
   end
 
   methods (Static)
-
-    function cleanDeps()
-      import affineDetectors.*;
-
-      fprintf('Deleting SFOP from: %s ...\n',sfop.rootInstallDir);
-
-      cwd = fileparts(mfilename('fullpath'));
-      installDir = fullfile(cwd,sfop.rootInstallDir);
-
-      if(exist(installDir,'dir'))
-        rmdir(installDir,'s');
-        fprintf('SFOP installation deleted\n');
-      else
-        fprintf('SFOP not installed, nothing to delete\n');
-      end
-
-    end
-
-    function installDeps()
-      import affineDetectors.*;
-      if sfop.isInstalled(),
-        fprintf('Detector SFOP is already installed\n');
-        return
-      end
-      fprintf('Downloading SFOP to: %s ...\n',sfop.rootInstallDir);
-
-      cwd = fileparts(mfilename('fullpath'));
-      installDir = fullfile(cwd,sfop.rootInstallDir);
-
-      try
-        untar(sfop.softwareUrl,installDir);
-      catch err
-        warning('Error downloading from: %s\n',sfop.softwareUrl);
-        fprintf('Following error was reported while untarring: %s\n',...
-                 err.message);
-      end
-
-      fprintf('SFOP download and install complete\n\n');
-    end
-
-    function response = isInstalled()
-      import affineDetectors.*;
-      cwd = fileparts(mfilename('fullpath'));
-      installDir = fullfile(cwd,sfop.rootInstallDir);
-      if(exist(installDir,'dir')),  response = true;
-      else response = false; end
+    
+    function [urls dstPaths] = getTarballsList()
+      import localFeatures.*;
+      urls = {sfop.softwareUrl};
+      dstPaths = {sfop.rootInstallDir};
     end
 
   end % ---- end of static methods ----

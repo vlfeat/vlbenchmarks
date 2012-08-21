@@ -1,4 +1,4 @@
-classdef kristianEvalBenchmark < benchmarks.genericBenchmark
+classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericInstaller
   %KRISTIANEVALBENCHMARK Kristians Mikolajczyk's affine detectors test
   %   Implements test interface for Kristian's testing script of affine
   %   covarinat image regions (frames).
@@ -16,9 +16,10 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
   
   properties (Constant)
     defOverlapError = 0.4;
-    repScoreDir = fullfile('data','software','repeatability','');
+    installDir = fullfile('data','software','repeatability','');
     keyPrefix = 'kmEval';
     testTypeKeys = {'rep','rep+match'};
+    url = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz';
   end
   
   methods
@@ -26,12 +27,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       import benchmarks.*;
       import helpers.*;
       
-      obj.benchmarkName = 'kristian_eval';
-      
-      if(~kristianEvalBenchmark.isInstalled())
-        obj.warn('Kristian''s benchmark not found, installing dependencies...');
-        kristianEvalBenchmark.installDeps();
-      end    
+      obj.benchmarkName = 'kristian_eval'; 
       
       obj.opts.overlapError = kristianEvalBenchmark.defOverlapError;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
@@ -46,6 +42,11 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
       end
        
       obj.configureLogger(obj.benchmarkName,varargin);
+      
+      if(~obj.isInstalled())
+        obj.warn('Kristian''s benchmark not found, installing dependencies...');
+        obj.installDeps();
+      end   
     end
     
     function [repScore, numCorresp, matchScore, numMatches] = ...
@@ -114,7 +115,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
         descriptorsB = [];
       end
      
-      krisDir = kristianEvalBenchmark.repScoreDir;
+      krisDir = kristianEvalBenchmark.installDir;
       tmpFile = tempname;
       ellBFile = [tmpFile 'ellB.txt'];
       tmpHFile = [tmpFile 'H.txt'];
@@ -154,14 +155,22 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark
     function cleanDeps()
     end
 
-    function installDeps()
+    function deps = getDependencies()
+      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
-
-    function result = isInstalled()
+    
+    function srclist = getMexSources()
       import benchmarks.*;
-      repScoreFile = fullfile(kristianEvalBenchmark.repScoreDir,'repeatability.m');
-      result = exist(repScoreFile,'file');
+      path = kristianEvalBenchmark.installDir;
+      srclist = {fullfile(path,'c_eoverlap.cxx')};
     end
+    
+    function [urls dstPaths] = getTarballsList()
+      import benchmarks.*;
+      urls = {kristianEvalBenchmark.url};
+      dstPaths = {kristianEvalBenchmark.installDir};
+    end
+    
    end
 end
 

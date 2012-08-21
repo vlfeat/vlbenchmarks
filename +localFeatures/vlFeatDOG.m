@@ -11,7 +11,8 @@
 %
 %   See also: vl_sift
 
-classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
+classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for vl_sift
     % See help vl_sift for description of these properties
@@ -63,6 +64,11 @@ classdef vlFeatDOG < localFeatures.genericLocalFeatureExtractor
       sign = [helpers.fileSignature(obj.binPath) ';'...
               helpers.cell2str(obj.vl_sift_arguments)];
     end
-
+  end
+  
+  methods (Static)
+    function deps = getDependencies()
+      deps = {helpers.VlFeatInstaller()};
+    end
   end
 end

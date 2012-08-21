@@ -1,4 +1,4 @@
-classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
+classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger & helpers.GenericInstaller
   %REPEATABILITYBENCHMARK Calc repeatability score of im. features detector
   %   repeatabilityTest(resultsStorage,'OptionName',optionValue,...)
   %   constructs an object for calculating repeatability score. 
@@ -174,18 +174,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger
   end
     
   methods (Static)
-    function res = isInstalled()
-      helpInstaller = helpers.Installer();
-      benchmHelpInstaller = benchmarks.helpers.Installer();
-      res = helpInstaller.isInstalled() && benchmHelpInstaller.isInstalled();
-    end
-    
-    function installDeps()
-      fprintf('Installing dependencies of Matching Benchmark.\n');
-      helpInstaller = helpers.Installer();
-      benchmHelpInstaller = benchmarks.helpers.Installer();
-      helpInstaller.installDeps();
-      benchmHelpInstaller.installDeps();
+    function deps = getDependencies()
+      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
   end
   

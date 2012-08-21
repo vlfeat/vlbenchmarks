@@ -18,7 +18,8 @@
 %   HesThresh:: [200]
 %     Threshold for hessian maxima detection (only used when detector is 'hessian')
 
-classdef vggAffine < localFeatures.genericLocalFeatureExtractor
+classdef vggAffine < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     % Properties below correspond to the binary downloaded
     % from vgg
@@ -36,11 +37,6 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
     function obj = vggAffine(varargin)
       import localFeatures.*;
       import helpers.*;
-      if ~vggAffine.isInstalled(),
-        obj.isOk = false;
-        warn('vggAffine not found installed');
-        vggAffine.installDeps();
-      end
 
       % Parse the passed options
       obj.opts.detector= 'hessian';
@@ -55,9 +51,17 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
         case 'harris'
           obj.opts.detectorType = 'haraff';
         otherwise
-          error('Invalid detector type: %s\n',opts.detector);
+          error('Invalid detector type: %s\n',obj.opts.detector);
       end
       obj.detectorName = [obj.opts.detector '-affine(vgg)' ];
+      
+      obj.configureLogger(obj.detectorName,varargin);
+      
+      if ~obj.isInstalled(),
+        obj.isOk = false;
+        obj.warn('vggAffine not found installed');
+        obj.installDeps();
+      end
       
       % Check platform dependence
       machineType = computer();
@@ -72,10 +76,8 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
           obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
                              'extract_features_32bit.exe');
         otherwise
-          obj.isOk = false;
-          warning('Arch: %s not supported by vggAffine',machineType);
+          error('Arch: %s not supported by vggAffine',machineType);
       end
-      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -150,48 +152,10 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor
 
   methods (Static)
 
-    function cleanDeps()
+    function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-
-      fprintf('\nDeleting vggAffine from: %s ...\n',vggAffine.rootInstallDir);
-
-      installDir = vggAffine.rootInstallDir;
-
-      if(exist(installDir,'dir'))
-        rmdir(installDir,'s');
-        fprintf('Vgg affine installation deleted\n');
-      else
-        fprintf('Vgg affine not installed, nothing to delete\n');
-      end
-
-    end
-
-    function installDeps()
-      import localFeatures.*;
-      if vggAffine.isInstalled(),
-        fprintf('Detector vggAffine is already installed\n');
-        return
-      end
-      fprintf('Downloading vggAffine to: %s ...\n',vggAffine.rootInstallDir);
-
-      installDir = vggAffine.rootInstallDir;
-
-      try
-        untar(vggAffine.softwareUrl,installDir);
-      catch err
-        warning('Error downloading from: %s\n',vggAffine.softwareUrl);
-        fprintf('Following error was reported while untarring: %s\n',...
-                 err.message);
-      end
-
-      fprintf('vggAffine download and install complete\n\n');
-    end
-
-    function response = isInstalled()
-      import localFeatures.*;
-      installDir = vggAffine.rootInstallDir;
-      if(exist(installDir,'dir')),  response = true;
-      else response = false; end
+      urls = {vggAffine.softwareUrl};
+      dstPaths = {vggAffine.rootInstallDir};
     end
 
   end % ---- end of static methods ----

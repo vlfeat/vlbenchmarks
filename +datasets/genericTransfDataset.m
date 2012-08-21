@@ -11,18 +11,4 @@ classdef genericTransfDataset < datasets.genericDataset
     tfs = getTransformation(obj,imgIdx) % Return the 3x3 homography
     % from image 1 to image imgIdx
   end
-
-  methods(Static)
-    % Over-ride this function to delete data from the right location
-    function cleanDeps()
-      fprintf('No dependencies to delete for this dataset class\n');
-    end
-
-    % Over-ride this function to download and install data in the right location
-    function installDeps()
-      fprintf('No dependencies to install for this dataset class\n');
-    end
-
-  end
-
 end % -------- end of class ---------

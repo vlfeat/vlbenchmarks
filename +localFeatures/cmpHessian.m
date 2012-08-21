@@ -12,7 +12,8 @@
 %
 %   (No options available currently)
 
-classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
+classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
+    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the cmp hessian
     % binary accepts. See the binary help for explanation.
@@ -30,10 +31,10 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
     function obj = cmpHessian(varargin)
       import localFeatures.*;
       obj.detectorName = 'CMP Hessian';
-      if ~cmpHessian.isInstalled(),
+      if ~obj.isInstalled(),
         obj.isOk = false;
         obj.warn('cmpHessian not found installed');
-        cmpHessian.installDeps();
+        obj.installDeps();
       end
 
       % Check platform dependence
@@ -98,51 +99,15 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor
   end
 
   methods (Static)
-
-    function cleanDeps()
+    
+    function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-
-      fprintf('\nDeleting cmpHessian from: %s ...\n',cmpHessian.rootInstallDir);
-      
-      installDir = cmpHessian.rootInstallDir;
-
-      if(exist(installDir,'dir'))
-        rmdir(installDir,'s');
-        fprintf('CMP hessian installation deleted\n');
-      else
-        fprintf('CMP hessian not installed, nothing to delete\n');
-      end
-
+      urls = {cmpHessian.softwareUrl};
+      dstPaths = {cmpHessian.rootInstallDir};
     end
-
-    function installDeps()
-      import localFeatures.*;
-      if cmpHessian.isInstalled(),
-        fprintf('CMP hessian is already installed\n');
-        return
-      end
-      fprintf('Downloading cmpHessian to: %s ...\n',cmpHessian.rootInstallDir);
-
-      installDir = cmpHessian.rootInstallDir;
-
-      try
-        untar(cmpHessian.softwareUrl,installDir);
-      catch err
-        warning('Error downloading from: %s\n',cmpHessian.softwareUrl);
-        fprintf('Following error was reported while untarring: %s\n',...
-                 err.message);
-      end
-
-      fprintf('cmpHessian download complete, Manual compilation is needed to complete installation\n');
-      fprintf('Goto directory: +localFeatures/%s, and run the makefile to complete the installation\n',...
-              cmpHessian.rootInstallDir);
-    end
-
-    function response = isInstalled()
-      import localFeatures.*;
-      installDir = cmpHessian.rootInstallDir;
-      if(exist(installDir,'dir')),  response = true;
-      else response = false; end
+    
+    function compile()
+      error('Not implemented.');
     end
 
   end % ---- end of static methods ----

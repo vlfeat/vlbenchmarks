@@ -8,7 +8,8 @@
 %   See also: vl_covdet
 
 
-classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
+classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
   properties (SetAccess=public, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vl_covdet_arguments
@@ -59,6 +60,11 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
               helpers.cell2str(obj.vl_covdet_arguments)];
     end
-
+  end
+  
+  methods (Static)
+    function deps = getDependencies()
+      deps = {helpers.VlFeatInstaller()};
+    end
   end
 end

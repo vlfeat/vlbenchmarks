@@ -10,7 +10,8 @@
 %     The category within the vgg dataset, has to be one of 'bikes','trees',
 %     'graf','wall','bark','boat','leuven','ubc'
 
-classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger
+classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
+    & helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     category
     dataDir
@@ -31,7 +32,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger
       import helpers.*;
       if ~obj.isInstalled(),
         obj.warn('Vgg Affine dataset is not installed');
-        vggAffineDataset.installDeps();
+        obj.installDeps();
       end
       opts.category= 'graf';
       [opts varargin] = vl_argparse(opts,varargin);
@@ -71,54 +72,18 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger
   end
 
   methods (Static)
-    function cleanDeps()
+    
+    function [urls dstPaths] = getTarballsList()
       import datasets.*;
+      numCategories = numel(vggAffineDataset.allCategories);
+      urls = cell(1,numCategories);
+      dstPaths = cell(1,numCategories);
       installDir = vggAffineDataset.rootInstallDir;
-
-      fprintf('\nDeleting vgg dataset in: %s \n',vggAffineDataset.rootInstallDir);
-      if(exist(installDir,'dir'))
-        rmdir(installDir,'s');
-        fprintf('Vgg dataset deleted\n');
-      else
-        fprintf('Vgg dataset not installed, nothing to delete\n');
-      end
-    end
-
-    function installDeps()
-      import datasets.*;
-      if(vggAffineDataset.isInstalled()),
-        fprintf('vggAffineDataset already installed, nothing to do\n');
-        return;
-      end
-
-      fprintf('Downloading vgg dataset to: %s \n',vggAffineDataset.rootInstallDir);
-
-      installDir = vggAffineDataset.rootInstallDir;
-
-      allCategories = vggAffineDataset.allCategories;
-      for i = 1:numel(allCategories)
-        curCategory = allCategories{i};
-        fprintf('  Downloading %s dataset ...\n',curCategory);
-        downloadUrl = [vggAffineDataset.rootUrl curCategory '.tar.gz'];
-        outDir = fullfile(installDir,curCategory);
-        helpers.vl_xmkdir(outDir);
-        untar(downloadUrl,outDir);
-      end
-
-      fprintf('Vgg dataset download and install complete\n\n');
-
-    end
-
-    function response = isInstalled()
-      import datasets.*;
-      response = false;
-      installDir = vggAffineDataset.rootInstallDir;
-      for i = 1:numel(vggAffineDataset.allCategories)
+      for i = 1:numCategories
         curCategory = vggAffineDataset.allCategories{i};
-        tmpDir = fullfile(installDir,curCategory);
-        if(~exist(tmpDir,'dir')), return; end
+        dstPaths{i} = fullfile(installDir,curCategory);
+        urls{i} = [vggAffineDataset.rootUrl curCategory '.tar.gz'];
       end
-      response = true;
     end
 
   end % --- end of static methods ---

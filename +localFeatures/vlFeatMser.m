@@ -16,7 +16,8 @@
 %   See also: vl_mser
 
 
-classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor
+classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vl_mser_arguments
@@ -82,5 +83,11 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor
       sign = helpers.cell2str(signList);
     end
 
+  end
+  
+  methods (Static)
+    function deps = getDependencies()
+      deps = {helpers.VlFeatInstaller()};
+    end
   end
 end

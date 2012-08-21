@@ -1,4 +1,4 @@
-classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger
+classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & helpers.GenericInstaller
   %MATCHINGBENCHMARK 
   %
   %   Options:
@@ -147,18 +147,8 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger
   
   
   methods (Static)
-    function res = isInstalled()
-      helpInstaller = helpers.Installer();
-      benchmHelpInstaller = benchmarks.helpers.Installer();
-      res = helpInstaller.isInstalled() && benchmHelpInstaller.isInstalled();
-    end
-    
-    function installDeps()
-      fprintf('Installing dependencies of Matching Benchmark.\n');
-      helpInstaller = helpers.Installer();
-      benchmHelpInstaller = benchmarks.helpers.Installer();
-      helpInstaller.installDeps();
-      benchmHelpInstaller.installDeps();
+    function deps = getDependencies()
+      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
   end
 end

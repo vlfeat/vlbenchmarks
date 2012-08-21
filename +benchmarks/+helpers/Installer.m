@@ -1,4 +1,4 @@
-classdef Installer < helpers.Installer
+classdef Installer < helpers.GenericInstaller
   
   methods (Static)
     function srclist = getMexSources()

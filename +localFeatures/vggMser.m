@@ -29,7 +29,8 @@
 %     Magnification of the measurement region for the descriptor
 %     calculation.
 
-classdef vggMser < localFeatures.genericLocalFeatureExtractor 
+classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the vggMser
     % binary accepts. See the binary help for explanation.
@@ -48,11 +49,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
     function obj = vggMser(varargin)
       import localFeatures.*;
       obj.detectorName = 'MSER(vgg)';
-      if ~vggMser.isInstalled(),
-        obj.isOk = false;
-        obj.warn('vggMser not found installed');
-        vggMser.installDeps();
-      end
 
       % Parse the passed options
       obj.opts.es = -1;
@@ -62,7 +58,15 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
       obj.opts.noAngle = false;
       obj.opts.magnification = 3;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-
+      
+      obj.configureLogger(obj.detectorName,varargin);
+      
+      if ~obj.isInstalled(),
+        obj.isOk = false;
+        obj.warn('vggMser not found installed');
+        obj.installDeps();
+      end
+      
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -71,12 +75,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
         case  {'PCWIN','PCWIN64'}
           obj.binPath = fullfile(vggMser.rootInstallDir,'mser.exe');
         otherwise
-          obj.isOk = false;
-          obj.errMsg = sprintf('Arch: %s not supported by vggMser',...
-                                machineType);
+          error('Arch: %s not supported by vggMser',machineType);
       end
-      
-      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -172,48 +172,10 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor
 
     end
     
-    function cleanDeps()
+    function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-
-      fprintf('\nDeleting vggMser from: %s ...\n',vggMser.rootInstallDir);
-
-      installDir = vggMser.rootInstallDir;
-
-      if(exist(installDir,'dir'))
-        rmdir(installDir,'s');
-        fprintf('Vgg mser installation deleted\n');
-      else
-        fprintf('Vgg mser not installed, nothing to delete\n');
-      end
-
-    end
-
-    function installDeps()
-      import localFeatures.*;
-      if vggMser.isInstalled(),
-        fprintf('Detector vggMser is already installed\n');
-        return
-      end
-      fprintf('Downloading vggMser to: %s ...\n',vggMser.rootInstallDir);
-      
-      installDir = vggMser.rootInstallDir;
-
-      try
-        untar(vggMser.softwareUrl,installDir);
-      catch err
-        warning('Error downloading from: %s\n',vggMser.softwareUrl);
-        fprintf('Following error was reported while untarring: %s\n',...
-                 err.message);
-      end
-
-      fprintf('vggMser download and install complete\n\n');
-    end
-
-    function response = isInstalled()
-      import localFeatures.*;
-      installDir = vggMser.rootInstallDir;
-      if(exist(installDir,'dir')),  response = true;
-      else response = false; end
+      urls = {vggMser.softwareUrl};
+      dstPaths = {vggMser.rootInstallDir};
     end
 
   end % ---- end of static methods ----
