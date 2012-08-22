@@ -1,7 +1,5 @@
 classdef GenericInstaller < handle
   properties (Constant)
-    wgetCommand = 'wget %s';
-    unbzipCommand = 'tar xvjf %s'
   end
   
   methods
@@ -59,10 +57,11 @@ classdef GenericInstaller < handle
       if obj.mexFilesCompiled()
         return;
       end
-      
-      mexSources = obj.getMexSources();
-      for source=mexSources
-        obj.installMex(source{:});
+      [sources flags] = obj.getMexSources();
+      numSources = numel(sources);
+      if ~exist('flags','var'), flags = cell(1,numSources); end;
+      for i = numSources
+        obj.installMex(sources{i},flags{i});
       end
     end
     
@@ -92,8 +91,10 @@ classdef GenericInstaller < handle
   end
   
   methods (Static)
-    function srclist = getMexSources()
+    function [srclist cflags ldflags ]  = getMexSources()
       srclist = {};
+      cflags = {};
+      ldflags = {};
     end
     
     function [urls dstPaths compileCmds] = getTarballsList()
@@ -113,17 +114,24 @@ classdef GenericInstaller < handle
     function compile()
     end
     
-    function installMex(mexFile)
+    function installMex(mexFile, flags)
+      if ~exist('flags','var'), flags = ''; end;
       curDir = pwd;
       [mexDir mexFile mexExt] = fileparts(mexFile);
-      cd(mexDir);
-      mexCmd = sprintf('mex -O %s',[mexFile mexExt]);
+      mexCmd = sprintf('mex %s %s -O', [mexFile mexExt], flags);
       fprintf('Compiling: %s\n',mexCmd);
-      eval(mexCmd);
+      cd(mexDir);
+      try
+        eval(mexCmd);
+      catch err
+        cd(curDir);
+        throw(err);
+      end
       cd(curDir);
     end
     
     function installTarball(url,distDir,compileCmd)
+      import helpers.*;
       [address filename ext] = fileparts(url);
       fprintf('Downloading and unpacking %s.\n',url);
       try
@@ -133,7 +141,7 @@ classdef GenericInstaller < handle
           case '.zip'
             unzip(url,distDir);
           case '.bz2'
-            
+            helpers.unbzip(url,distDir);
           otherwise
             error(['Unknown archive extension ' ext]);
         end 

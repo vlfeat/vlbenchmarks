@@ -3,19 +3,25 @@ classdef VlFeatInstaller < helpers.GenericInstaller
   properties (Constant)
     installVersion = '0.9.14';
     installDir = fullfile('data','software');
-    url = 'http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz';
+    name = ['vlfeat-' helpers.VlFeatInstaller.installVersion];
+    dir = fullfile(pwd,helpers.VlFeatInstaller.installDir,...
+      helpers.VlFeatInstaller.name,'');
+    url = sprintf('http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz',...
+      helpers.VlFeatInstaller.installVersion);
+    mexDir = fullfile(helpers.VlFeatInstaller.dir,'toolbox','mex',mexext);
+    makeCmd = 'make';
+    
+    % LDFLAGS for mex compilation
+    MEXFLAGS = sprintf('LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
+      helpers.VlFeatInstaller.mexDir,helpers.VlFeatInstaller.mexDir,...
+      helpers.VlFeatInstaller.dir);
   end
   
   methods (Static)    
     function [urls dstPaths] = getTarballsList()
       import helpers.*;
-      urlPattern = VlFeatInstaller.url;
-      softwareUrl = sprintf(urlPattern,VlFeatInstaller.installVersion);
-      vlFeatName = fullfile(['vlfeat-' VlFeatInstaller.installVersion],'');
-      vlFeatDir = fullfile(VlFeatInstaller.installDir,vlFeatName,'');
-      
-      urls = {softwareUrl};
-      dstPaths = {vlFeatDir};
+      urls = {VlFeatInstaller};
+      dstPaths = {VlFeatInstaller.dir};
     end
     
     function compile()
@@ -26,29 +32,22 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       
       fprintf('Compiling vlfeat\n');
       
-      vlFeatName = ['vlfeat-' VlFeatInstaller.installVersion];
-      vlFeatDir = fullfile(VlFeatInstaller.installDir,vlFeatName,'');
-      
       prevDir = pwd;
-      cd(vlFeatDir);
+      cd(VlFeatInstaller.dir);
       % Handle directory structure inside the archive
-      movefile([vlFeatName,filesep,'*'],'.');
+      movefile([VlFeatInstaller.dir,filesep,'*'],'.');
 
-      status = system('make');
+      status = system(VlFeatInstaller.makeCmd);
+      cd(prevDir);
+      
       if status ~= 0
         error('VLFeat compilation was not succesfull.\n');
       end
-      
-      cd(prevDir);
     end
     
     function res = isCompiled()
       import helpers.*;
-      vlFeatName = ['vlfeat-' VlFeatInstaller.installVersion];
-      vlFeatDir = fullfile(VlFeatInstaller.installDir,vlFeatName,'');
-      mexDir = fullfile(vlFeatDir,'toolbox','mex',mexext);
-      
-      res = exist(mexDir,'dir');
+      res = exist(VlFeatInstaller.mexDir,'dir');
     end
   end
     

@@ -7,9 +7,12 @@ function reproduceKm()
 
 import localFeatures.*;
 
-detectors{1} = vggMser('es',2); % Custom options
-detectors{2} = vggNewAffine('Detector', 'hessian','Threshold',500);
-detectors{3} = vggNewAffine('Detector', 'harris','Threshold',1000);
+detectors{1} = cvSurf('HessianThreshold',1000,'FloatDescriptors',true);
+%detectors{1} = vggMser('es',2); % Custom options
+%detectors{2} = vggNewAffine('Detector', 'hessian','Threshold',500);
+%detectors{3} = vggNewAffine('Detector', 'harris','Threshold',1000);
+
+
 
 %% Define dataset
 
@@ -22,6 +25,7 @@ dataset = vggAffineDataset('category','graf');
 import benchmarks.*;
 
 repBenchmark = repeatabilityBenchmark();
+matchBenchmark = matchingBenchmark();
 kmBenchmark = kristianEvalBenchmark();
 
 %% Run the benchmarks in parallel
@@ -32,6 +36,9 @@ numImages = dataset.numImages;
 repeatability = zeros(numDetectors, numImages);
 numCorresp = zeros(numDetectors, numImages);
 
+matchingScore = zeros(numDetectors, numImages);
+numMatches = zeros(numDetectors, numImages);
+
 kmRepeatability = zeros(numDetectors, numImages);
 kmNumCorresp = zeros(numDetectors, numImages);
 
@@ -41,14 +48,16 @@ for detectorIdx = 1:numDetectors
   detector = detectors{detectorIdx};
   imageAPath = dataset.getImagePath(1);
   
-  parfor imageIdx = 2:numImages
+  for imageIdx = 2:numImages
     imageBPath = dataset.getImagePath(imageIdx);
     tf = dataset.getTransformation(imageIdx);
     [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
       repBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
     
-    [kmRepeatability(detectorIdx,imageIdx) kmNumCorresp(detectorIdx,imageIdx)] = ...
-      kmBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+    %[kmRepeatability(detectorIdx,imageIdx) kmNumCorresp(detectorIdx,imageIdx)] = ...
+    %  kmBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+    [matchingScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+      matchBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
   end
 end
 
@@ -64,13 +73,21 @@ printScores(detectors, numCorresp, 'Number of correspondences');
 figure(2); clf; plotScores(detectors, dataset, numCorresp, ...
  'Number of correspondences', 'Number of correspondences');
 
-printScores(detectors, kmRepeatability.*100, 'KM Detectors Repeatability');
-figure(3); clf; plotScores(detectors, dataset, kmRepeatability.*100, ...
- 'KM Detectors Repeatability', 'KM Number of correspondences');
+printScores(detectors, matchingScore.*100, 'Detectors Matching Score');
+figure(3); clf; plotScores(detectors, dataset, matchingScore.*100, ...
+ 'Detectors Matching Score', 'Detectors Matching Score');
 
-printScores(detectors, kmNumCorresp, 'KM Number of correspondences');
-figure(4); clf; plotScores(detectors, dataset, kmNumCorresp, ...
- 'KM Number of correspondences', 'KM Number of correspondences');
+printScores(detectors, numMatches, 'Number of matches');
+figure(4); clf; plotScores(detectors, dataset, numMatches, ...
+ 'Number of matches', 'Number of matches');
+
+%printScores(detectors, kmRepeatability.*100, 'KM Detectors Repeatability');
+%figure(3); clf; plotScores(detectors, dataset, kmRepeatability.*100, ...
+% 'KM Detectors Repeatability', 'KM Number of correspondences');
+
+%printScores(detectors, kmNumCorresp, 'KM Number of correspondences');
+%figure(4); clf; plotScores(detectors, dataset, kmNumCorresp, ...
+% 'KM Number of correspondences', 'KM Number of correspondences');
 
 
 %% Helper functions
