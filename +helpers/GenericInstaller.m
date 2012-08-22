@@ -1,4 +1,8 @@
 classdef GenericInstaller < handle
+  properties (Constant)
+    wgetCommand = 'wget %s';
+    unbzipCommand = 'tar xvjf %s'
+  end
   
   methods
     function res = isInstalled(obj)
@@ -128,6 +132,8 @@ classdef GenericInstaller < handle
             untar(url,distDir);
           case '.zip'
             unzip(url,distDir);
+          case '.bz2'
+            
           otherwise
             error(['Unknown archive extension ' ext]);
         end 
