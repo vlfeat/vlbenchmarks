@@ -48,6 +48,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
     % mser binary.
     function obj = vggMser(varargin)
       import localFeatures.*;
+      import helpers.*;
       obj.detectorName = 'MSER(vgg)';
 
       % Parse the passed options

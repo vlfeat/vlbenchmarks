@@ -27,6 +27,7 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
   methods
     function obj = matchingBenchmark(varargin)
       import benchmarks.*;
+      import helpers.*;
       obj.benchmarkName = 'matching';
       
       obj.opts.overlapError = matchingBenchmark.defOverlapError;

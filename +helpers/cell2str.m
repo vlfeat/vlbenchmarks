@@ -9,10 +9,19 @@ if nargin == 1
   separator = ';';
 end
   
-chars = cellfun(@mat2str,reshape(c,1,[]),'UniformOutput',false);
+chars = cellfun(@tostr, reshape(c,1,[]),'UniformOutput',false);
 chars(2,:) = {separator};
 if ~isempty(chars)
   chars(2,end) = {''};
 end
 str = [chars{:}];
+
+
+  function str = tostr(m)
+    if ischar(m)
+      str = m;
+    else
+      str = mat2str(m);
+    end
+  end
 end

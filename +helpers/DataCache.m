@@ -71,7 +71,11 @@ classdef DataCache
       % STOREDATA(DATA,KEY) - Store data DATA identified by key KEY.
       import helpers.DataCache;
       dataFile = DataCache.buildDataFileName(key);
-
+      
+      if ~exist(DataCache.dataPath,'dir')
+        vl_xmkdir(DataCache.dataPath);
+      end
+      
       packedData.key = key;
       packedData.data = data;
 

@@ -25,7 +25,7 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       obj.opts.minScale = 1;
       
       obj.opts.descSize = 128;
-      obj.opts.descMaxValue = 128;
+      obj.opts.descMaxValue = 255;
       obj.opts.descMinValue = 0;
       obj.opts.descInteger = false;
       [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
