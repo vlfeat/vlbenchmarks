@@ -3,7 +3,8 @@ function score = computeEllipseOverlap(f1, f2)
 %
 %
 
-import affineDetectors.*;
+import benchmarks.*;
+import benchmarks.helpers.*;
 
 S1 = reshape(f1([3 4 4 5]), 2, 2) ;
 S2 = reshape(f2([3 4 4 5]), 2, 2) ;
@@ -30,13 +31,13 @@ lam = eig(C1,C2)' ;
 
 for i=find(imag(lam) == 0)
   R = C1 - lam(i) * C2 ;
-  [u, v] = helpers.factorDegConic(R) ;
+  [u, v] = factorDegConic(R) ;
 
   if ~isempty(u)
-    X = [X helpers.realIntConic(C1, u)] ;
+    X = [X realIntConic(C1, u)] ;
   end
   if ~isempty(v)
-    X = [X helpers.realIntConic(C1, v)] ;
+    X = [X realIntConic(C1, v)] ;
   end
 end
 
