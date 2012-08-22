@@ -5,8 +5,6 @@ function overlap =  computeEllipseOverlap_slow(vggA,vggB)
 
 import benchmarks.*
 
-norm_arg = double(normalise);
-
 [w, tw, d, td] = helpers.mexComputeEllipseOverlap(vggA, vggB, -1) ; % This mex file
 % is borrowed from Kristians code, just renamed it
 

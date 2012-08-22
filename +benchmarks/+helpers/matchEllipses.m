@@ -52,7 +52,7 @@ for i2 = 1:N2
     lhsEllipse = vggEll2(:,i2);
     rhsEllipse = vggEll1(:,neighs{i2});
   end
-  scores{i2} = helpers.computeEllipseOverlap(lhsEllipse,rhsEllipse)';
+  scores{i2} = helpers.computeEllipseOverlap_slow(lhsEllipse,rhsEllipse)';
 end
 
 result.neighs = neighs ;
