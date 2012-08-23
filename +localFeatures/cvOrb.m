@@ -1,28 +1,32 @@
-% CVSURF feature extractor wrapper of OpenCV SURF detector
+% cvOrb feature extractor wrapper of OpenCV ORB detector
 %
-% Feature Extractor wrapper around the OpenCV SURF detector. This class
-% constructor accepts the same options as <a href="matlab: help localFeatures.mex.cvSurf">localFeatures.mex.cvSurf</a>
+% Feature Extractor wrapper around the OpenCV ORB detector. This class
+% constructor accepts the same options as <a href="matlab: help localFeatures.mex.cvOrb">localFeatures.mex.cvOrb</a>
+%
+% Matching the produced BRIEF descritpors, special hamming distance has to
+% be used (because of their binary nature). Descriptors are exported as
+% uint8 array.
 %
 
 
-classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
+classdef cvOrb < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
   properties (SetAccess=public, GetAccess=public)
-    cvsurf_argument
+    cvorb_arguments
     binPath
   end
 
   methods
 
-    function obj = cvSurf(varargin)
-      obj.detectorName = 'OpenCV SURF';
-      obj.cvsurf_argument = obj.configureLogger(obj.detectorName,varargin);
+    function obj = cvOrb(varargin)
+      obj.detectorName = 'OpenCV ORB';
+      obj.cvorb_arguments = obj.configureLogger(obj.detectorName,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();
       end
       
-      obj.binPath = {which('localFeatures.mex.cvSurf')};
+      obj.binPath = {which('localFeatures.mex.cvOrb')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -43,9 +47,9 @@ classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
       img = uint8(img); % If not already in uint8, then convert
       
       if nargout == 2
-        [frames descriptors] = localFeatures.mex.cvSurf(img,obj.cvsurf_argument{:});
+        [frames descriptors] = localFeatures.mex.cvOrb(img,obj.cvorb_arguments{:});
       elseif nargout == 1
-        [frames] = localFeatures.mex.cvSurf(img,obj.cvsurf_argument{:});
+        [frames] = localFeatures.mex.cvOrb(img,obj.cvorb_arguments{:});
       end
       
       timeElapsed = toc(startTime);
@@ -57,7 +61,7 @@ classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
     
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvsurf_argument)];
+              helpers.cell2str(obj.cvorb_arguments)];
     end
   end
   
@@ -69,7 +73,7 @@ classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
     function [srclist flags] = getMexSources()
       import helpers.*;
       path = fullfile(pwd,'+localFeatures','+mex','');
-      srclist = {fullfile(path,'cvSurf.cpp')};
+      srclist = {fullfile(path,'cvOrb.cpp')};
       flags = {[OpenCVInstaller.MEXFLAGS ' ' VlFeatInstaller.MEXFLAGS ]};
     end
   end
