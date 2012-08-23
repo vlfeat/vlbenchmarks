@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <vector>
 
+#include "matlabio.h"
+
 extern "C" {
 #include <toolbox/mexutils.h>
 }
@@ -44,7 +46,6 @@ mexFunction(int nout, mxArray *out[],
   enum {IN_I = 0, IN_END} ;
   enum {OUT_FRAMES=0, OUT_DESCRIPTORS, OUT_END} ;
 
-  int                verbose = 0 ;
   int                opt ;
   int                next = IN_END ;
   mxArray const     *optarg ;
@@ -56,9 +57,7 @@ mexFunction(int nout, mxArray *out[],
   int nOctaveLayers = 2;
   double hessianThreshold = 1000;
   bool floatDescriptors = true;
-
-  std::vector<float> descriptors;
-  std::vector<KeyPoint> frames;
+  bool verbose = false ;
 
   if (nin < IN_END) {
     vlmxError (vlmxErrNotEnoughInputArguments, 0) ;
@@ -66,15 +65,10 @@ mexFunction(int nout, mxArray *out[],
     vlmxError (vlmxErrTooManyOutputArguments, 0) ;
   }
 
-
-  if (mxGetNumberOfDimensions (in[IN_I]) != 2              ||
-      mxGetClassID            (in[IN_I]) != mxUINT8_CLASS  ) {
-    vlmxError(vlmxErrInvalidArgument, "I must be a matrix of class UINT8") ;
-  }
-
-  unsigned char* data = (unsigned char*) mxGetData (in[IN_I]) ;
-  int M    = mxGetM (in[IN_I]) ;
-  int N    = mxGetN (in[IN_I]) ;
+  /* Import the image */
+  Mat image = importImage8UC1(in[IN_I]);
+  std::vector<float> descriptors;
+  std::vector<KeyPoint> frames;
 
   while ((opt = vlmxNextOption (in, nin, options, &next, &optarg)) >= 0) {
     switch (opt) {
@@ -114,40 +108,8 @@ mexFunction(int nout, mxArray *out[],
       break ;
 
     case opt_frames : {
-        double const *mx_frms_ptr;
-        if (!vlmxIsMatrix(optarg, -1, -1)) {
-          mexErrMsgTxt("'Frames' must be a matrix.") ;
-        }
-
-        int nifrms = mxGetN  (optarg) ;
-        int mifrms = mxGetM  (optarg) ;
-        mx_frms_ptr = mxGetPr (optarg) ;
-        switch (mifrms) {
-        case 3: {
-          for (int i = 0; i < nifrms; ++i) {
-            int ifrms_i = mifrms * i;
-            frames.push_back(KeyPoint());
-            KeyPoint& frame = frames.back();
-            frame.pt.x = mx_frms_ptr[ifrms_i + 1] - 1.;
-            frame.pt.y = mx_frms_ptr[ifrms_i + 0] - 1.;
-            frame.size = mx_frms_ptr[ifrms_i + 2];
-          }
-        } break;
-        case 4: {
-          for (int i = 0; i < nifrms; ++i) {
-            int ifrms_i = mifrms * i;
-            frames.push_back(KeyPoint());
-            KeyPoint& frame = frames.back();
-            frame.pt.x = mx_frms_ptr[ifrms_i + 1] - 1.;
-            frame.pt.y = mx_frms_ptr[ifrms_i + 0] - 1.;
-            frame.size = mx_frms_ptr[ifrms_i + 2];
-            frame.angle = (CV_PI / 2. - mx_frms_ptr[ifrms_i + 3])/CV_PI*180.;
-          }
-        } break;
-        default:
-          mexErrMsgTxt("CvSurf does not support this type of frames.") ;
-          break;
-        }
+      /* Import the frames */
+      importFrames(frames, optarg);
       } break ;
 
     default :
@@ -156,6 +118,8 @@ mexFunction(int nout, mxArray *out[],
   }
 
   int frmNumel = upright ? 3 : 4;
+  bool calcDescs = (nout > OUT_DESCRIPTORS);
+  int descNumel;
 
   if (verbose) {
     mexPrintf("cvsurf: filter settings:\n") ;
@@ -164,14 +128,10 @@ mexFunction(int nout, mxArray *out[],
     mexPrintf("cvsurf:   hessianThreshold     = %f\n",hessianThreshold);
     mexPrintf("cvsurf:   extended             = %s\n",extended?"yes":"no");
     mexPrintf("cvsurf:   upright              = %s\n",upright ?"yes":"no");
+    mexPrintf("cvsurf:   calcDescriptors      = %s\n",calcDescs ?"yes":"no");
+    mexPrintf("cvsurf:   floatDescriptors     = %s\n",floatDescriptors?"yes":"no");
+    mexPrintf("cvsurf:   source frames        = %d\n",frames.size());
   }
-
-  Mat image = Mat(N,M,CV_8UC1,data);
-
-  bool calcDescs = false;
-  int descNumel;
-  if (nout >= OUT_DESCRIPTORS)
-    calcDescs = true;
 
   SURF surf = SURF(hessianThreshold, nOctaves, nOctaveLayers, extended);
   if (calcDescs) {
@@ -182,92 +142,16 @@ mexFunction(int nout, mxArray *out[],
     surf(image, Mat(), frames);
   }
 
-  /* make enough room for all the keypoints */
-  double *mx_frames = (double*)mxMalloc(frmNumel * sizeof(double) * frames.size()) ;
-  void *mx_descrs;
-  if (calcDescs) {
-    if (! floatDescriptors) {
-      mx_descrs  = mxMalloc(sizeof(vl_uint8) * descriptors.size()) ;
-    } else {
-      mx_descrs  = mxMalloc(sizeof(float) * descriptors.size()) ;
-    }
+  if (verbose) {
+    mexPrintf("cvsurf: detected %d frames\n",frames.size());
   }
 
-  /* For each keypoint ........................................ */
-  for (int i = 0; i < frames.size() ; ++i) {
+  /* Export  computed data */
+  exportFrames(&out[OUT_FRAMES], frames, frmNumel);
 
-    /* TODO solve the descriptor transpose (is SURF same as SIFT?) */
-
-    /* Save back with MATLAB conventions. Notice that the input
-       * image was the transpose of the actual image. */
-
-    const KeyPoint& frame = frames[i];
-    int frm_i = i * frmNumel;
-    int desc_i = i * descNumel;
-
-    switch (frmNumel) {
-    case 3: { /* DISC */
-      mx_frames [frm_i + 0] = frame.pt.y + 1. ;
-      mx_frames [frm_i + 1] = frame.pt.x + 1. ;
-      mx_frames [frm_i + 2] = frame.size ;
-    } break;
-    case 4: { /* ORIENTED DISC */
-      mx_frames [frm_i + 0] = frame.pt.y + 1. ;
-      mx_frames [frm_i + 1] = frame.pt.x + 1. ;
-      mx_frames [frm_i + 2] = frame.size ;
-      mx_frames [frm_i + 3] = CV_PI / 2. - frame.angle / 180. * CV_PI;
-    } break;
-    default:
-      VL_ASSERT(0,"Invalid frame type.");
-      break;
-    }
-
-    if (calcDescs) {
-      if (! floatDescriptors) {
-        for (int j = 0 ; j < descNumel ; ++j) {
-          float x = (descriptors[desc_i + j] + 0.5F) * 255.0F;
-          x = (x < 255.0F) ? x : 255.0F ;
-          ((vl_uint8*)mx_descrs) [desc_i + j] = (vl_uint8) x ;
-        }
-      } else {
-        for (int j = 0 ; j < descNumel ; ++j) {
-          float x = descriptors[desc_i + j];
-          ((float*)mx_descrs) [desc_i + j] = x ;
-        }
-      }
-    }
-  } /* next keypoint */
-
-  {
-    mwSize dims [2] ;
-
-    /* create an empty array */
-    dims [0] = 0 ;
-    dims [1] = 0 ;
-    out[OUT_FRAMES] = mxCreateNumericArray
-                      (2, dims, mxDOUBLE_CLASS, mxREAL) ;
-
-    /* set array content to be the frames buffer */
-    dims [0] = frmNumel ;
-    dims [1] = frames.size() ;
-    mxSetPr         (out[OUT_FRAMES], mx_frames) ;
-    mxSetDimensions (out[OUT_FRAMES], dims, 2) ;
-
-    if (calcDescs) {
-      /* create an empty array */
-      dims [0] = 0 ;
-      dims [1] = 0 ;
-      out[OUT_DESCRIPTORS]= mxCreateNumericArray
-                            (2, dims,
-                             floatDescriptors ? mxSINGLE_CLASS : mxUINT8_CLASS,
-                             mxREAL) ;
-
-      /* set array content to be the descriptors buffer */
-      dims [0] = descNumel ;
-      dims [1] = frames.size() ;
-      mxSetData       (out[OUT_DESCRIPTORS], mx_descrs) ;
-      mxSetDimensions (out[OUT_DESCRIPTORS], dims, 2) ;
-    }
+  if (calcDescs) {
+    exportDescs<float>(&out[OUT_DESCRIPTORS], descriptors.data(), descNumel,
+                     frames.size(),floatDescriptors, -0.5, 0.5);
   }
 
 }
