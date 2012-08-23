@@ -1,6 +1,4 @@
 classdef GenericInstaller < handle
-  properties (Constant)
-  end
   
   methods
     function res = isInstalled(obj)
@@ -129,25 +127,16 @@ classdef GenericInstaller < handle
       cd(curDir);
     end
     
-    function installTarball(url,distDir,compileCmd)
+    function installTarball(url,distDir)
       import helpers.*;
       [address filename ext] = fileparts(url);
       fprintf('Downloading and unpacking %s.\n',url);
-      try
-        switch ext
-          case {'.tar','.gz','.tgz'}
-            untar(url,distDir);
-          case '.zip'
-            unzip(url,distDir);
-          case '.bz2'
-            helpers.unbzip(url,distDir);
-          otherwise
-            error(['Unknown archive extension ' ext]);
-        end 
-      catch err
-        warning('Error downloading from: %s\n',url);
-        throw(err);
-      end
+      %try
+        helpers.unpack(url, distDir);
+      %catch err
+        %warning('Error downloading from: %s\n',url);
+        %throw(err);
+      %end
     end
     
   end

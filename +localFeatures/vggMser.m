@@ -80,37 +80,29 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       end
     end
 
-    function [frames descriptors] = extractFeatures(obj, imagePath)
+    function [frames] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      if ~obj.isOk, frames = zeros(5,0); return; end
 
-      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      if nargout == 1
-        obj.info('Computing frames of image %s.',getFileName(imagePath));
-      else
-        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
-      end
+      obj.info('Computing frames of image %s.',getFileName(imagePath));
 
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
 
       args = ' -t 2';
-      if obj.opts.es ~= -1
-        args = sprintf('%s -es %f',args,obj.opts.es);
+
+      fields = fieldnames(obj.opts);
+      for field = fields
+        val = getfield(obj.opts,field{:});
+        if val >= 0
+          args = strcat(args,' -',field,' ', num2str(val));
+        end
       end
-      if obj.opts.per ~= -1
-        args = sprintf('%s -per %f',args,obj.opts.per);
-      end
-      if obj.opts.ms ~= -1
-        args = sprintf('%s -ms %d',args,obj.opts.ms);
-      end
-      if obj.opts.mm ~= -1
-        args = sprintf('%s -mm %d',args,obj.opts.mm);
-      end
+      
       args = sprintf('%s -i "%s" -o "%s"',...
                      args, imagePath, framesFile);
       cmd = [obj.binPath ' ' args];
@@ -120,13 +112,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
         error('%d: %s: %s', status, cmd, msg) ;
       end
       
-      if nargout == 1
-        frames = obj.parseMserOutput(framesFile);
-      else
-        [ frames descriptors ] = helpers.vggCalcSiftDescriptor( imagePath, ...
-                          framesFile, 'Magnification', obj.opts.magnification, ...
-                          'NoAngle', obj.opts.noAngle );
-      end
+      frames = localFeatures.helpers.readFramesFile(framesFile);
       
       delete(framesFile);
 
@@ -134,7 +120,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       obj.debug('%d frames from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed);
       
-      obj.storeFeatures(imagePath, frames, descriptors);
+      obj.storeFeatures(imagePath, frames, []);
     end
 
     function sign = getSignature(obj)
@@ -145,33 +131,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
   end
 
   methods (Static)
-
-    function frames = parseMserOutput(framesFile)
-      fid = fopen(framesFile,'r');
-      if fid==-1
-        error('Could not read file: %s\n',framesFile);
-      end
-      [header,count] = fscanf(fid,'%f',2);
-      if count~= 2,
-        error('Invalid vgg mser output in: %s\n',framesFile);
-      end
-      numPoints = header(2);
-      %frames = zeros(5,numPoints);
-      [frames,count] = fscanf(fid,'%f',[5 numPoints]);
-      if count~=5*numPoints,
-        error('Invalid mser output in %s\n',framesFile);
-      end
-
-      % Transform the frame properly
-      frames(1:2,:) = frames(1:2,:) + 1;
-      C = frames(3:5,:);
-      den = C(1,:) .* C(3,:) - C(2,:) .* C(2,:) ;
-      S = [C(3,:) ; -C(2,:) ; C(1,:)] ./ den([1 1 1], :) ;
-      frames(3:5,:) = S;
-
-      fclose(fid);
-
-    end
     
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
