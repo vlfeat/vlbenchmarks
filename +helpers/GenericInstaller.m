@@ -97,10 +97,9 @@ classdef GenericInstaller < handle
       ldflags = {};
     end
     
-    function [urls dstPaths compileCmds] = getTarballsList()
+    function [urls dstPaths] = getTarballsList()
       urls = {};
       dstPaths = {};
-      compileCmds = {};
     end
     
     function deps = getDependencies()
