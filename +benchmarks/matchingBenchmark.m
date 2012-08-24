@@ -91,8 +91,9 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
 
       % Compute magnified frames
       magFactor = obj.opts.magnification^2;
-      mframesA(3:5,:) = framesA(3:5,:).*magFactor;
-      mreprojFramesB(3:5,:) = reprojFramesB(3:5,:).*magFactor;
+      mframesA = [framesA(1:2,:); framesA(3:5,:).*magFactor];
+      mreprojFramesB = [reprojFramesB(1:2,:); ...
+        reprojFramesB(3:5,:).*magFactor];
       
       % Find all ellipses with sufficient overlap
       obj.info('Computing overlaps between %d/%d frames.',...
