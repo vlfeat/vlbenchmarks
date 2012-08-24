@@ -8,11 +8,6 @@
 %   The options to the constructor are the same as that for vl_mser
 %   See help vl_mser to see those options and their default values.
 %
-%   Additional options:
-%
-%   Magnification :: [3]
-%     Magnification of the region size used for descriptor calculation.
-%
 %   See also: vl_mser
 
 
@@ -22,7 +17,6 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor & ...
     % See help vl_mser for setting parameters for vl_mser
     vl_mser_arguments
     binPath
-    opts
   end
 
   methods
@@ -31,25 +25,18 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor & ...
     % The varargin is passed directly to vl_mser
     function obj = vlFeatMser(varargin)
       obj.detectorName = 'MSER(vlFeat)';
-      obj.opts.magnification = 3;
-      obj.opts.noAngle = false;
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.vl_mser_arguments = obj.configureLogger(obj.detectorName,varargin);
       obj.binPath = which('vl_mser');
     end
 
-    function [frames descriptors] = extractFeatures(obj, imagePath)
+    function [frames] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
       
       startTime = tic;
-      if nargout == 1
-        obj.info('Computing frames of image %s.',getFileName(imagePath));
-      else
-        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
-      end
+      obj.info('Computing frames of image %s.',getFileName(imagePath));
       
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
@@ -63,22 +50,19 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor & ...
       sel = frames(3,:).*frames(5,:) - frames(4,:).^2 >= 1 ;
       frames = frames(:, sel) ;
       
-      if nargout == 2
-        [ frames descriptors ] = helpers.vggCalcSiftDescriptor( imagePath, ...
-                  frames, 'Magnification', obj.opts.magnification, ...
-                  'NoAngle', obj.opts.noAngle );
-      end
-      
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
       
-      obj.storeFeatures(imagePath, frames, descriptors);
+      obj.storeFeatures(imagePath, frames, []);
+    end
+    
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
     end
     
     function sign = getSignature(obj)
       signList = {helpers.fileSignature(obj.binPath), ...
-                  helpers.struct2str(obj.opts), ...
                   helpers.cell2str(obj.vl_mser_arguments)};
       sign = helpers.cell2str(signList);
     end

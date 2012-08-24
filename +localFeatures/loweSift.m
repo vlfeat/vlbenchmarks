@@ -27,7 +27,8 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
       end
       
       execDir = loweSift.dir;
-      obj.binPath = {fullfile(execDir, 'sift.m') fullfile(execDir, 'sift')};
+      obj.binPath = {fullfile(execDir, 'sift.m') ...
+        fullfile(execDir, 'sift')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -54,18 +55,18 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
         imagePath = fullfile(pwd,imagePath);
       end
       
-      obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+      obj.info('Computing frames and descriptors of image %s.',...
+        getFileName(imagePath));
       
       try
         cd(loweSift.dir);
         [img descriptors frames] = sift(imagePath);
+        cd(curDir);
       catch err
         cd(curDir);
         throw(err);
-      end
-      
-      cd(curDir);
-      
+      end      
+
       % Convert the frames to Matlab coordinate system
       descriptors = descriptors';
       frames = frames';
@@ -77,6 +78,10 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
         imageName,timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
+    end
+    
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
     end
     
     function sign = getSignature(obj)

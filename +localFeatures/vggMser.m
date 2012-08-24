@@ -22,12 +22,6 @@
 %   MM:: [10]
 %     Minimum margin
 %
-%   noAngle:: [false]
-%     Compute rotation variant descriptors if true (no rotation esimation)
-%
-%   Magnification:: [binary default]
-%     Magnification of the measurement region for the descriptor
-%     calculation.
 
 classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
@@ -56,8 +50,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       obj.opts.per = -1;
       obj.opts.ms = -1;
       obj.opts.mm = -1;
-      obj.opts.noAngle = false;
-      obj.opts.magnification = 3;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
       obj.configureLogger(obj.detectorName,varargin);
@@ -123,6 +115,10 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       obj.storeFeatures(imagePath, frames, []);
     end
 
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
+    end
+    
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath) ';'... 
               helpers.struct2str(obj.opts)];

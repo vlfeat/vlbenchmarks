@@ -61,6 +61,14 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
           error('Invalid frame type');
       end
       
+      if nargout > 1
+        [frames descriptors] = obj.extractDescriptors(imagePath,frames);
+      end
+      
+      obj.storeFeatures(imagePath, frames, descriptors);
+    end
+
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
       descMinValue = obj.opts.descMinValue;
       descMaxValue = obj.opts.descMaxValue;
       descriptors = rand(obj.opts.descSize,numFeatures)...
@@ -69,10 +77,8 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       if obj.opts.descInteger
         descriptors = round(descriptors);
       end
-      
-      obj.storeFeatures(imagePath, frames, descriptors);
     end
-
+    
     function signature = getSignature(obj)
       signature = helpers.struct2str(obj.opts);
     end

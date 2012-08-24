@@ -15,8 +15,6 @@
 classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
     helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
-    % The properties below correspond to parameters for the cmp hessian
-    % binary accepts. See the binary help for explanation.
     binPath
   end
   
@@ -92,6 +90,10 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
+    end
+    
     function sign = getSignature(obj)
       sign = helpers.fileSignature(obj.binPath);
     end
@@ -104,6 +106,10 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
       import localFeatures.*;
       urls = {cmpHessian.softwareUrl};
       dstPaths = {cmpHessian.rootInstallDir};
+    end
+    
+    function deps = getDependencies()
+      deps = {helpers.Installer() helpers.OpenCVInstaller()};
     end
     
     function compile()

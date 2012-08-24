@@ -27,6 +27,7 @@ classdef cvStar < localFeatures.genericLocalFeatureExtractor & ...
 
     function frames = extractFeatures(obj, imagePath)
       import helpers.*;
+      import localFeatures.*;
       
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
@@ -47,6 +48,10 @@ classdef cvStar < localFeatures.genericLocalFeatureExtractor & ...
       obj.storeFeatures(imagePath, frames, []);
     end
     
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
+    end
+    
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
               helpers.cell2str(obj.cvStar_arguments)];
@@ -55,7 +60,8 @@ classdef cvStar < localFeatures.genericLocalFeatureExtractor & ...
   
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.Installer() helpers.VlFeatInstaller() helpers.OpenCVInstaller()};
+      deps = {helpers.Installer() helpers.VlFeatInstaller() ...
+        helpers.OpenCVInstaller()};
     end
     
     function [srclist flags] = getMexSources()

@@ -47,6 +47,10 @@ classdef cvFast < localFeatures.genericLocalFeatureExtractor & ...
       obj.storeFeatures(imagePath, frames, []);
     end
     
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
+    end
+    
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
               helpers.cell2str(obj.cvFast_arguments)];

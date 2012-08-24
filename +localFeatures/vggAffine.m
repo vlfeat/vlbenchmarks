@@ -1,163 +1,193 @@
 % VGGAFFINE class to wrap around the VGG affine co-variant detectors.
 %
-%   obj = localFeatures.vggAffine('Option','OptionValue',...);
+%   obj = affineDetectors.vggAffine('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
 %   obj class implements the genericDetector interface and wraps around the
-%   vgg implementation of harris and hessian affine detectors available at:
-%   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/extract_features2.tar.gz
+%   vgg implementation of harris and hessian affine detectors (Philbin
+%   version).
+%
+%   This version of VGG descriptor calculation internaly compute with 
+%   magnification factor equal 3 and cannot be adjusted in the binary
+%   parameters.
 %
 %   The constructor call above takes the following options:
 %
-%   Detector:: ['hessian']
-%     One of 'hessian' or 'harris' to select what type of corner detector to use
+%   Detector:: ['hesaff']
+%     One of {'hesaff', 'haraff', 'heslap', 'harlap','har'}
 %
-%   HarThresh:: [10]
-%     Threshold for harris corner detection (only used when detector is 'harris')
+%   Descriptor:: ['sift']
+%     One of {'sift','jla','gloh','mom','koen','kf','sc','spin','pca','cc'}.
+%     See help string of the binary in
+%     ./data/software/vggAffine/compute_descriptors.ln
 %
-%   HesThresh:: [200]
-%     Threshold for hessian maxima detection (only used when detector is 'hessian')
+%   threshold:: [-1]
+%     Cornerness threshold.
+%
+%   noAngle:: [false]
+%     Compute rotation variant descriptors if true (no rotation esimation)
+%
 
-classdef vggAffine < localFeatures.genericLocalFeatureExtractor & ...
-    helpers.GenericInstaller
+classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
+    & helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
-    % Properties below correspond to the binary downloaded
-    % from vgg
     opts
-    binPath
   end
   
   properties (Constant)
-    rootInstallDir = fullfile('data','software','vggAffine','');
-    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/extract_features2.tar.gz';
+    binDir = fullfile('data','software','vggAffine','');
+    detBinPath = fullfile(localFeatures.vggAffine.binDir,'h_affine.ln');
+    descrBinPath = fullfile(localFeatures.vggAffine.binDir,'compute_descriptors.ln');
+    detUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/h_affine.ln.gz';
+    descUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/compute_descriptors.ln.gz'
+    validDetectors = {'hesaff', 'haraff', 'heslap', 'harlap','har'};
+    validDescriptors = {'sift','jla','gloh','mom','koen','kf','sc',...
+      'spin','pca','cc'};
   end
-  
+
   methods
     % The constructor is used to set the options for vggAffine
     function obj = vggAffine(varargin)
       import localFeatures.*;
       import helpers.*;
 
-      % Parse the passed options
-      obj.opts.detector= 'hessian';
-      obj.opts.harThresh = 1000; % original 10, documented 1000
-      obj.opts.hesThresh = 500; % original 200, documented 500
-      obj.opts.noAngle = false;
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-
-      switch(lower(obj.opts.detector))
-        case 'hessian'
-          obj.opts.detectorType = 'hesaff';
-        case 'harris'
-          obj.opts.detectorType = 'haraff';
-        otherwise
-          error('Invalid detector type: %s\n',obj.opts.detector);
-      end
-      obj.detectorName = [obj.opts.detector '-affine(vgg)' ];
-      
-      obj.configureLogger(obj.detectorName,varargin);
-      
       if ~obj.isInstalled(),
-        obj.isOk = false;
-        obj.warn('vggAffine not found installed');
+        obj.warn('Not found installed');
         obj.installDeps();
       end
-      
+
+      % Default options
+      obj.opts.detector= 'hesaff';
+      obj.opts.threshold = -1;
+      obj.opts.noAngle = false;
+      obj.opts.descriptor = 'sift';
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+
+      if ~ismember(obj.opts.detector, obj.validDetectors)
+        obj.error('Invalid detector');
+      end
+      if ~ismember(obj.opts.descriptor, obj.validDescriptors)
+        obj.error('Invalid descriptor');
+      end
+      obj.detectorName = ['VGG ' obj.opts.detector];
+  
       % Check platform dependence
       machineType = computer();
-      switch(machineType)
-        case  {'GLNX86'}
-          obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
-                             'extract_features_32bit.ln');
-        case {'GLNXA64'}
-          obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
-                             'extract_features_64bit.ln');
-        case  {'PCWIN','PCWIN64'}
-          obj.binPath = fullfile(vggAffine.rootInstallDir,'extract_features',...
-                             'extract_features_32bit.exe');
-        otherwise
-          error('Arch: %s not supported by vggAffine',machineType);
+      if ~ismember(machineType,{'GLNX86','GLNXA64'})
+          obj.error('Arch: %s not supported by VGG Affine.',machineType);
       end
+      obj.configureLogger(obj.detectorName,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
+      import localFeatures.*;
+      if ~obj.isOk, frames = zeros(5,0); return; end
+
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-
-      if ~obj.isOk, frames = zeros(5,0); return; end
 
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
       else
-        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+        obj.info('Computing frames and descriptors of image %s.',...
+          getFileName(imagePath));
       end
       
       tmpName = tempname;
-      outFile = [tmpName '.' obj.opts.detectorType];
-      tempImageCreated = false;
+      framesFile = [tmpName '.' obj.opts.detector];
       
-      [path filename ext] = fileparts(imagePath);
-      % Convert jpeg images to png (jpeg not supported).
-      if strcmp(ext,'.jpg') || strcmp(ext,'.jpeg')
-        obj.debug(obj.detectorName,sprintf('converting jpeg->png.'));
-        im = imread(imagePath);
-        imagePath = [tmpName '.png'];
-        imwrite(im,imagePath);
-        tempImageCreated = true;
-        clear im;
+      detArgs = '';
+      if obj.opts.threshold >= 0
+        detArgs = sprintf('-thres %f ',obj.opts.threshold);
       end
-      
-      if nargout == 2 
-        desc_param='-sift'; 
-        outFile = strcat(outFile, '.sift');
-      else 
-        desc_param = ''; 
-      end;
+      detArgs = sprintf('%s-%s -i "%s" -o "%s" %s',...
+                     detArgs, obj.opts.detector,...
+                     imagePath,framesFile);
 
-      args = sprintf(' -o1 "%s" -%s -harThres %f -hesThres %f -i "%s" %s',...
-                     outFile, obj.opts.detectorType, obj.opts.harThresh,...
-                     obj.opts.hesThresh, imagePath, desc_param);
-      if obj.opts.noAngle
-        args = strcat(args,' -noangle');
-      end
-      cmd = [obj.binPath ' ' args];
+      detCmd = [obj.detBinPath ' ' detArgs];
 
-      [status,msg] = system(cmd);
+      [status,msg] = system(detCmd);
       if status
-        error('%d: %s: %s', status, cmd, msg) ;
+        error('%d: %s: %s', status, detCmd, msg) ;
       end
-
-      [frames descriptors] = vl_ubcread(outFile,'format','oxford');
-      delete(outFile); delete([outFile '.params']);
-      if tempImageCreated, delete(imagePath); end;
-
+      
+      if nargout ==2
+        [frames descriptors] = obj.extractDescriptors(imagePath,framesFile);
+      else
+        frames = helpers.readFramesFile(framesFile);
+      end
+      
+      delete(framesFile);
+      
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end
+  
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      % EXTRACTDESCRIPTORS Compute SIFT descriptors using 
+      %   compute_descriptors_2.ln binary.
+      %
+      %  frames can be both array of frames or path to a frames file.
+      import localFeatures.*;
+
+      tmpName = tempname;
+      outDescFile = [tmpName '.descs'];
+
+      if size(frames,1) == 1 && exist(frames,'file')
+        framesFile = frames;
+      elseif exist('frames','var')
+        framesFile = [tmpName '.frames'];
+        helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
+      end
+
+      % Prepare the options
+      descrArgs = sprintf('-%s -i "%s" -p1 "%s" -o1 "%s"', ...
+        obj.opts.descriptor, imagePath, framesFile, outDescFile);
+
+      if obj.opts.noAngle
+        descrArgs = strcat(descrArgs,' -noangle');
+      end             
+
+      descrCmd = [obj.descrBinPath ' ' descrArgs];
+
+      [status,msg] = system(descrCmd);
+      if status
+        error('%d: %s: %s', status, descrCmd, msg) ;
+      end
+      [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
+      delete(outDescFile);
+    end
     
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath) ';' ... 
-              obj.opts.detectorType ';' ... 
-              num2str(obj.opts.harThresh) ';' ...
-              num2str(obj.opts.hesThresh) ';' ...
-              num2str(obj.opts.noAngle)];
+      signList = {helpers.fileSignature(obj.detBinPath) ... 
+        helpers.fileSignature(obj.descrBinPath) ...
+        helpers.struct2str(obj.opts)};
+      sign = helpers.cell2str(signList);
     end
-
   end
 
   methods (Static)
-
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {vggAffine.softwareUrl};
-      dstPaths = {vggAffine.rootInstallDir};
+      urls = {vggAffine.detUrl vggAffine.descUrl};
+      dstPaths = {vggAffine.binDir vggAffine.binDir};
     end
 
+    function compile()
+      import localFeatures.*;
+      % When unpacked, binaries are not executable
+      chmodCmds = {sprintf('chmod +x %s',vggAffine.detBinPath) ...
+        sprintf('chmod +x %s',vggAffine.descrBinPath)}; 
+      for cmd = chmodCmds
+        [status msg] = system(cmd{:});
+        if status ~= 0, error(msg); end
+      end
+    end
   end % ---- end of static methods ----
 
 end % ----- end of class definition ----

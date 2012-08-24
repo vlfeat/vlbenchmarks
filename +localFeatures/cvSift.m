@@ -8,7 +8,7 @@
 classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
   properties (SetAccess=public, GetAccess=public)
-    cvSift_argument
+    cvsift_arguments
     binPath
   end
 
@@ -16,7 +16,7 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
 
     function obj = cvSift(varargin)
       obj.detectorName = 'OpenCV SIFT';
-      obj.cvSift_argument = obj.configureLogger(obj.detectorName,varargin);
+      obj.cvsift_arguments = obj.configureLogger(obj.detectorName,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();
@@ -27,43 +27,57 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
+      import localFeatures.*;
       
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
       
+      img = imread(imagePath);
+      if(size(img,3)>1), img = rgb2gray(img); end
+      img = uint8(img);
+      
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
+        [frames] = localFeatures.mex.cvSift(img,obj.cvsift_arguments{:});
       else
-        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+        obj.info('Computing frames and descriptors of image %s.',...
+          getFileName(imagePath));
+        [frames descriptors] = mex.cvSift(img,obj.cvsift_arguments{:});
       end
-      
-      img = imread(imagePath);
-      if(size(img,3)>1), img = rgb2gray(img); end
-      img = uint8(img); % If not already in uint8, then convert
-      
-      if nargout == 2
-        [frames descriptors] = localFeatures.mex.cvSift(img,obj.cvSift_argument{:});
-      elseif nargout == 1
-        [frames] = localFeatures.mex.cvSift(img,obj.cvSift_argument{:});
-      end
-      
       timeElapsed = toc(startTime);
+      
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end
     
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      import localFeatures.*;
+      img = imread(imagePath);
+      if(size(img,3)>1), img = rgb2gray(img); end
+      img = uint8(img);
+      
+      startTime = tic;
+      [frames descriptors] = mex.cvSift(img,'Frames', ...
+        frames,obj.cvorb_arguments{:});
+      timeElapsed = toc(startTime);
+      
+      obj.debug('Descriptors of %d frames computed in %gs',...
+        size(frames,2),timeElapsed);
+    end
+    
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvSift_argument)];
+              helpers.cell2str(obj.cvsift_arguments)];
     end
   end
   
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.Installer() helpers.VlFeatInstaller() helpers.OpenCVInstaller()};
+      deps = {helpers.Installer() helpers.VlFeatInstaller() ...
+        helpers.OpenCVInstaller()};
     end
     
     function [srclist flags] = getMexSources()

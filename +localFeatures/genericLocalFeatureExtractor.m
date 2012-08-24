@@ -7,17 +7,14 @@
 %   (see +localFeatures/exampleDetector.m for a simple example)
 
 classdef genericLocalFeatureExtractor < handle & helpers.Logger
-  properties (SetAccess=protected, GetAccess=public)
-    isOk = true; % signifies if detector has been installed and runs ok on
-                 % this particular platform
-  end
   
   properties (SetAccess=public, GetAccess=public)
     detectorName % Set this property in the constructor
   end
   
   properties (Constant)
-    featuresKeyPrefix = 'frames'; % Prefix of the cached features key
+    framesKeyPrefix = 'frames'; % Prefix of the cached features key
+    descsKeyPrefix = '+desc'; % Prefix of the cached features key
   end
 
   methods(Abstract)
@@ -45,6 +42,12 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     %   store respectively the S11, S12, S22 such that
     %   ELLIPSE = {x: x' inv(S) x = 1}.
     
+    [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+    % EXTRACTDESCRIPTOR Extract descriptors of input frames
+    % Extract descriptors of regions defined by frames in an image 
+    % defined by its path imagePath. Outputs refined list of frames and
+    % descriptors.
+    
     sign = getSignature(obj)
     % GETSIGNATURE
     % Returns unique signature for detector parameters.
@@ -55,10 +58,12 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
   end
   
   methods (Access = public)
-    function deleteCachedFeatures(obj,imagePath,loadDescriptors)
+    function clearCache(obj,imagePath)
       import helpers.*;
       
-      key = obj.getFeaturesKey(imagePath,loadDescriptors);
+      key = obj.getFeaturesKey(imagePath,true);
+      DataCache.removeData(key);
+      key = obj.getFeaturesKey(imagePath,false);
       DataCache.removeData(key);
     end
   end
@@ -98,9 +103,9 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
       import helpers.*;
       imageSignature = helpers.fileSignature(imagePath);
       detSignature = obj.getSignature();
-      prefix = genericLocalFeatureExtractor.featuresKeyPrefix;
+      prefix = genericLocalFeatureExtractor.framesKeyPrefix;
       if hasDescriptors
-        prefix = strcat(prefix,'Desc');
+        prefix = strcat(prefix,genericLocalFeatureExtractor.descsKeyPrefix);
       end
       key = cell2str({prefix,detSignature,imageSignature});
     end
