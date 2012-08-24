@@ -23,23 +23,29 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
 
   properties (Constant)
     rootInstallDir = fullfile('data','software','sfop','');
-    softwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-0.9.tar.gz';
+    dir = fullfile(localFeatures.sfop.rootInstallDir,'sfop-1.0','');
+    matlabDir = fullfile(localFeatures.sfop.dir,'matlab','');
+    binPath = fullfile(localFeatures.sfop.dir,'src','sfop');
+    softwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-1.0.tar.gz';
+    configCmd = './configure --disable-gpu --disable-doxygen CC=%s CXX=%s';
+    makeCmd = 'make';
   end
   
   methods
     % The constructor is used to set the options for vggAffine
     function obj = sfop(varargin)
-      import affineDetectors.*;
+      import localFeatures.*;
+      obj.detectorName = 'SFOP';
+      obj.sfop_varargin = obj.configureLogger(obj.detectorName,varargin);
+      
       if ~obj.isInstalled(),
+        obj.warn('Not installed');
         obj.installDeps();
       end
-
-      obj.sfop_varargin = obj.configureLogger(obj.detectorName,varargin);
     end
 
-    function [frames descriptors] = extractFeatures(obj, imagePath)
+    function frames = extractFeatures(obj, imagePath)
       import helpers.*;
-      if ~obj.isOk, frames = zeros(5,0); return; end
 
       startTime = tic;
       if nargout == 1
@@ -51,16 +57,21 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
       tmpName = tempname;
       outFile = [tmpName '.points'];
 
-      savePwd = pwd;
-      cwd = fileparts(mfilename('fullpath'));
-      sfop_varargin = obj.sfop_varargin;
-      cd(fullfile(cwd,obj.rootInstallDir,'sfop-0.9','matlab'));
-      sfop(imagePath,outFile,sfop_varargin{:});
-      cd(savePwd);
+      imagePath = fullfile(pwd,imagePath);
+      
+      curDir = pwd;
+      cd(obj.matlabDir);
+      try
+        sfop(imagePath,outFile,obj.sfop_varargin{:});
+      catch err
+        cd(curDir);
+        throw(err);
+      end
+      cd(curDir);
 
-      frames = affineDetectors.vggMser.parseMserOutput(outFile);
+      frames = localFeatures.helpers.readFramesFile(outFile);
       % Above output uses the same output format as vggMser
-
+      
       delete(outFile);
       
       timeElapsed = toc(startTime);
@@ -68,8 +79,13 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
         getFileName(imagePath),timeElapsed);
     end
     
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      obj.error('Descriptor calculation of provided frames not supported');
+    end
+    
     function signature = getSignature(obj)
       import helpers.*;
+      signature = helpers.fileSignature(obj.binPath);
     end
   end
 
@@ -79,6 +95,24 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
       import localFeatures.*;
       urls = {sfop.softwareUrl};
       dstPaths = {sfop.rootInstallDir};
+    end
+    
+    function compile()
+      import localFeatures.*;
+      cxx = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;
+      cc = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;
+      configCmd = sprintf(sfop.configCmd,cc,cxx);
+      
+      curDir = pwd;
+      cd(sfop.dir);
+      try
+        system(configCmd,'-echo');
+        system(sfop.makeCmd, '-echo');
+        cd(curDir);
+      catch err
+        cd(curDir);
+        throw(err);
+      end
     end
 
   end % ---- end of static methods ----
