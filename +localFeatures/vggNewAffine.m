@@ -165,11 +165,15 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
 
       descrCmd = [obj.descrBinPath ' ' descrArgs];
 
+      startTime = tic;
+      obj.info('Computing descriptors of %d frames.',size(frames,2));
       [status,msg] = system(descrCmd);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
+      timeElapsed = toc(startTime);
+      obj.debug('Descriptors computed in %gs',timeElapsed);
       delete(outDescFile);
 
       % Remove the magnification from frames scale

@@ -131,12 +131,7 @@ classdef GenericInstaller < handle
       import helpers.*;
       [address filename ext] = fileparts(url);
       fprintf('Downloading and unpacking %s.\n',url);
-      %try
-        helpers.unpack(url, distDir);
-      %catch err
-        %warning('Error downloading from: %s\n',url);
-        %throw(err);
-      %end
+      helpers.unpack(url, distDir);
     end
     
   end
