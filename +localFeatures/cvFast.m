@@ -15,8 +15,9 @@ classdef cvFast < localFeatures.genericLocalFeatureExtractor & ...
   methods
 
     function obj = cvFast(varargin)
-      obj.detectorName = 'OpenCV FAST';
-      obj.cvFast_arguments = obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'OpenCV FAST';
+      obj.detectorName = obj.name;
+      obj.cvFast_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();

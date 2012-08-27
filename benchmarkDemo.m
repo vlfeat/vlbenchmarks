@@ -9,7 +9,7 @@ import localFeatures.*;
 
 detectors{1} = vggMser('ms',30); % Custom options
 detectors{2} = vlFeatMser(); % Default options
-detectors{2}.detectorName = 'VLFeat MSER'; % used in the plot legend by modifying the above field
+detectors{2}.name = 'VLFeat MSER'; % used in the plot legend by modifying the above field
 detectors{3} = cmpHessian();
 detectors{4} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
 detectors{5} = vggAffine('Detector', 'hessian');
@@ -97,7 +97,7 @@ function printScores(detectors, scores, name, outFile)
   maxNameLen = 0;
   detNames = cell(numDetectors,1);
   for k = 1:numDetectors
-    detNames{k} = detectors{k}.detectorName;
+    detNames{k} = detectors{k}.name;
     maxNameLen = max(maxNameLen,length(detNames{k}));
   end
 
@@ -171,7 +171,7 @@ function plotScores(detectors, dataset, score, titleText, yLabel, outFile)
 
   legendStr = cell(1,numel(detectors));
   for m = 1:numel(detectors) 
-    legendStr{m} = detectors{m}.detectorName; 
+    legendStr{m} = detectors{m}.name; 
   end
   legend(legendStr,'Location',legendLocation);
   grid on ;

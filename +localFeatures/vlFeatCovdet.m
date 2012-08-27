@@ -19,12 +19,21 @@ classdef vlFeatCovdet < localFeatures.genericLocalFeatureExtractor & ...
   methods
 
     function obj = vlFeatCovdet(varargin)
-      obj.detectorName = 'vlFeat Covdet';
+      % def. arguments
+      vlArgs.method = 'DoG';
+      vlArgs.affineAdaptation = false;
+      [vlArgs, drop] = vl_argparse(vlArgs,varargin);
+      
+      obj.name = ['VLFeat ' vlArgs.method];
+      if vlArgs.affineAdaptation, obj.name = [obj.name '-affine']; end
+      obj.detectorName = obj.name;
+      obj.descriptorName = 'VLFeat SIFT';
+      obj.extractsDescriptors = true;
       
       obj.opts.forceOrientation = false; % Force orientation for SIFT desc.
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
-      obj.vl_covdet_arguments = obj.configureLogger(obj.detectorName,varargin);
+      obj.vl_covdet_arguments = obj.configureLogger(obj.name,varargin);
       obj.binPath = {which('vl_covdet') which('libvl.so')};
     end
 

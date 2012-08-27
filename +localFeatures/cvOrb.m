@@ -21,13 +21,14 @@ classdef cvOrb < localFeatures.genericLocalFeatureExtractor & ...
 
     function obj = cvOrb(varargin)
       obj.opts.scoreType = 'FAST';
-      % Get the score type from the arguments
-      [obj.opts, varargin] = vl_argparse(obj.opts, varargin);
-      obj.detectorName = ['OpenCV ORB ',obj.opts.scoreType];
-      obj.cvorb_arguments = obj.configureLogger(obj.detectorName,varargin);
-      % Return the score type back to the arguments
-      obj.cvorb_arguments = [obj.cvorb_arguments ...
-        {'ScoreType',obj.opts.scoreType}];
+      [obj.opts, drop] = vl_argparse(obj.opts, varargin);
+      obj.name = 'OpenCV ORB';
+      obj.detectorName = [obj.name,' ',obj.opts.scoreType];
+      obj.descriptorName = obj.name;
+      obj.extractsDescriptors = true;
+      
+      obj.cvorb_arguments = obj.configureLogger(obj.name,varargin);
+      obj.cvorb_arguments = varargin;
       
       if ~obj.isInstalled()
         obj.warn('Not installed.')

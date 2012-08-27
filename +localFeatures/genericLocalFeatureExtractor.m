@@ -9,7 +9,12 @@
 classdef genericLocalFeatureExtractor < handle & helpers.Logger
   
   properties (SetAccess=public, GetAccess=public)
-    detectorName % Set this property in the constructor
+    name % General name of the feature extractor
+    detectorName = '' % Particular name of the frames detector
+    descriptorName = '' % Name of descriptor extr. algorithm
+    % If detector support desc. extraction of descriptors from provided
+    % frames, set to true.
+    extractsDescriptors = false;
   end
   
   properties (Constant)
@@ -41,6 +46,11 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     %   if frames is 5 x nFrames, then frames(3,:), frames(4,:) and frames(5,:)
     %   store respectively the S11, S12, S22 such that
     %   ELLIPSE = {x: x' inv(S) x = 1}.
+    %
+    % When called only with one output argument, only frames are
+    % calculated. When invoked with two output arguments, descriptors of
+    % the frames are calculated. However descriptor calculation may
+    % invalidate some frames.
     
     [frames descriptors] = extractDescriptors(obj, imagePath, frames)
     % EXTRACTDESCRIPTOR Extract descriptors of input frames

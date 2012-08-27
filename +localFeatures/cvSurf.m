@@ -15,8 +15,11 @@ classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
   methods
 
     function obj = cvSurf(varargin)
-      obj.detectorName = 'OpenCV SURF';
-      obj.cvsurf_arguments = obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'OpenCV SURF';
+      obj.detectorName = obj.name;
+      obj.descriptorName = obj.name;
+      obj.extractsDescriptors = true;
+      obj.cvsurf_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();
@@ -61,7 +64,7 @@ classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
       
       startTime = tic;
       [frames descriptors] = mex.cvSurf(img,'Frames', ...
-        frames,obj.cvorb_arguments{:});
+        frames,obj.cvsurf_arguments{:});
       timeElapsed = toc(startTime);
       
       obj.debug('Descriptors of %d frames computed in %gs',...

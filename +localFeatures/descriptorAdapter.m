@@ -19,11 +19,17 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
         error('FrameDetector not a genericLocalFeatureExtractor.');
       end
       
+      if ~descExtractor.extractsDescriptors
+        error('Class % does not support descriptor extraction of provided frames',...
+          descExtractor.name);
+      end
+      
       obj.frameDetector = frameDetector;
       obj.descExtractor = descExtractor;
-      obj.detectorName = [frameDetector.detectorName ' + '...
-        descExtractor.detectorName];
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.name = [obj.detectorName ' + ' obj.descriptorName];
+      obj.detectorName = frameDetector.detectorName;
+      obj.descriptorName = descExtractor.descriptorName;
+      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)

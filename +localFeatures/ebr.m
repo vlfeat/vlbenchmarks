@@ -13,9 +13,10 @@ classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
     function obj = ebr(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.detectorName = 'EBR';
+      obj.name = 'EBR';
+      obj.detectorName = obj.name;
       
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.configureLogger(obj.name,varargin);
       
       if ~obj.isInstalled(),
         obj.warn('ebr not found installed');

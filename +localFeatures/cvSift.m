@@ -15,8 +15,11 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
   methods
 
     function obj = cvSift(varargin)
-      obj.detectorName = 'OpenCV SIFT';
-      obj.cvsift_arguments = obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'OpenCV SIFT';
+      obj.detectorName = obj.name;
+      obj.descriptorName = obj.name;
+      obj.extractsDescriptors = true;
+      obj.cvsift_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();
@@ -61,7 +64,7 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
       
       startTime = tic;
       [frames descriptors] = mex.cvSift(img,'Frames', ...
-        frames,obj.cvorb_arguments{:});
+        frames,obj.cvsift_arguments{:});
       timeElapsed = toc(startTime);
       
       obj.debug('Descriptors of %d frames computed in %gs',...

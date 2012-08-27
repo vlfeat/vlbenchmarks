@@ -24,8 +24,9 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor & ...
     % See help vl_mser for possible parameters
     % The varargin is passed directly to vl_mser
     function obj = vlFeatMser(varargin)
-      obj.detectorName = 'MSER(vlFeat)';
-      obj.vl_mser_arguments = obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'VLFeat MSER';
+      obj.detectorName = obj.name;
+      obj.vl_mser_arguments = obj.configureLogger(obj.name,varargin);
       obj.binPath = which('vl_mser');
     end
 

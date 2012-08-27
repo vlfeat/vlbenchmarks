@@ -15,8 +15,9 @@ classdef cvStar < localFeatures.genericLocalFeatureExtractor & ...
   methods
 
     function obj = cvStar(varargin)
-      obj.detectorName = 'OpenCV STAR';
-      obj.cvStar_arguments = obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'OpenCV STAR';
+      obj.detectorName = obj.name;
+      obj.cvStar_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();

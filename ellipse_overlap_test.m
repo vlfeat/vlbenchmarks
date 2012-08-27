@@ -1,63 +1,59 @@
 import localFeatures.*;
+import datasets.*;
 
 datasetNames = {'graf','wall','bikes','bark','trees'};
 
 for d = 1%:numel(datasetNames)
   datasetName = datasetNames{d};
 
-  dataset = vggDataset('category',datasetName);
   
-  %detectors{1} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
-  vlf_old_aff = '/home/kaja/projects/c/vlfeat-old-aff-norm/toolbox/mex/mexa64/vl_covdet.mexa64';
-  detectors{1} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian','Magnif',1);
-  detectors{1}.detectorName = 'VLf Hessian affine (no or.) + mag.';
+  dataset = vggAffineDataset('category',datasetName);
+  
+  detectors{1} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
 %  detectors{1}.binPath{1} = vlf_old_aff;
-  %detectors{2} = cmpHessian();
-  detectors{2} = vggNewAffine('Detector', 'hessian');
-
-  storage = framesStorage(dataset, 'calcDescriptors', false);
-  storage.addDetectors(detectors);
-
-  storage.calcFrames();
+  detectors{2} = cmpHessian();
+  %detectors{2} = vggNewAffine('Detector', 'hessian'); detectors{2}.detectorName = 'VGG hesaff';
+  %detectors{2} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','dog');
 
 
   %%
   img_id = 1;
-  firstDetector = 1;
-  secondDetector = 2;
+  d1 = 1;
+  d2 = 2;
 
-  frames1 = storage.frames{firstDetector}{img_id};
-  frames2 = storage.frames{secondDetector}{img_id};
+  imgPath = dataset.getImagePath(1);
+  img = datasets.helpers.genEll();
+  %imgPath = [tempname '.pgm'];
+  %imwrite(img,imgPath);
+  
+  [framesA a] = detectors{d1}.extractFeatures(imgPath);
+  [framesB a] = detectors{d2}.extractFeatures(imgPath);
   
   
-  [ frames1Matches frames2Matches ] = find_matches(frames1,frames2,0.8);
+  [ bestMatches ] = find_matches(framesA,framesB,0.8);
 
-  %% Store the original image and frames
-  %storage.plotFrames(frames1,frames2,frames1,frames2,1,1,matchIdxs);
+  img = imread(imgPath);
 
+  figure(101); clf; imshow(img); colormap gray; hold on ; 
+
+  % Plot the transformed and matched frames from B on A in blue
+  matchedBFrames = bestMatches(1,(bestMatches(1,:)~=0));
+  matchedAFrames = find(bestMatches(1,:)~=0);
+  %vl_plotframe(framesB(:,matchedBFrames),'g','linewidth',1);
+  % Plot the remaining frames from B on A in red
+  unmatchedBFrames = setdiff(1:size(framesB,2),matchedBFrames);
+  unmatchedAFrames = setdiff(1:size(framesA,2),matchedAFrames);
   
-  %vl_plotframe(frames1,'linewidth', 1);
-  %title(sprintf('%s det. frames',detectors{firstDetector}.detectorName)); 
-  %print(sprintf('comp_%s_frms_1.pdf',datasetName),'-dpdf');
-
-  %figure(1); clf;
-  %colormap gray ;
-  %h=gcf;
-  %set(h,'PaperOrientation','landscape');
-  %set(h,'PaperUnits','normalized');
-  %set(h,'PaperPosition', [0 0 1 1]);
-  % Plot all the frames of the second detector in green
-  %hold on ; imshow(imageA); 
-  %vl_plotframe(frames2,'linewidth', 1,'r');
-  %title(sprintf('%s det. frames',detectors{secondDetector}.detectorName)); 
-  %axis image;
-  %print(sprintf('comp_%s_frms_2.pdf',datasetName),'-dpdf');
-
-
-  %%
+  colors = distinguishable_colors(25);
   
-  draw_matches( imageA, frames1, frames2, frames1Matches, frames2Matches,... 
-    detectors{firstDetector}.detectorName, detectors{secondDetector}.detectorName,...
-     datasetName);
+  vl_plotframe(framesB(:,unmatchedBFrames),'k','linewidth',3);
+  vl_plotframe(framesA(:,unmatchedAFrames),'k','linewidth',3);
+  uBF = vl_plotframe(framesB(:,unmatchedBFrames),'Color',colors(1,:),'linewidth',1);
+  uAF = vl_plotframe(framesA(:,unmatchedAFrames),'Color',colors(2,:),'linewidth',1);
+
+ 
+  legend([uAF uBF],...
+    sprintf('Unmatched frames of %s',detectors{d1}.detectorName), ... 
+    sprintf('Unmatched frames of %s',detectors{d2}.detectorName));
 
 end

@@ -69,20 +69,22 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       if ~ismember(obj.opts.descriptor, obj.validDescriptors)
         obj.error('Invalid descriptor');
       end
+      obj.name = ['VGG ' obj.opts.detector ' ' obj.opts.descriptor];
       obj.detectorName = ['VGG ' obj.opts.detector];
+      obj.descriptorName = ['VGG ' obj.opts.descriptor];
+      obj.extractsDescriptors = true;
   
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
           obj.error('Arch: %s not supported by VGG Affine.',machineType);
       end
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      if ~obj.isOk, frames = zeros(5,0); return; end
 
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;

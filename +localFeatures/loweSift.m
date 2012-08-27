@@ -19,8 +19,10 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
     function obj = loweSift(varargin)
       import localFeatures.*;
       
-      obj.detectorName = 'Lowe SIFT';
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'Lowe SIFT';
+      obj.detectorName = obj.name;
+      obj.descriptorName = obj.name;
+      obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.installDeps();
@@ -40,19 +42,21 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
       
       startTime = tic;
       curDir = pwd;
-      imageName = getFileName(imagePath); 
       
-      % In case image is not in grayscale convert it
+      % In case image is not in grayscale convert it and save it
       img = imread(imagePath);
       if ndims(img) == 3
         img = rgb2gray(img);
-        imagePath = [tempname '.pgm'];
-        imwrite(img, imagePath);
+        detImagePath = [tempname '.pgm'];
+        imwrite(img, detImagePath);
+      else
+        detImagePath = imagePath;
       end
       clear img;
       
-      if imagePath(1) ~= filesep
-        imagePath = fullfile(pwd,imagePath);
+      % Check whether it is absolute path
+      if detImagePath(1) ~= filesep
+        detImagePath = fullfile(pwd,imagePath);
       end
       
       obj.info('Computing frames and descriptors of image %s.',...
@@ -60,7 +64,7 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
       
       try
         cd(loweSift.dir);
-        [img descriptors frames] = sift(imagePath);
+        [img descriptors frames] = sift(detImagePath);
         cd(curDir);
       catch err
         cd(curDir);
@@ -75,7 +79,7 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
       
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
-        imageName,timeElapsed);
+        getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

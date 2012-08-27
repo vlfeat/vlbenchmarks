@@ -35,8 +35,9 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
     % The constructor is used to set the options for vggAffine
     function obj = sfop(varargin)
       import localFeatures.*;
-      obj.detectorName = 'SFOP';
-      obj.sfop_varargin = obj.configureLogger(obj.detectorName,varargin);
+      obj.name = 'SFOP';
+      obj.detectorName = obj.name;
+      obj.sfop_varargin = obj.configureLogger(obj.name,varargin);
       
       if ~obj.isInstalled(),
         obj.warn('Not installed');
@@ -47,36 +48,45 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
     function frames = extractFeatures(obj, imagePath)
       import helpers.*;
 
+      frames = obj.loadFeatures(imagePath, false);
+      if numel(frames) > 0; return; end;
+      
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
       else
-        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+        obj.info('Computing frames and descriptors of image %s.',...
+          getFileName(imagePath));
       end
 
       tmpName = tempname;
       outFile = [tmpName '.points'];
 
-      imagePath = fullfile(pwd,imagePath);
+      detImagePath = fullfile(pwd,imagePath);
       
       curDir = pwd;
       cd(obj.matlabDir);
       try
-        sfop(imagePath,outFile,obj.sfop_varargin{:});
+        sfop(detImagePath,outFile,obj.sfop_varargin{:});
       catch err
         cd(curDir);
         throw(err);
       end
       cd(curDir);
 
-      frames = localFeatures.helpers.readFramesFile(outFile);
       % Above output uses the same output format as vggMser
+      frames = localFeatures.helpers.readFramesFile(outFile);
+      % Discs are exported as ellipses, convert to discs.
+      frames = [frames(1:2,:) ; sqrt(frames(3,:))];
+      
       
       delete(outFile);
       
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
+      
+      obj.storeFeatures(imagePath, frames, []);
     end
     
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
@@ -101,12 +111,11 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
       import localFeatures.*;
       cxx = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;
       cc = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;
-      configCmd = sprintf(sfop.configCmd,cc,cxx);
       
       curDir = pwd;
       cd(sfop.dir);
       try
-        system(configCmd,'-echo');
+        system(sprintf(sfop.configCmd,cc,cxx),'-echo');
         system(sfop.makeCmd, '-echo');
         cd(curDir);
       catch err

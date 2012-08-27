@@ -16,7 +16,8 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
     function obj = ibr(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.detectorName = 'IBR';
+      obj.name = 'IBR';
+      obj.detectorName = obj.name;
 
       % Parse the passed options
       obj.opts.scalefactor = -1;
@@ -25,7 +26,7 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
       obj.opts.overlapthreshold = -1;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.configureLogger(obj.name,varargin);
       
       if ~obj.isInstalled(),
         obj.isOk = false;

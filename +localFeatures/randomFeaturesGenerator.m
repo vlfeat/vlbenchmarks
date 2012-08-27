@@ -16,8 +16,11 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
     % hessian binary.
     function obj = randomFeaturesGenerator(varargin)
       import localFeatures.*;
-      detectorName = 'Random features';
-      obj = obj@localFeatures.genericLocalFeatureExtractor(detectorName,varargin);
+      obj.name = 'Random features';
+      obj.detectorName = obj.name;
+      obj.descriptorName = obj.name;
+      obj.extractsDescriptors = true;
+      
       obj.opts.featuresDensity = 0.0005; % Number of features  per pixel
       
       obj.opts.frameType = obj.ORIENTED_DISC;
@@ -28,8 +31,8 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       obj.opts.descMaxValue = 255;
       obj.opts.descMinValue = 0;
       obj.opts.descInteger = false;
-      [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
-      obj.configureLogger(obj.detectorName,varargin);
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)

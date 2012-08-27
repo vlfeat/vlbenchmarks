@@ -43,7 +43,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
     function obj = vggMser(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.detectorName = 'MSER(vgg)';
+      obj.name = 'VGG MSER';
+      obj.detectorName = obj.name;
 
       % Parse the passed options
       obj.opts.es = -1;
@@ -52,7 +53,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       obj.opts.mm = -1;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.configureLogger(obj.name,varargin);
       
       if ~obj.isInstalled(),
         obj.isOk = false;
@@ -88,10 +89,10 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       args = ' -t 2';
 
       fields = fieldnames(obj.opts);
-      for field = fields
-        val = getfield(obj.opts,field{:});
+      for i = 1:numel(fields)
+        val = obj.opts.(fields{i});
         if val >= 0
-          args = strcat(args,' -',field,' ', num2str(val));
+          args = strcat(args,' -',fields{i},' ', num2str(val));
         end
       end
       

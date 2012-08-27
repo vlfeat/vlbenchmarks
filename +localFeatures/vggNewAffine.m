@@ -65,7 +65,10 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
         otherwise
           error('Invalid detector type: %s\n',obj.opts.detector);
       end
-      obj.detectorName = [obj.opts.detector '-affine(new vgg)'];
+      obj.name = ['newVGG' obj.opts.detector '-affine'];
+      obj.detectorName = obj.name;
+      obj.descriptorName = 'newVGG SIFT';
+      obj.extractsDescriptors = true;
   
       % Check platform dependence
       machineType = computer();
@@ -81,13 +84,12 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
           obj.errMsg = sprintf('Arch: %s not supported by vggNewAffine',...
                                 machineType);
       end
-      obj.configureLogger(obj.detectorName,varargin);
+      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      if ~obj.isOk, frames = zeros(5,0); return; end
 
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
