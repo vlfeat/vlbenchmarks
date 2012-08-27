@@ -26,9 +26,9 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
       
       obj.frameDetector = frameDetector;
       obj.descExtractor = descExtractor;
-      obj.name = [obj.detectorName ' + ' obj.descriptorName];
       obj.detectorName = frameDetector.detectorName;
       obj.descriptorName = descExtractor.descriptorName;
+      obj.name = [obj.detectorName ' + ' obj.descriptorName];
       obj.configureLogger(obj.name,varargin);
     end
 

@@ -157,11 +157,14 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
 
       descrCmd = [obj.descrBinPath ' ' descrArgs];
 
+      obj.info('Computing descriptors.');
+      startTime = tic;
       [status,msg] = system(descrCmd);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
+      obj.debug('Descriptors computed in %gs',toc(startTime));
       delete(outDescFile);
     end
     

@@ -168,7 +168,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       descrCmd = [obj.descrBinPath ' ' descrArgs];
 
       startTime = tic;
-      obj.info('Computing descriptors of %d frames.',size(frames,2));
+      obj.info('Computing descriptors.');
       [status,msg] = system(descrCmd);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;
