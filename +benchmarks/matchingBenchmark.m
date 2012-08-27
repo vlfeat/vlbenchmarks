@@ -11,6 +11,13 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
   %   Normalise the frames to constant scale (defaults is true for detector
   %   repeatability tests, see Mikolajczyk et. al 2005).
   %
+  %   CropFrames :: [false]
+  %   Crop frames out of overlapping regions of image pair.
+  %
+  %   Magnification :: [3]
+  %   Before computing overlaps, magnify the input frames in order to
+  %   reflect the size of the region used for descriptor calculation.
+  %
   
   properties
     opts                % Local options of matchingTest
@@ -19,6 +26,7 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
   properties(Constant)
     defOverlapError = 0.5;
     defNormaliseFrames = false;
+    defCropFrames = false;
     defMagnification = 3;
     keyPrefix = 'matching';
     repFramesKeyPrefix = 'reprojectedFrames';
@@ -33,6 +41,7 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
       obj.opts.overlapError = matchingBenchmark.defOverlapError;
       obj.opts.normaliseFrames = matchingBenchmark.defNormaliseFrames;
       obj.opts.magnification  = matchingBenchmark.defMagnification;
+      obj.opts.cropFrames = matchingBenchmark.defCropFrames;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.configureLogger(obj.benchmarkName,varargin);
       
@@ -63,7 +72,8 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
         [framesB descriptorsB] = detector.extractFeatures(imageBPath);
       
         [matchingScore numMatches bestMatches reprojFrames] = ... 
-          testFeatures(obj,tf,framesA,framesB,descriptorsA, descriptorsB);
+          testFeatures(obj,tf, imageAPath, imageBPath, framesA, framesB, ...
+          descriptorsA, descriptorsB);
         
         results = {matchingScore numMatches bestMatches reprojFrames };
         
@@ -76,7 +86,8 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
     end
    
     function [matchingScore numMatches bestMatches reprojFrames] = ... 
-                testFeatures(obj, tf, framesA, framesB, descriptorsA, descriptorsB)
+                testFeatures(obj, tf, imageAPath, imageBPath, ...
+                framesA, framesB, descriptorsA, descriptorsB)
       import benchmarks.helpers.*;
       import helpers.*;
       
@@ -89,6 +100,32 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
       
       [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
 
+      if obj.opts.cropFrames
+        % Get the size of the input images
+        imageA = imread(imageAPath);
+        imageB = imread(imageBPath);
+        imageASize = size(imageA);
+        imageBSize = size(imageB);
+        clear imageA;
+        clear imageB;
+        
+        % find frames fully visible in both images
+        bboxA = [1 1 imageASize(2) imageASize(1)] ;
+        bboxB = [1 1 imageBSize(2) imageBSize(1)] ;
+
+        visibleFramesA = isEllipseInBBox(bboxA, framesA ) & ...
+          isEllipseInBBox(bboxB, reprojFramesA);
+
+        visibleFramesB = isEllipseInBBox(bboxA, reprojFramesB) & ...
+          isEllipseInBBox(bboxB, framesB );
+
+        % Crop frames outside overlap region
+        framesA = framesA(:,visibleFramesA);
+        reprojFramesA = reprojFramesA(:,visibleFramesA);
+        framesB = framesB(:,visibleFramesB);
+        reprojFramesB = reprojFramesB(:,visibleFramesB);
+      end
+      
       % Compute magnified frames
       magFactor = obj.opts.magnification^2;
       mframesA = [framesA(1:2,:); framesA(3:5,:).*magFactor];
