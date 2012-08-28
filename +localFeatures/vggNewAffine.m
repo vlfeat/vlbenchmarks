@@ -129,7 +129,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       delete(framesFile);
       
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
+      obj.debug('Image %s processed in %gs',...
         getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
