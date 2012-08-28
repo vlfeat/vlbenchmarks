@@ -7,7 +7,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
   end
   
   properties(Constant)
-    defK = 100;
+    defK = 50;
     defMaxComparisonsFactor = inf;
     resultsKeyPrefix = 'retreivalResults';
     kdtreeKeyPrefix = 'kdtree';
@@ -157,7 +157,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       parfor q = 1:numQueries
         obj.info('Computing query %d/%d.',q,numQueries);
         query = dataset.getQuery(q);
-        queriesAp(q) = obj.evalQuery(descriptors, kdtree, query);
+        queriesAp(q) = obj.evalQuery(frames, descriptors, kdtree, query);
       end
       
       mAP = mean(queriesAp);
@@ -168,7 +168,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       DataCache.storeData(results, resultsKey);
     end
    
-    function [ap rankedList pr] = evalQuery(obj,descriptors, kdtree, query)
+    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, kdtree, query)
       import helpers.*;
       import benchmarks.*;
       
@@ -181,9 +181,18 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       end
       
       qImgId = query.imageId;
-      qDescriptors = single(descriptors{qImgId});
-      qNumDescriptors = size(descriptors{qImgId},2);
+      % Pick only features in the query box
+      qFrames = localFeatures.helpers.frameToEllipse(frames{qImgId});
+      visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
+      qDescriptors = single(descriptors{qImgId}(:,visibleFrames));
+      qNumDescriptors = size(qDescriptors,2);
       allDescriptors = single([descriptors{:}]);
+      
+      if qNumDescriptors == 0
+        obj.info('No descriptors detected in the query box.');
+        ap = 0; rankedList = []; pr = {[],[],[]};
+        return;
+      end
       
       numImages = numel(descriptors);
       numDescriptors = cellfun(@(c) size(c,2),descriptors);
@@ -200,7 +209,8 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       nnImgIds = imageIdxs(indexes);
       
       votes= vl_binsum( single(zeros(numImages,1)),...
-        repmat( dists(end,:), k, 1 ) - dists, nnImgIds );
+        repmat( dists(end,:), min(k,qNumDescriptors), 1 ) - dists,...
+        nnImgIds );
       votes = votes./sqrt(numDescriptors);
       [temp, rankedList]= sort( votes, 'descend' ); 
       
