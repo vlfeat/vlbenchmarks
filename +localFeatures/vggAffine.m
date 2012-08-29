@@ -27,6 +27,12 @@
 %   noAngle:: [false]
 %     Compute rotation variant descriptors if true (no rotation esimation)
 %
+%   Magnification:: [3]
+%     Magnification of the measurement region for the descriptor
+%     calculation.
+%
+%   CropFrames :: true
+%   Crop frames which after magnification overlap the image borders.
 
 classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
     & helpers.GenericInstaller
@@ -43,6 +49,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
     validDetectors = {'hesaff', 'haraff', 'heslap', 'harlap','har'};
     validDescriptors = {'sift','jla','gloh','mom','koen','kf','sc',...
       'spin','pca','cc'};
+    builtInMagnification = 3;
   end
 
   methods
@@ -61,6 +68,8 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       obj.opts.threshold = -1;
       obj.opts.noAngle = false;
       obj.opts.descriptor = 'sift';
+      obj.opts.magnification = 3;
+      obj.opts.cropFrames = true;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       if ~ismember(obj.opts.detector, obj.validDetectors)
@@ -115,10 +124,17 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         error('%d: %s: %s', status, detCmd, msg) ;
       end
       
+      frames = helpers.readFramesFile(framesFile);
+      
       if nargout ==2
-        [frames descriptors] = obj.extractDescriptors(imagePath,framesFile);
-      else
-        frames = helpers.readFramesFile(framesFile);
+        if obj.opts.magnification == obj.builtInMagnification ...
+            && ~obj.opts.cropFrames
+          % When frames does not have to be magnified or cropped, process
+          % directly the file from the frames detector.
+          [frames descriptors] = obj.computeDescriptors(imagePath,framesFile);
+        else
+          [frames descriptors] = obj.extractDescriptors(imagePath,frames);
+        end
       end
       
       delete(framesFile);
@@ -132,20 +148,51 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
   
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
       % EXTRACTDESCRIPTORS Compute SIFT descriptors using 
-      %   compute_descriptors_2.ln binary.
+      %   compute_descriptors.ln binary.
       %
       %  frames can be both array of frames or path to a frames file.
+      import localFeatures.*;
+      magFactor = 1;
+      tmpName = tempname;
+      
+      if size(frames,1) ~= 5
+        frames = helpers.frameToEllipse(frames);
+      end
+      
+      if obj.opts.cropFrames
+        imgSize = size(imread(imagePath));
+        imgbox = [1 1 imgSize(2)+1 imgSize(1)+1];
+        mf = obj.opts.magnification ^ 2;
+        magFrames = [frames(1:2,:) ; frames(3:5,:) .* mf];
+        isVisible = benchmarks.helpers.isEllipseInBBox(imgbox,magFrames);
+        frames = frames(:,isVisible);
+      end
+      
+      if obj.opts.magnification ~= obj.builtInMagnification
+        % Magnify the frames accordnig to set magnif. factor
+        magFactor = obj.builtInMagnification / obj.opts.magnification;
+        magFactor = magFactor ^ 2;
+        frames(3:5,:) = frames(3:5,:) .* magFactor;
+      end
+      
+      framesFile = [tmpName '.frames'];
+      helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
+      
+      [frames descriptors] = obj.computeDescriptors(imagePath,framesFile);
+      
+      if obj.opts.magnification ~= obj.builtInMagnification
+        % Resize the frames back to their size
+        frames(3:5,:) = frames(3:5,:) ./ magFactor;
+      end
+    end
+    
+    
+    function [frames descriptors] = computeDescriptors(obj, imagePath, framesFile)
+      % COMPUTEDESCRIPTORS Compute descriptors from frames stored in a file
       import localFeatures.*;
 
       tmpName = tempname;
       outDescFile = [tmpName '.descs'];
-
-      if size(frames,1) == 1 && exist(frames,'file')
-        framesFile = frames;
-      elseif exist('frames','var')
-        framesFile = [tmpName '.frames'];
-        helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
-      end
 
       % Prepare the options
       descrArgs = sprintf('-%s -i "%s" -p1 "%s" -o1 "%s"', ...
@@ -190,6 +237,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         if status ~= 0, error(msg); end
       end
     end
+    
   end % ---- end of static methods ----
 
 end % ----- end of class definition ----
