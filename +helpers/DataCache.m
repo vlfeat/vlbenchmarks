@@ -38,6 +38,7 @@ classdef DataCache
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
     lockFiles = false; % Prevent removal of accessed data, for SMP
+    disabled = false; % Disable caching
   end
   
   methods (Static)
@@ -46,6 +47,7 @@ classdef DataCache
       % data = GETDATA(key) Get data from the cache indexed by string key.
       %   If the data has not been found, returns [];
       import helpers.DataCache;
+      if DataCache.disabled, data = []; return; end
       dataFile = DataCache.buildDataFileName(key);
 
       if exist(dataFile,'file')
