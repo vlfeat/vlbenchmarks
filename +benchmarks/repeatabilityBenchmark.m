@@ -33,6 +33,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
   methods
     function obj = repeatabilityBenchmark(varargin)
       import benchmarks.*;
+      import helpers.*;
       obj.benchmarkName = 'repeatability';
       
       obj.opts.overlapError = repeatabilityBenchmark.defOverlapError;
@@ -198,7 +199,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
+      deps = {helpers.Installer(),helpers.VlFeatInstaller(),...
+        benchmarks.helpers.Installer()};
     end
   end
   

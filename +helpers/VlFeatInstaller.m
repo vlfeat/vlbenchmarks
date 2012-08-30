@@ -8,7 +8,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     
   properties (Constant)
     installVersion = '0.9.14';
-    installDir = fullfile('data','software');
+    installDir = fullfile('data','software','vlfeat');
     name = ['vlfeat-' helpers.VlFeatInstaller.installVersion];
     dir = fullfile(pwd,helpers.VlFeatInstaller.installDir,...
       helpers.VlFeatInstaller.name,'');
@@ -26,8 +26,8 @@ classdef VlFeatInstaller < helpers.GenericInstaller
   methods (Static)    
     function [urls dstPaths] = getTarballsList()
       import helpers.*;
-      urls = {VlFeatInstaller};
-      dstPaths = {VlFeatInstaller.dir};
+      urls = {VlFeatInstaller.url};
+      dstPaths = {VlFeatInstaller.installDir};
     end
     
     function compile()
@@ -40,8 +40,6 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       
       prevDir = pwd;
       cd(VlFeatInstaller.dir);
-      % Handle directory structure inside the archive
-      movefile([VlFeatInstaller.dir,filesep,'*'],'.');
 
       status = system(VlFeatInstaller.makeCmd);
       cd(prevDir);

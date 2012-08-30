@@ -16,6 +16,7 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
     % hessian binary.
     function obj = randomFeaturesGenerator(varargin)
       import localFeatures.*;
+      import helpers.*;
       obj.name = 'Random features';
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;

@@ -198,7 +198,8 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger ...
   
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
+      deps = {helpers.Installer(),helpers.VlFeatInstaller(),...
+        benchmarks.helpers.Installer()};
     end
   end
 end

@@ -72,6 +72,7 @@ classdef DataCache
     function storeData(data, key)
       % STOREDATA(DATA,KEY) - Store data DATA identified by key KEY.
       import helpers.DataCache;
+      import helpers.*;
       dataFile = DataCache.buildDataFileName(key);
       
       if ~exist(DataCache.dataPath,'dir')
