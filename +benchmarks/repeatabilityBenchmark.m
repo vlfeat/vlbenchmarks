@@ -1,4 +1,5 @@
-classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger & helpers.GenericInstaller
+classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
+    & helpers.Logger & helpers.GenericInstaller
   %REPEATABILITYBENCHMARK Calc repeatability score of im. features detector
   %   repeatabilityTest(resultsStorage,'OptionName',optionValue,...)
   %   constructs an object for calculating repeatability score. 
@@ -13,14 +14,18 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger &
   %   Normalise the frames to constant scale (defaults is true for detector
   %   repeatability tests, see Mikolajczyk et. al 2005).
   %
+  %   CropFrames :: [true]
+  %   Crop the frames out of overlaping regions.
+  %
   
   properties
     opts                % Local options of repeatabilityTest
   end
   
   properties(Constant)
-    defOverlapError = 0.4;
+    defOverlapError = 0.4; % Default OverlapError value
     defNormaliseFrames = true;
+    defCropFrames = true;
     keyPrefix = 'repeatability';
     reprojFramesKeyPrefix = 'reprojectedFrames';
   end
@@ -32,8 +37,9 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger &
       
       obj.opts.overlapError = repeatabilityBenchmark.defOverlapError;
       obj.opts.normaliseFrames = repeatabilityBenchmark.defNormaliseFrames;
+      obj.opts.cropFrames = repeatabilityBenchmark.defCropFrames;
       if numel(varargin) > 0
-        [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
+        [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       end
       obj.configureLogger(obj.benchmarkName,varargin);
       
@@ -45,12 +51,19 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger &
     
     function [repeatability numCorresp bestCorresp reprojFrames] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
-
+      %TESTDETECTOR Compute repeatability of a detector.
+      %  [REP NUM_CORR] = testDetector(DETECTOR, TF, IMAGE_A_PATH, 
+      %     IMAGE_B_PATH) Compute repeatability REP of a detector DETECTOR 
+      %     and its frames extracted from images defined by their path 
+      %     IMAGEA_PATH and IMAGEB_PATH which geometry is related by 
+      %     homography TF. NUM_CORR is number of found correspondences.
+      %     This method caches its results.
       import benchmarks.*;
       import helpers.*;
       
       obj.info('Comparing frames from det. %s and images %s and %s.',...
-          detector.detectorName,getFileName(imageAPath),getFileName(imageBPath));
+          detector.detectorName,getFileName(imageAPath),...
+          getFileName(imageBPath));
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
@@ -77,6 +90,13 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger &
    
     function [repeatability numCorresp bestCorresp reprojFrames] = ... 
                 testFeatures(obj, tf, imageAPath, imageBPath, framesA, framesB)
+      %TESTFEATURES Compute repeatability of a given frames.
+      %  [REP NUM_CORR] = testFeatures(TF, IMAGE_A_PATH, 
+      %     IMAGE_B_PATH, FRAMES_A, FRAMES_B) Compute repeatability 
+      %     REP between frames FRAMES_A and FRAMES_B which were extracted 
+      %     from images defined by their path IMAGEA_PATH and IMAGEB_PATH 
+      %     which geometry is related by homography TF. NUM_CORR is number 
+      %     of found correspondences.
       import benchmarks.helpers.*;
       import helpers.*;
       
@@ -86,43 +106,46 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger &
       startTime = tic;
       normFrames = obj.opts.normaliseFrames;
       overlapError = obj.opts.overlapError;
-      
-      imageA = imread(imageAPath);
-      imageB = imread(imageBPath);
-      imageASize = size(imageA);
-      imageBSize = size(imageB);
-      clear imageA;
-      clear imageB;
+      overlapThresh = 1 - overlapError;
       
       framesA = localFeatures.helpers.frameToEllipse(framesA) ;
       framesB = localFeatures.helpers.frameToEllipse(framesB) ;
       
       [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
       
-      % find frames fully visible in both images
-      bboxA = [1 1 imageASize(2) imageASize(1)] ;
-      bboxB = [1 1 imageBSize(2) imageBSize(1)] ;
+      if obj.opts.cropFrames
+        imageA = imread(imageAPath);
+        imageB = imread(imageBPath);
+        imageASize = size(imageA);
+        imageBSize = size(imageB);
+        clear imageA;
+        clear imageB;
 
-      visibleFramesA = isEllipseInBBox(bboxA, framesA ) & ...
-        isEllipseInBBox(bboxB, reprojFramesA);
+        % find frames fully visible in both images
+        bboxA = [1 1 imageASize(2) imageASize(1)] ;
+        bboxB = [1 1 imageBSize(2) imageBSize(1)] ;
 
-      visibleFramesB = isEllipseInBBox(bboxA, reprojFramesB) & ...
-        isEllipseInBBox(bboxB, framesB );
-      
-      % Crop frames outside overlap region
-      framesA = framesA(:,visibleFramesA);
-      reprojFramesA = reprojFramesA(:,visibleFramesA);
-      framesB = framesB(:,visibleFramesB);
-      reprojFramesB = reprojFramesB(:,visibleFramesB);
+        visibleFramesA = isEllipseInBBox(bboxA, framesA ) & ...
+          isEllipseInBBox(bboxB, reprojFramesA);
+
+        visibleFramesB = isEllipseInBBox(bboxA, reprojFramesB) & ...
+          isEllipseInBBox(bboxB, framesB );
+
+        % Crop frames outside overlap region
+        framesA = framesA(:,visibleFramesA);
+        reprojFramesA = reprojFramesA(:,visibleFramesA);
+        framesB = framesB(:,visibleFramesB);
+        reprojFramesB = reprojFramesB(:,visibleFramesB);
+      end
 
       % Find all ellipse correspondences
-      frameCorresp = matchEllipses(reprojFramesB, framesA,'NormaliseFrames',normFrames);
+      frameCorresp = fastEllipseOverlap(reprojFramesB, framesA, ...
+        'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh - 0.1);
       
       % Find the best one-to-one correspondences
       numFramesA = size(framesA,2);
       numFramesB = size(reprojFramesB,2);
       corresp = zeros(3,0);
-      overlapThresh = 1 - overlapError;
       bestCorresp = zeros(2, numFramesA) ;
 
       % Collect all correspondences in a single array
@@ -160,15 +183,15 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark & helpers.Logger &
       
       reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
       
-      obj.info('Repeatability: %g \t Num correspondences: %g',repeatability,numCorresp);
+      obj.info('Repeatability: %g \t Num correspondences: %g', ...
+        repeatability,numCorresp);
       
       obj.debug('Score between %d/%d frames comp. in %gs',size(framesA,2), ...
         size(framesB,2),toc(startTime));
     end
     
     function signature = getSignature(obj)
-      import helpers.*;
-      signature = struct2str(obj.opts);
+      signature = helpers.struct2str(obj.opts);
     end
     
   end
