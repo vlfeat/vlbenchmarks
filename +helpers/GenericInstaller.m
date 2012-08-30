@@ -95,7 +95,7 @@ classdef GenericInstaller < handle
       [sources flags] = obj.getMexSources();
       numSources = numel(sources);
       if ~exist('flags','var'), flags = cell(1,numSources); end;
-      for i = numSources
+      for i = 1:numSources
         obj.installMex(sources{i},flags{i});
       end
     end
@@ -139,8 +139,7 @@ classdef GenericInstaller < handle
       %   length which specify paths to C/CPP sources and mex
       %   compilation flags respectively.
       srclist = {};
-      cflags = {};
-      ldflags = {};
+      flags = {};
     end
     
     function [urls dstPaths] = getTarballsList()
