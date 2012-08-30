@@ -1,5 +1,5 @@
-% RANDOMFEATURESGENERATOR class to wrap around the CMP Hessian Affine detector
-% implementatio
+% RANDOMFEATURESGENERATOR Generates random features and descriptors
+%   Generator of random discs and oriented discs.
 
 classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor 
   properties (SetAccess=private, GetAccess=public)
@@ -21,7 +21,7 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
       
-      obj.opts.featuresDensity = 0.0005; % Number of features  per pixel
+      obj.opts.featuresDensity = 2e-3; % Number of features  per pixel
       
       obj.opts.frameType = obj.ORIENTED_DISC;
       obj.opts.maxScale = 30;
@@ -46,7 +46,7 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       img = imread(imagePath);
       imgSize = size(img);
       
-      imageArea = prod(imgSize);
+      imageArea = imgSize(1) * imgSize(2);
       numFeatures = round(imageArea * obj.opts.featuresDensity);
       
       locations = rand(2,numFeatures);
@@ -72,6 +72,11 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      img = imread(imagePath);
+      imgSize = size(img);
+      
+      imageArea = imgSize(1) * imgSize(2);
+      numFeatures = round(imageArea * obj.opts.featuresDensity);
       descMinValue = obj.opts.descMinValue;
       descMaxValue = obj.opts.descMaxValue;
       descriptors = rand(obj.opts.descSize,numFeatures)...

@@ -124,6 +124,8 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
         reprojFramesA = reprojFramesA(:,visibleFramesA);
         framesB = framesB(:,visibleFramesB);
         reprojFramesB = reprojFramesB(:,visibleFramesB);
+        descriptorsA = descriptorsA(:,visibleFramesA);
+        descriptorsB = descriptorsB(:,visibleFramesB);
       end
       
       % Compute magnified frames

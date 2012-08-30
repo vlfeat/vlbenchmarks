@@ -136,6 +136,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
 
       repScore = tmprepScore(overlap_err_idx)./100;
       numCorresp = tmpnumCorresp(overlap_err_idx);
+      matchScore = matchScore ./ 100;
       delete(ellAFile);
       delete(ellBFile);
       delete(tmpHFile);
