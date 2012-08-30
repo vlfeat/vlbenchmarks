@@ -140,7 +140,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       delete(framesFile);
       
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
+      obj.debug('Image %s processed in %gs',...
         getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
@@ -204,11 +204,14 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
 
       descrCmd = [obj.descrBinPath ' ' descrArgs];
 
+      obj.info('Computing descriptors.');
+      startTime = tic;
       [status,msg] = system(descrCmd);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
+      obj.debug('Descriptors computed in %gs',toc(startTime));
       delete(outDescFile);
     end
     

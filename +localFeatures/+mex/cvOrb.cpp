@@ -160,7 +160,7 @@ mexFunction(int nout, mxArray *out[],
     }
   }
 
-  int frmNumel = 5;
+  int frmNumel = 4;
   int descNumel = 0;
   bool calcDescs = (nout > OUT_DESCRIPTORS);
 

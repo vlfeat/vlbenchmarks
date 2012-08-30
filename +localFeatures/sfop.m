@@ -24,8 +24,8 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
   properties (Constant)
     rootInstallDir = fullfile('data','software','sfop','');
     dir = fullfile(localFeatures.sfop.rootInstallDir,'sfop-1.0','');
-    matlabDir = fullfile(localFeatures.sfop.dir,'matlab','');
-    binPath = fullfile(localFeatures.sfop.dir,'src','sfop');
+    matDir = fullfile(pwd,localFeatures.sfop.dir,'matlab','');
+    binPath = fullfile(pwd,localFeatures.sfop.dir,'src','sfop');
     softwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-1.0.tar.gz';
     configCmd = './configure --disable-gpu --disable-doxygen CC=%s CXX=%s';
     makeCmd = 'make';
@@ -65,7 +65,7 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
       detImagePath = fullfile(pwd,imagePath);
       
       curDir = pwd;
-      cd(obj.matlabDir);
+      cd(obj.matDir);
       try
         sfop(detImagePath,outFile,obj.sfop_varargin{:});
       catch err
