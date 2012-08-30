@@ -39,7 +39,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       obj.opts.normaliseFrames = repeatabilityBenchmark.defNormaliseFrames;
       obj.opts.cropFrames = repeatabilityBenchmark.defCropFrames;
       if numel(varargin) > 0
-        [obj.opts varargin] = vl_argparse(obj.opts,obj.remArgs);
+        [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       end
       obj.configureLogger(obj.benchmarkName,varargin);
       
