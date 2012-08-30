@@ -1,8 +1,6 @@
 function [ fileName ] = getFileName( path )
-%SEPARATEFILENAME Get the file name from the path
+%GETFILENAME Get file name from the path
 
-[path fileName exp] = fileparts(path);
-
+[drop fileName exp] = fileparts(path);
 fileName = [fileName exp];
 end
-
