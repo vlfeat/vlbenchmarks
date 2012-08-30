@@ -92,7 +92,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       for i = 1:numel(fields)
         val = obj.opts.(fields{i});
         if val >= 0
-          args = strcat(args,' -',fields{i},' ', num2str(val));
+          args = [args,' -',fields{i},' ', num2str(val)];
         end
       end
       

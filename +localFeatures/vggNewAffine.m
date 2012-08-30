@@ -129,7 +129,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       delete(framesFile);
       
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
+      obj.debug('Image %s processed in %gs',...
         getFileName(imagePath),timeElapsed);
       
       obj.storeFeatures(imagePath, frames, descriptors);
@@ -168,7 +168,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       descrCmd = [obj.descrBinPath ' ' descrArgs];
 
       startTime = tic;
-      obj.info('Computing descriptors of %d frames.',size(frames,2));
+      obj.info('Computing descriptors.');
       [status,msg] = system(descrCmd);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;

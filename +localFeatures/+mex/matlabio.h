@@ -71,7 +71,7 @@ void importFrames(std::vector<cv::KeyPoint>& frames, mxArray const *mArray)
     }
   } break;
   default:
-    mexErrMsgTxt("CvSurf does not support this type of frames.") ;
+    mexErrMsgTxt("Detector does not support this type of frames.") ;
     break;
   }
 }
@@ -116,7 +116,7 @@ void exportFrames(mxArray **out, const std::vector<cv::KeyPoint>& frames,
       mx_frames [frm_i + 3] = CV_PI / 2. - frame.angle / 180. * CV_PI;
     } break;
     default:
-      VL_ASSERT(0,"Invalid frame type.");
+      mexErrMsgTxt("Invalid frame type.");
       break;
     }
 
@@ -175,8 +175,8 @@ void exportDescs(mxArray **out, const TP* descriptors,
         TP x = (descriptors[desc_i + j]);
         /* Do not do anything with the data in case the descriptor is binary */
         if (minValue < maxValue) {
-          x = (x - minValue) / (maxValue - minValue) * 255.0F;
-          x = (x < 255.0F) ? x : 255.0F ;
+          float f_x = (x - minValue) / (maxValue - minValue) * 255.0F;
+          x = (f_x < 255.0F) ? f_x : 255.0F ;
         }
         ((vl_uint8*)mx_descrs) [desc_i + j] = (vl_uint8) x ;
       }
