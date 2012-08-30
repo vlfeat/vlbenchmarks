@@ -1,4 +1,10 @@
 classdef VlFeatInstaller < helpers.GenericInstaller
+% VLFEATINSTALLER Downloads and installs VLFeat library
+%    See or adjust constant class arguments for details about the 
+%    library version or location.
+%
+%    The MEXFLAGS constant property can be used for your mexFiles
+%    which depend and link to the VLFeat library.
     
   properties (Constant)
     installVersion = '0.9.14';
@@ -11,7 +17,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     mexDir = fullfile(helpers.VlFeatInstaller.dir,'toolbox','mex',mexext);
     makeCmd = 'make';
     
-    % LDFLAGS for mex compilation
+    % Flags for mex files which link to VLFeat
     MEXFLAGS = sprintf('LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
       helpers.VlFeatInstaller.mexDir,helpers.VlFeatInstaller.mexDir,...
       helpers.VlFeatInstaller.dir);
