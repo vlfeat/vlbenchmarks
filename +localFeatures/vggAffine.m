@@ -4,8 +4,7 @@
 %   frames = obj.detectPoints(img)
 %
 %   obj class implements the genericDetector interface and wraps around the
-%   vgg implementation of harris and hessian affine detectors (Philbin
-%   version).
+%   vgg implementation of Harris and Hessian affine detectors.
 %
 %   This version of VGG descriptor calculation internaly compute with 
 %   magnification factor equal 3 and cannot be adjusted in the binary

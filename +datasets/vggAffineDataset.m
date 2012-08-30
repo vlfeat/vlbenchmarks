@@ -1,8 +1,12 @@
-% VGGAFFINEDATASET class to wrap around the vgg affine benchmark datasets
+% VGGAFFINEDATASET class to wrap around the vgg affine datasets
 %
 %   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
 %
-%   obj = localFeatures.vggAffineDataset('Option','OptionValue',...)
+
+%   obj = vggAffineDataset('Option','OptionValue')
+%
+%   This class perform automatic installation when the dataset data are
+%   not available.
 %
 %   Following options are supported:
 %
@@ -23,6 +27,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
     allCategories = {'bikes','trees','graf','wall','bark',...
                      'boat','leuven','ubc'};
     rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
+    defCategory = 'graf';
   end
 
   
@@ -34,10 +39,10 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
         obj.warn('Vgg Affine dataset is not installed');
         obj.installDeps();
       end
-      opts.category= 'graf';
-      [opts varargin] = vl_argparse(opts,varargin);
+      opts.category= obj.defCategory;
+      opts = vl_argparse(opts,varargin);
       assert(ismember(opts.category,obj.allCategories),...
-             sprintf('Invalid category for vgg dataset: %s\n',opts.category));
+        sprintf('Invalid category for vgg dataset: %s\n',opts.category));
       obj.datasetName = ['vggAffineDataset-' opts.category];
       obj.category= opts.category;
       obj.dataDir = fullfile(obj.rootInstallDir,opts.category,'');
@@ -66,7 +71,8 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       if(imgIdx == 1), tfs = eye(3); return; end
       tfs = zeros(3,3);
       [tfs(:,1) tfs(:,2) tfs(:,3)] = ...
-          textread(fullfile(obj.dataDir,sprintf('H1to%dp',imgIdx)),'%f %f %f%*[^\n]');
+         textread(fullfile(obj.dataDir,sprintf('H1to%dp',imgIdx)),...
+         '%f %f %f%*[^\n]');
     end
 
   end

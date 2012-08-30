@@ -1,4 +1,11 @@
 function [reprojFramesA,reprojFramesB] = reprojectFrames(framesA,framesB,tfs)
+% REPROJECTFRAMES Reproject frames detected in images pair
+%   through homography.
+%   [REP_FRAMES_A REP_FRAMES_B] = reprojectFrames(FRAMES_A, FRAMES_B,
+%      TF) Reproject FRAMES_A to REP_FRAMES_A using homography TF
+%      and FRAMES_B to REP_FRAMES_B with homography inv(TF).
+%      Before reprojection frames are converted to 0-starting
+%      coordinates.
   import benchmarks.helpers.*;
 
   % Change from Matlab origin
