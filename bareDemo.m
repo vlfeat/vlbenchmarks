@@ -5,8 +5,7 @@ function bareDemo()
 
 import localFeatures.*;
 
-%detector = randomFeaturesGenerator();
-detector = descriptorAdapter(vggMser(),vggAffine());
+detector = randomFeaturesGenerator();
 
 %% Define dataset
 
@@ -18,11 +17,11 @@ dataset = vggAffineDataset('category','graf');
 
 import benchmarks.*;
 
-repeatabilityTest = repeatabilityBenchmark('CropFrames',false,...
-  'NormaliseFrames',false,'OverlapError',0.4);
-matchingTest = matchingBenchmark('CropFrames',false,...
-  'NormaliseFrames',false,'OverlapError',0.4);
-ijcvTest = kristianEvalBenchmark('CommonPart',0,'OverlapError',0.4);
+repeatabilityTest = repeatabilityBenchmark('CropFrames',true,...
+  'NormaliseFrames',true,'OverlapError',0.4);
+matchingTest = matchingBenchmark('CropFrames',true,...
+  'NormaliseFrames',true,'OverlapError',0.4);
+ijcvTest = kristianEvalBenchmark('CommonPart',1,'OverlapError',0.4);
 
 %% Run the benchmarks
 

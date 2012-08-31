@@ -188,10 +188,11 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
     
-    function srclist = getMexSources()
+    function [srclist flags] = getMexSources()
       import benchmarks.*;
       path = kristianEvalBenchmark.installDir;
       srclist = {fullfile(path,'c_eoverlap.cxx')};
+      flags = {''};
     end
     
     function [urls dstPaths] = getTarballsList()
