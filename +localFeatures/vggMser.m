@@ -56,7 +56,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       obj.configureLogger(obj.name,varargin);
       
       if ~obj.isInstalled(),
-        obj.isOk = false;
         obj.warn('vggMser not found installed');
         obj.installDeps();
       end
