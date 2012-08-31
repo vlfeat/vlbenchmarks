@@ -6,6 +6,8 @@ function unpack( url, distDir )
 %     For *.gz and *.bz2 archives (formats not supported by Matlab) 
 %     needs  wget utility and gunzip + tar utility in the system path.
 
+import helpers.*;
+
 wgetCommand = 'wget %s -O %s'; % Command for downloading archives
 unbzipCommand = 'tar xvjf %s';
 unTarGzipCommand = 'tar xvzf %s';
