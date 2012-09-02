@@ -10,9 +10,9 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
   %     Overlap error of the ellipses for which the repScore is
   %     calculated. Can be only in {0.1, 0.2, ... ,0.9}.
   %
-  %   CommonPart :: [true]
-  %     Normalise frames into same scale and crop frames out 
-  %     of overlap regions when true.
+  %   CommonPart :: [1]
+  %     flag should be set to 1 for repeatability and 0 for descriptor 
+  %     performance
   %
   
   properties
@@ -21,7 +21,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
   
   properties (Constant)
     defOverlapError = 0.4;
-    defCommonPart = true;
+    defCommonPart = 1;
     installDir = fullfile('data','software','repeatability','');
     keyPrefix = 'kmEval';
     testTypeKeys = {'rep','rep+match'};
@@ -79,10 +79,8 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
-      detSign = detector.getSignature();
-      testType = kristianEvalBenchmark.testTypeKeys{nargout/2};
-      keyPrefix = kristianEvalBenchmark.keyPrefix;
-      resultsKey = strcat(keyPrefix,testType,detSign,imageASign,imageBSign);
+      resultsKey = cell2str({obj.keyPrefix, obj.getSignature(), ...
+        detector.getSignature(), imageASign, imageBSign});
       cachedResults = DataCache.getData(resultsKey);
       
       if isempty(cachedResults)
@@ -177,7 +175,10 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       obj.debug('Score between %d/%d frames comp. in %gs',...
         size(framesA,2),size(framesB,2),timeElapsed);
     end
-
+ 
+    function signature = getSignature(obj)
+      signature = helpers.struct2str(obj.opts);
+    end
   end
   
    methods (Static)
