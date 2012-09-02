@@ -30,6 +30,9 @@ classdef GenericInstaller < handle
 %   The method installDeps() executes all the installation steps.
 
 % AUTORIGHTS
+  properties (Constant)
+    unpackedTagFileExt = '.unpacked';
+  end
 
   methods
     function res = isInstalled(obj)
@@ -84,8 +87,12 @@ classdef GenericInstaller < handle
     %   Tests if the folder where the tarball should be unpacked
     %   exist.
       [urls dstPaths] = obj.getTarballsList();
-      for path = dstPaths
-        if ~exist(path{:},'dir')
+      for i = 1:numel(dstPaths)
+        [address filename ext] = fileparts(urls{i});
+        % Create dummy file to tag that archive has been unpacked
+        unpackTagFile = fullfile(dstPaths{i},['.',filename,ext,...
+          obj.unpackedTagFileExt]);
+        if ~exist(unpackTagFile,'file')
           res = false;
           return
         end
@@ -199,6 +206,12 @@ classdef GenericInstaller < handle
       [address filename ext] = fileparts(url);
       fprintf('Downloading and unpacking %s.\n',url);
       helpers.unpack(url, distDir);
+      
+      % Create dummy file to tag that archive has been unpacked
+      unpackTagFile = fullfile(distDir,['.',filename,ext,...
+        GenericInstaller.unpackedTagFileExt]);
+      f = fopen(unpackTagFile,'w');
+      fclose(f);
     end
 
   end
