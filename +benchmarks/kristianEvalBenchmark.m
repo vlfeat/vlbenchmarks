@@ -1,4 +1,5 @@
-classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericInstaller
+classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
+    & helpers.GenericInstaller & helpers.Logger
   %KRISTIANEVALBENCHMARK Kristians Mikolajczyk's affine detectors test
   %   Implements test interface for Kristian's testing script of affine
   %   covarinat image regions (frames).
@@ -9,6 +10,10 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
   %     Overlap error of the ellipses for which the repScore is
   %     calculated. Can be only in {0.1, 0.2, ... ,0.9}.
   %
+  %   CommonPart :: [true]
+  %     Normalise frames into same scale and crop frames out 
+  %     of overlap regions when true.
+  %
   
   properties
     opts                % Options of the km eval
@@ -16,6 +21,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
   
   properties (Constant)
     defOverlapError = 0.4;
+    defCommonPart = true;
     installDir = fullfile('data','software','repeatability','');
     keyPrefix = 'kmEval';
     testTypeKeys = {'rep','rep+match'};
@@ -30,6 +36,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
       obj.benchmarkName = 'kristian_eval'; 
       
       obj.opts.overlapError = kristianEvalBenchmark.defOverlapError;
+      obj.opts.commonPart = kristianEvalBenchmark.defCommonPart;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
       % Index of a value from the test results corresponding to idx*10 overlap
@@ -51,6 +58,19 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
     
     function [repScore, numCorresp, matchScore, numMatches] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
+      %TESTDETECTOR Compute repeatability and matching score.
+      %  [REP NUM_CORR MATCHING NUM_MATCHES] = testDetector(DETECTOR,
+      %     TF, IMAGEA_PATH, IMAGEB_PATH) Compute repeatability REP 
+      %     and matching score MATCHING of detector DETECTOR and its 
+      %     frames and descriptors extracted from images defined by 
+      %     their path IMAGEA_PATH and IMAGEB_PATH whose geometry is 
+      %     related by homography TF.
+      %     NUM_CORR is number of found correspondences and 
+      %     NUM_MATHCES number of matching detected features.
+      %     This function caches results.
+      %  [REP NUM_CORR] = testDetector(DETECTOR, TF, IMAGEA_PATH, 
+      %     IMAGEB_PATH) Compute only repeatability of the detector
+      %     based only on detected frames.
       import helpers.*;
       import benchmarks.*;
       
@@ -94,7 +114,17 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
     function [repScore numCorresp matchScore numMatches] = ... 
                testFeatures(obj, tf, imageAPath, imageBPath, ...
                  framesA, framesB, descriptorsA, descriptorsB)
-      
+      %TESTFEATURES Compute repeatability and matching score of image features
+      %  [REP NUM_CORR MATCHING NUM_MATCHES] = testFeatures(TF, 
+      %     IMAGEA_PATH, IMAGEB_PATH, FRAMES_A, FRAMES_B, 
+      %     DESCRIPTORS_A, DESCRIPTORS_B) Compute repeatability REP and
+      %     matching MATHICNG score between FRAMES_A and FRAMES_B which 
+      %     are related by homography TF and their descriptors 
+      %     DESCRIPTORS_A and DESCRIPTORS_B which were extracted from 
+      %     images IMAGE_A and IMAGE_B.
+      %  [REP NUM_CORR] = testFeatures(TF, IMAGEA_PATH, IMAGEB_PATH, 
+      %     FRAMES_A, FRAMES_B) Compute only repeatability between the
+      %     the frames FRAMES_A and FRAMES_B.
       import benchmarks.*;
       import helpers.*;
       
@@ -103,14 +133,11 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
       
       startTime = tic;
       
-      if nargout == 4 && nargin == 8
-        commonPart = 0;
-      elseif nargout == 4
+      if nargout == 4 && ~exist('descriptorsB','var') 
         obj.warn('Unable to calculate match score without descriptors.');
       end
       
       if nargout == 2
-        commonPart = 1;
         descriptorsA = [];
         descriptorsB = [];
       end
@@ -131,7 +158,8 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark & helpers.GenericIn
       addpath(krisDir);
       rehash;
       [err, tmprepScore, tmpnumCorresp, matchScore, numMatches] ...
-          = repeatability(ellAFile,ellBFile,tmpHFile,imageAPath,imageBPath,commonPart);
+          = repeatability(ellAFile,ellBFile,tmpHFile,imageAPath,...
+              imageBPath,obj.opts.commonPart);
       rmpath(krisDir);
 
       repScore = tmprepScore(overlap_err_idx)./100;

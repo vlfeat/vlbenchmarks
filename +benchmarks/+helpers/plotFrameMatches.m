@@ -1,5 +1,24 @@
 function plotFrameMatches(bestMatches, reprojectedFrames,...
   imageAPath, figA, imageBPath, figB)
+% PLOTFRAMEMATCHES Visualise matched frames in original images.
+%   plotFramesMatches(BEST_MATCHES, REPROJ_FRAMES, IMAGE_A_PATH, 
+%   FIG_A_NUM) Plots matches in the reference image IMAGE_A_PATH in 
+%   figure FIG_A between frames stored in cell array REPROJ_FRAMES 
+%   with the following contents:
+%
+%     {FRAMES_A,FRAMES_B,REPROJ_FRAMES_A,REPROJ_FRAMES_B}
+%
+%   to figure FIG_A with image def. by IMAGE_A_PATH as a background.
+%   BEST_MATCHES is an matrix of size [1 size(framesA,2)] where
+%   value BEST_MATCHES(iFrameA) is an index of matched frame in
+%   FRAMES_B of FRAMES_A(:,iFrameA) or zero if frame is not matched.
+%   Matched ellipses are visualised with lines connecting their
+%   centres.
+%
+%   plotFramesMatches(BEST_MATCHES, REPROJ_FRAMES, IMAGE_A_PATH, 
+%   FIG_A_NUM, IMAGE_B_PATH, FIG_B) Plots matched frames both in
+%   reference and projected image.
+%
   
   matchLineStyle = 'bx-';
                         

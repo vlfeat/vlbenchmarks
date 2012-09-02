@@ -1,14 +1,10 @@
-classdef genericBenchmark < handle & helpers.Logger
-  %GENERICBENCHMARK Generic test of affine covariant detector.
-  %   genericTest(framesStorage, test_name,'Option','OptionValue',...)
-  %   This class implements mutual parts of affine covariant
-  %   detectors test.
+classdef genericBenchmark < handle
+  %GENERICBENCHMARK Abstract class defining generic benchmark
   
   properties
-    benchmarkName         % Name of the test shown in the results
+    benchmarkName         % Name of the test
   end
  
-  
   methods
     signature = getSignature(obj)
     % GETSIGNATURE Get signature of the benchmark settings

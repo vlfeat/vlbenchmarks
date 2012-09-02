@@ -1,4 +1,5 @@
-classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & helpers.GenericInstaller
+classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger ...
+    & helpers.GenericInstaller
   %MATCHINGBENCHMARK 
   %
   %   Options:
@@ -88,6 +89,14 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
     function [matchingScore numMatches bestMatches reprojFrames] = ... 
                 testFeatures(obj, tf, imageAPath, imageBPath, ...
                 framesA, framesB, descriptorsA, descriptorsB)
+      %TESTFEATURES Compute matching score of a given frames and descriptors.
+      %  [MATCHING NUM_MATCHES] = testFeatures(TF, IMAGE_A_PATH, 
+      %     IMAGE_B_PATH, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute 
+      %     matching score MATCHING between frames FRAMES_A and FRAMES_B 
+      %     and their descriptors DESCS_A and DESCS_B which were extracted 
+      %     from images defined by their path IMAGEA_PATH and IMAGEB_PATH 
+      %     which geometry is related by homography TF. NUM_MATHCES is 
+      %     number of matches.
       import benchmarks.helpers.*;
       import helpers.*;
       
@@ -137,7 +146,7 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
       % Find all ellipses with sufficient overlap
       obj.info('Computing overlaps between %d/%d frames.',...
           size(framesA,2),size(framesB,2));
-      frameMatches = matchEllipses(mreprojFramesB, mframesA,...
+      frameMatches = fastEllipseOverlap(mreprojFramesB, mframesA,...
         'NormaliseFrames',normFrames);
 
       % Calculate the one-to-one matches based on distances in descriptor
@@ -173,7 +182,8 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
       
       reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
       
-      obj.info('Matching score: %g \t Num. of matches: %g',matchingScore,numMatches);
+      obj.info('Matching score: %g \t Num. of matches: %g',...
+        matchingScore,numMatches);
       
       timeElapsed = toc(startTime);
       obj.debug('Score between %d/%d frames comp. in %gs',size(framesA,2), ...
@@ -181,8 +191,7 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger & help
     end
     
     function signature = getSignature(obj)
-      import helpers.*;
-      signature = struct2str(obj.opts);
+      signature = helpers.struct2str(obj.opts);
     end
   end
   

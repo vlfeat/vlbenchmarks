@@ -114,6 +114,11 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       
       [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
       
+      framesA = localFeatures.helpers.frameToEllipse(framesA) ;
+      framesB = localFeatures.helpers.frameToEllipse(framesB) ;
+      
+      [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
+      
       if obj.opts.cropFrames
         imageA = imread(imageAPath);
         imageB = imread(imageBPath);
@@ -140,8 +145,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       end
 
       % Find all ellipse correspondences
-      frameCorresp = matchEllipses(reprojFramesB, framesA, ...
-        'NormaliseFrames',normFrames);
+      frameCorresp = fastEllipseOverlap(reprojFramesB, framesA, ...
+        'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh - 0.1);
       
       % Find the best one-to-one correspondences
       numFramesA = size(framesA,2);

@@ -1,14 +1,18 @@
 % GENERICTRANSFDATASET Abstract class for a generic dataset with images of 
-% known linear geometric transformation for evaluating affine detectors.
+% known linear geometric transformation (for evaluating affine detectors).
 
 classdef genericTransfDataset < datasets.genericDataset
   properties (SetAccess=protected, GetAccess=public)
-    imageNames % Labels of images
-    imageNamesLabel % Definition of the transformations
+    % Setting these properties is not mandatory however are usefull in 
+    % functions for plotting results.
+    imageNames % Labels of images, express degree of transformation
+    imageNamesLabel % Definition of the type of transformations
   end
 
   methods(Abstract)
-    tfs = getTransformation(obj,imgIdx) % Return the 3x3 homography
-    % from image 1 to image imgIdx
+    tf = getTransformation(obj,imgIdx) 
+    % GETTRANSFORMATION Get transformation between an image and ref. image.
+    %   TF = getTransformation(IMG_IDX) Return the 3x3 homography TF from 
+    %   image 1 to image IMG_IDX.
   end
 end % -------- end of class ---------

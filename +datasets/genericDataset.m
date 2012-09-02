@@ -1,23 +1,24 @@
-% GENERICDATASET Abstract class for a generic dataset for evaluating 
-% affine detectors.
-%
-%   It inherits from the handle class, so that means you can
-%   maintain state inside an object of this class. If you have to add your
-%   own dataset, make sure it inherits from this class
+% GENERICDATASET Abstract class for a generic dataset
 
 classdef genericDataset < handle
   properties (SetAccess=protected, GetAccess=public)
-    datasetName = ''; % Set this property in the constructor
-    numImages = 0 % Set in constructor
+    datasetName = ''; % Name of the dataset
+    numImages = 0 % Number of images in the dataset
   end
 
   methods(Abstract)
-    imgPath = getImagePath(obj,imgIdx) % Return the full image
-    % path of image number imgIdx in the dataset
+    imgPath = getImagePath(obj,imgIdx)
+    % GETIMAGEPATH Get path of an image from the dataset
+    %   IMG_PATH = getImagePath(IMG_IDX) Returns path IMG_PATH of an
+    %   image with id IMG_IDX \in [1:numImages]
   end
   
   methods
     function signature = getImagesSignature(obj)
+    % GETIMAGESSIGNATURE Get signature of all images in the dataset
+    %   SIGN = getImagesSignature() Returns signature of all the images
+    %   in the dataset. Signature consist from the dataset name and
+    %   MD5 of all images file signatures (see help `getFileSignature`).
       import helpers.*;
       imgSignatures = '';
       for imgIdx = 1:obj.numImages
