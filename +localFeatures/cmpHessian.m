@@ -32,7 +32,6 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
       obj.detectorName = obj.name;
       obj.descriptorName = 'CMP SIFT';
       if ~obj.isInstalled(),
-        obj.isOk = false;
         obj.warn('cmpHessian not found installed');
         obj.installDeps();
       end
@@ -64,7 +63,6 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
       end
       
       img = imread(imagePath);
-      if(size(img,3) > 1), img = rgb2gray(img); end
 
       tmpName = tempname;
       imgFile = [tmpName '.png'];
