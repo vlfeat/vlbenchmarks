@@ -63,9 +63,14 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
         obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
       end
       
-      featFile = [imagePath '.hesaff.sift'];
+      % Write image in correct format
+      image = imread(imagePath);
+      tempName = tempname;
+      imageFile = [tempName '.ppm'];
+      featFile = [tempName '.ppm.hesaff.sift'];
+      helpers.writeppm(image, imageFile);
       
-      args = sprintf(' "%s" ',imagePath);
+      args = sprintf(' "%s" ',imageFile);
       cmd = [obj.binPath ' ' args];
 
       [status,msg] = system(cmd);
