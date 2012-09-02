@@ -106,8 +106,7 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
     function compile()
       import localFeatures.*;
       % When unpacked, ibr is not executable
-      chmodCmd = sprintf('chmod +x %s',ibr.binPath);
-      system(chmodCmd);
+      helpers.setFileExecutable(ibr.binPath);
     end
 
   end % ---- end of static methods ----
