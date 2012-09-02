@@ -1,4 +1,10 @@
-function unbzip( url, distDir )
+function unpack( url, distDir )
+% UNPACK Unpack internet archive
+%   unpack(url, distDir) Unpack archive defined by 'url' to a 
+%     'distDir'. Supports *.tar, *.tar.gz, *.tgz, *.zip
+%     archives.
+%     For *.gz and *.bz2 archives (formats not supported by Matlab) 
+%     needs  wget utility and gunzip + tar utility in the system path.
 
 wgetCommand = 'wget %s -O %s'; % Command for downloading archives
 unbzipCommand = 'tar xvjf %s';

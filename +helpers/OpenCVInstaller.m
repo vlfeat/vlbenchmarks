@@ -1,4 +1,21 @@
 classdef OpenCVInstaller < helpers.GenericInstaller
+% OPENCVINSTALLER Downloads and compiles OpenCV library
+%   For compilation, cmake binary, which can be executed from
+%   Matlab environment must be present in your PATH.
+%   Downloads OpenCV Library and compiles it using the compiler 
+%   specified in mex configuration. Because OpenCV uses a libstdc++
+%   library, the compiler used for mex compilation must be using 
+%   same or older version of the libstdc++ as Matlab does or the 
+%   OpenCV would not be linked. The same holds for the cmake binary 
+%   file. 
+%   To change the version or cmake arguments see the  constant
+%   properties of this class.
+%   Your OpenCV distribution can be also compiled 'by hand' when
+%   'make install' output files are located in 
+%   './data/OpenCV-%VERSION%/install' folder. See constant properties.
+%
+%   Constant property MEXFLAGS can be used for you mex files which
+%   links to OpenCV.
     
   properties (Constant)
     % Version of the installed OpenCV
@@ -20,7 +37,8 @@ classdef OpenCVInstaller < helpers.GenericInstaller
     includeDir = fullfile(helpers.OpenCVInstaller.installDir,'include');
     
     % LDFLAGS for mex compilation
-    MEXFLAGS = sprintf('LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_nonfree -I%s',...
+    MEXFLAGS = sprintf(...
+      'LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_contrib -lopencv_nonfree -I%s',...
       helpers.OpenCVInstaller.libDir,helpers.OpenCVInstaller.libDir,...
       helpers.OpenCVInstaller.includeDir);
     
@@ -30,7 +48,8 @@ classdef OpenCVInstaller < helpers.GenericInstaller
     cmakeCommand = 'cmake';
     % CMake build arguments
     cmakeArgs = {...
-      sprintf('-DCMAKE_INSTALL_PREFIX:PATH="%s"',helpers.OpenCVInstaller.installDir),...
+      sprintf('-DCMAKE_INSTALL_PREFIX:PATH="%s"',...
+        helpers.OpenCVInstaller.installDir),...
       sprintf('-DCMAKE_CXX_COMPILER:FILEPATH="%s"',...
         mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable),...
       sprintf('-DCMAKE_C_COMPILER:FILEPATH="%s"',...
@@ -61,6 +80,7 @@ classdef OpenCVInstaller < helpers.GenericInstaller
     end
     
     function compile()
+      % Run cmake; make and make install
       import helpers.*;
       if OpenCVInstaller.isCompiled()
         return;

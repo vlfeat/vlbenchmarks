@@ -1,10 +1,14 @@
 function str = cell2str(c,separator)
-% STRUCT2STR Convert structure to a string
+% CELL2STR Convert  cell arr. of mat. and strings to a string.
+%   out = cell2str(cellArray, separator) 
+%   Convert cell array of mat. arrays and strings to a single string
 %   String is formated as ($ as separator):
-%     field1_name$filed2_name...$s(1).field1_name$...$s(n).field1_name
-%   i.e. filed names separated by seprator followed by all the values of
-%   the structure array.
-
+%     str(c(1))$str(c(2))$...
+%   If cell content is not a string, mat2str is called. 
+%
+%   out = cell2str(cellArray) convert to a string, values seprated 
+%   by ';'
+%
 if nargin == 1
   separator = ';';
 end
