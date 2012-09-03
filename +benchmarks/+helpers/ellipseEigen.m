@@ -19,11 +19,12 @@ function [eigval,eigvec] = ellipseEigen(frames)
 
 % AUTORIGHTS
 
-numFrames = size(f,2);
+numFrames = size(frames,2);
 eigval = zeros(2,numFrames);
 eigvec = zeros(4,numFrames);
 
 for i=1:numFrames
-  [eigvec(:,i), tmp] = eig([f(3:4,i)';f(4:5,i)']);
-  eigval(:,i) = tmp([1 4])' ;
+  [V, D] = eig(reshape(frames([3 4 4 5],i),2,2)) ;
+  eigvec(:,i) = V(:) ;
+  eigval(:,i) = D([1 4]) ;
 end
