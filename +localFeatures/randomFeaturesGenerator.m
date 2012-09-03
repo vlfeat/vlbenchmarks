@@ -1,11 +1,11 @@
 % RANDOMFEATURESGENERATOR Generates random features and descriptors
 %   Generator of random discs and oriented discs.
 
-classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor 
+classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
     opts
   end
- 
+
   properties (Constant)
     DISC = 3;
     ORIENTED_DISC = 4;
@@ -21,13 +21,13 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
-      
+
       obj.opts.featuresDensity = 2e-3; % Number of features  per pixel
-      
+
       obj.opts.frameType = obj.ORIENTED_DISC;
       obj.opts.maxScale = 30;
       obj.opts.minScale = 1;
-      
+
       obj.opts.descSize = 128;
       obj.opts.descMaxValue = 255;
       obj.opts.descMinValue = 0;
@@ -38,23 +38,26 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
-      
+
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-      
+
       obj.info('generating frames for image %s.',getFileName(imagePath));
-      
+
       img = imread(imagePath);
       imgSize = size(img);
-      
+      img = double(img) ;
+      randn('state',mean(img(:))) ;
+      rand('state',mean(img(:))) ;
+
       imageArea = imgSize(1) * imgSize(2);
       numFeatures = round(imageArea * obj.opts.featuresDensity);
-      
+
       locations = rand(2,numFeatures);
       locations(1,:) = locations(1,:) .* imgSize(2);
       locations(2,:) = locations(2,:) .* imgSize(1);
       scales = rand(1,numFeatures)*(obj.opts.maxScale - obj.opts.minScale) + obj.opts.minScale;
-      
+
       switch obj.opts.frameType
         case obj.DISC
           frames = [locations;scales];
@@ -64,34 +67,34 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
         otherwise
           error('Invalid frame type');
       end
-      
+
       if nargout > 1
         [frames descriptors] = obj.extractDescriptors(imagePath,frames);
       end
-      
+
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
       img = imread(imagePath);
       imgSize = size(img);
-      
+
       imageArea = imgSize(1) * imgSize(2);
       numFeatures = round(imageArea * obj.opts.featuresDensity);
       descMinValue = obj.opts.descMinValue;
       descMaxValue = obj.opts.descMaxValue;
       descriptors = rand(obj.opts.descSize,numFeatures)...
         * (descMaxValue - descMinValue) + descMinValue;
-      
+
       if obj.opts.descInteger
         descriptors = round(descriptors);
       end
     end
-    
+
     function signature = getSignature(obj)
       signature = helpers.struct2str(obj.opts);
     end
-    
+
   end
 
   methods (Static)
