@@ -103,11 +103,13 @@ classdef matchingBenchmark < benchmarks.genericBenchmark & helpers.Logger ...
       startTime = tic;
       normFrames = obj.opts.normaliseFrames;
       overlErr = obj.opts.overlapError;
-      
+
       framesA = localFeatures.helpers.frameToEllipse(framesA) ;
       framesB = localFeatures.helpers.frameToEllipse(framesB) ;
-      
-      [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
+      reprojFramesA = warpEllipse(tf, framesA) ;
+      reprojFramesB = warpEllipse(inv(tf), framesB) ;
+
+      %[reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
 
       if obj.opts.cropFrames
         % Get the size of the input images

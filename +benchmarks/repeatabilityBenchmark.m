@@ -87,9 +87,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
         framesB = detector.extractFeatures(imageBPath);
         [repeatability numCorresp bestCorresp reprojFrames] = ...
           testFeatures(obj,tf,imageAPath, imageBPath,framesA, framesB);
-
         results = {repeatability numCorresp bestCorresp reprojFrames };
-
         helpers.DataCache.storeData(results, resultsKey);
       else
         [repeatability numCorresp bestCorresp reprojFrames] = cachedResults{:};
@@ -118,10 +116,14 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       overlapError = obj.opts.overlapError;
       overlapThresh = 1 - overlapError;
 
+      % converts whatever features frames we have (e.g. dics) to
+      % unoriented ellipses
       framesA = localFeatures.helpers.frameToEllipse(framesA) ;
       framesB = localFeatures.helpers.frameToEllipse(framesB) ;
 
-      [reprojFramesA,reprojFramesB] = reprojectFrames(framesA, framesB, tf);
+      % map
+      reprojFramesA = warpEllipse(tf, framesA) ;
+      reprojFramesB = warpEllipse(inv(tf), framesB) ;
 
       if obj.opts.cropFrames
         imageA = imread(imageAPath);
