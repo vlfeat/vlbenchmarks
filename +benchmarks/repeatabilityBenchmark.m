@@ -1,22 +1,24 @@
 classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
-  % REPEATABILITYBENCHMARK Compute the repeatability of detected features
-  %   REPEATABILITYBENCHMARK(resultsStorage,'OptionName',optionValue,...)
-  %   constructs an object to compute the repeatabiliy of detected
-  %   features. Options:
-  %
-  %   OverlapError:: [0.4]
-  %     Maximal overlap error of ellipses to be considered as
-  %     correspondences.
-  %
-  %   NormaliseFrames:: [true]
-  %     Normalise the frames to constant scale (defaults is true for
-  %     detector repeatability tests, see Mikolajczyk et. al 2005).
-  %
-  %   CropFrames:: [true]
-  %     Crop the frames out of overlaping regions.
+% REPEATABILITYBENCHMARK Compute the repeatability of detected features
+%   REPEATABILITYBENCHMARK(resultsStorage,'OptionName',optionValue,...)
+%   constructs an object to compute the repeatabiliy of detected
+%   features. Options:
+%
+%   OverlapError:: [0.4]
+%     Maximal overlap error of ellipses to be considered as
+%     correspondences.
+%
+%   NormaliseFrames:: [true]
+%     Normalise the frames to constant scale (defaults is true for
+%     detector repeatability tests, see Mikolajczyk et. al 2005).
+%
+%   CropFrames:: [true]
+%     Crop the frames out of overlaping regions.
 
-  % AUTORIGHTS
+% Author: Karel Lenc, Andrea Vedaldi
+
+% AUTORIGHTS
 
   properties
     opts % Local options of repeatabilityTest
@@ -51,13 +53,22 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 
     function [repeatability numCorresp bestCorresp reprojFrames] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
-      %TESTDETECTOR Compute repeatability of a detector.
-      %  [REP NUM_CORR] = testDetector(DETECTOR, TF, IMAGE_A_PATH,
-      %     IMAGE_B_PATH) Compute repeatability REP of a detector DETECTOR
-      %     and its frames extracted from images defined by their path
-      %     IMAGEA_PATH and IMAGEB_PATH which geometry is related by
-      %     homography TF. NUM_CORR is number of found correspondences.
-      %     This method caches its results.
+      % TESTDETECTOR Computes the repeatability of a detector on a pair of images
+      %   REPEATABILITY = TESTDETECTOR(DETECTOR, TF, IMAGEAPATH, IMAGEBPATH)
+      %   computes the repeatability REP of a detector DETECTOR and its
+      %   frames extracted from images defined by their path IMAGEAPATH and
+      %   IMAGEBPATH whose geometry is related by the homography
+      %   transformation TF.
+      %
+      %   [REPEATABILITY, NUMCORRESP] = TESTDETECTOR(...) returns also the
+      %   total number of feature correspondences found.
+      %
+      %   This method caches its results, so that calling it again will not
+      %   recompute the repeatability score unless the cache is manually
+      %   cleared.
+      %
+      %   See also: REPEATABILITYBENCHMARK().
+
       import benchmarks.*;
       import helpers.*;
 
@@ -72,9 +83,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       cachedResults = DataCache.getData(resultsKey);
 
       if isempty(cachedResults)
-        [framesA] = detector.extractFeatures(imageAPath);
-        [framesB] = detector.extractFeatures(imageBPath);
-
+        framesA = detector.extractFeatures(imageAPath);
+        framesB = detector.extractFeatures(imageBPath);
         [repeatability numCorresp bestCorresp reprojFrames] = ...
           testFeatures(obj,tf,imageAPath, imageBPath,framesA, framesB);
 
@@ -138,11 +148,12 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
         reprojFramesB = reprojFramesB(:,visibleFramesB);
       end
 
-      % Find all ellipse correspondences
+      % For all frames A find the reprojected frames B that have at least
+      % the minimum overlap.
       frameCorresp = fastEllipseOverlap(reprojFramesB, framesA, ...
         'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh - 0.1);
 
-      % Find the best one-to-one correspondences
+      % Find the best one-to-one correspondences ~~~~~~~~~~~~~~~~~~~~~
       numFramesA = size(framesA,2);
       numFramesB = size(reprojFramesB,2);
       corresp = zeros(3,0);
@@ -151,12 +162,11 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       % Collect all correspondences in a single array
       for j=1:numFramesA
         numNeighs = length(frameCorresp.scores{j});
-        if numNeighs > 0
-          corresp = [corresp, ...
-                    [j *ones(1,numNeighs); frameCorresp.neighs{j}; ...
-                    frameCorresp.scores{j}]];
-        end
+        corresp{j} = [j *ones(1,numNeighs) ;
+                      frameCorresp.neighs{j} ;
+                      frameCorresp.scores{j}] ;
       end
+      corresp = cat(2,corresp{:}) ;
 
       % Filter corresp. with insufficient overlap
       corresp = corresp(:,corresp(3,:)>overlapThresh);
