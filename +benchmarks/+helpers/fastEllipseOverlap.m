@@ -63,13 +63,18 @@ function result = fastEllipseOverlap(f1, f2, varargin)
     return;
   end
 
+  % Given two ellipses f1, f2, we want to upper bound their overlap
+  % (inters over union). We have
+  %
+  %   overlap(f1,f2) = |inters(f1,f2)| / |union(f1,f2)| <= maxOverlap
+  %   maxOverlap = min(|f1|,|f2|) / max(|f1|,|f2|)
+  %
+  %
+
   for i2 = 1:N2
     s = conf.normalisedScale / sqrt(a2(i2) / pi)  ;
 
     canOverlap = sqrt(vl_alldist2(f2(1:2, i2), f1(1:2,:))) < 4 * sqrt(a2(i2) / pi);
-    % a2(i2) - area of tested ellipse
-    % a1 - areas of all ellipses
-    % min(a2(i2) a1) - vector
     maxOverlap = min(a2(i2), a1) ./ max(a2(i2), a1) .* canOverlap ;
     neighs{i2} = find(maxOverlap > conf.minAreaRatio) ;
 
