@@ -1,25 +1,29 @@
-function [eeig,eigvec] = ellipseEigen(f)
-% ELLIPSEEIGEN Calculates eigen values and vectors from ell. frames
-%   [EIG EIGVEC] = ellipseEigen(F) Calculated eigen values EIG and 
-%    eigen vectors EIGVEC of ellipse matrix E given by an ellipse 
-%    frame F:
+function [eigval,eigvec] = ellipseEigen(frames)
+% ELLIPSEEIGEN Computes the eigenvalues an eigenvectors for an ellipse
+%   [EIGVAL EIGVEC] = ELLPISEEIGEN(FRAMES) calculates the eigenvalues
+%   EIGVAL and eigenvectors EIGVEC of the elliptical frames
+%   FRAMES. The covariance of an ellipse is given by
 %
-%    E = [ F(3,.) F(4,.) ]
-%        [ F(4,.) F(5,.) ]
+%    S = [FRAMES(3) FRAMES(4)]
+%        [FRAMES(4) FRAMES(5)]
 %
-%    s.t. 
-%      E * EIGVEC = EIGVEC * diag(EIG)
+%   then EIGVAL contains the eigenvalues of this matrix and EIGVEC the
+%   corresponding eigenvectors (stacked), such that
 %
+%     S * reshape(eigvec,2,2) = reshape(eigvec,2,2) * diag(eigval).
+%
+%   If FRAMES contains more than one elliptical frame, then EIGVEC
+%   and EIGVAL have one column per frame.
+
+% Author: Andrea Vedaldi, Karel Lenc
+
+% AUTORIGHTS
 
 numFrames = size(f,2);
-eeig = zeros(2,numFrames);
+eigval = zeros(2,numFrames);
 eigvec = zeros(4,numFrames);
 
 for i=1:numFrames
-  [eigVec eigVal] = eig([f(3:4,i)';f(4:5,i)']);
-  eeig(:,i) = [eigVal(1);eigVal(4)];
-  eigvec(:,i) = [eigVec(:,1);eigVec(:,2)];
-end
-
-% NOTE vector solution removed as it was unstable.
+  [eigvec(:,i), tmp] = eig([f(3:4,i)';f(4:5,i)']);
+  eigval(:,i) = tmp([1 4])' ;
 end
