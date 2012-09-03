@@ -1,37 +1,39 @@
 classdef Logger < handle
-  %LOGGER Helper class implementing simple logging framework.
-  %  Supports both prinitng of messages to the stdout or writing
-  %  to a log file with different verbosity level.
-  %  To use the logging framework, define this class as a superclass
-  %  and call method configureLogger with the rest of the constructor
-  %  arguments. 
-  %
-  %  Supports the following verbosity levels:
-  %  
-  %  helpers.Logger.TRACE - Tracing minute detail of the execution.
-  %  helpers.Logger.DEBUG - Debugging information.
-  %  helpers.Logger.INFO  - Information about execution state
-  %  helpers.Logger.WARN  - Warnings, calls warn function.
-  %  helpers.Logger.ERROR - Errors, calls error function.
-  %  helpers.Logger.OFF   - Ignore everything.
-  %
-  %  To log, call method trace(msg), debug(msg), info(msg), warn(msg)
-  %  or error(msg) according to the importance of the event.
-  %
-  %  Supports these arguments as ('Name',value) pairs (see vl_argparse)
-  %
-  %  VerboseLevel :: [helpers.Logger.DEBUG]
-  %    Verbose level of messages sent to stdout. If set to OFF all 
-  %    messages are ignored, even errors would not stop the program
-  %    execution.
-  %
-  %   FileVerboseLevel :: [helpers.Logger.OFF]
-  %     Verbose level of messages which are written into a log file.
-  %
-  %   LogFile :: [./data/log]
-  %   Path to a log file.
-  %
-  
+% LOGGER A simple logger class
+%  LOGGER supports both prinitng of messages to the console or writing
+%  them to a log file with different verbosity levels. To use the
+%  logging framework, define this class as a superclass and call
+%  method configureLogger with the rest of the constructor arguments.
+%
+%  LOGGER supports the following verbosity levels:
+%
+%    helpers.Logger.TRACE - Tracing minute detail of the execution.
+%    helpers.Logger.DEBUG - Debugging information.
+%    helpers.Logger.INFO  - Information about execution state
+%    helpers.Logger.WARN  - Warnings, calls warn function.
+%    helpers.Logger.ERROR - Errors, calls error function.
+%    helpers.Logger.OFF   - Ignore everything.
+%
+%  To log a message, call method trace(msg), debug(msg), info(msg),
+%  warn(msg) or error(msg) according to the importance of the event.
+%
+%  LOGGER supports the following 'Name',value options:
+%
+%  VerboseLevel:: [helpers.Logger.DEBUG]
+%    Verbosity level of messages sent to stdout. If set to OFF all
+%    messages are ignored, even errors would not stop the program
+%    execution.
+%
+%  FileVerboseLevel:: [helpers.Logger.OFF]
+%    Verbosity level of messages which are written into a log file.
+%
+%  LogFile :: [./data/log]
+%     Path to a log file.
+
+% Author: Karel Lenc
+
+% AUTORIGHTS
+
   properties
     % Verbose level of messages printed to stdout
     verboseLevel = helpers.Logger.DEBUG;
@@ -42,7 +44,7 @@ classdef Logger < handle
     % Log label used as a preamble of all messages
     logLabel = '';
   end
-  
+
   properties (Constant)
     % Verbose levels
     ALL = 4;
@@ -52,13 +54,13 @@ classdef Logger < handle
     WARN = 0;
     ERROR = -1;
     OFF = -2;
-    
+
     levelStr = containers.Map(...
       {helpers.Logger.TRACE,helpers.Logger.DEBUG,helpers.Logger.INFO, ...
       helpers.Logger.WARN,helpers.Logger.ERROR},...
       {'TRACE','DEBUG','INFO','WARN','ERROR'});
   end
- 
+
   methods (Access = protected)
     function varargin = configureLogger(obj,logLabel,varargin)
     % args = configureLogger(logLabel, varargin)
@@ -72,39 +74,39 @@ classdef Logger < handle
       opts.fileVerbose = obj.fileVerboseLevel;
       opts.logFile = obj.logFile;
       [opts varargin] = vl_argparse(opts,varargin{:});
-      obj.verboseLevel = opts.verbose; 
+      obj.verboseLevel = opts.verbose;
       obj.fileVerboseLevel = opts.fileVerbose;
       obj.logFile = opts.logFile;
     end
-    
+
     function trace(obj, varargin)
     % trace(varargin) Log a trace message, same args as fprintf.
       obj.log(obj.TRACE,varargin{:});
     end
-    
+
     function debug(obj, varargin)
       % debug(varargin) Log a debug message, same args as fprintf.
       obj.log(obj.DEBUG,varargin{:});
     end
-    
+
     function info(obj, varargin)
     % info(varargin) Log an info message, same args as fprintf.
       obj.log(obj.INFO,varargin{:});
     end
-    
+
     function warn(obj, varargin)
     % warn(varargin) Log a warning message, same args as fprintf. If
     %   the VerboseLevel >= WARN, calls warning function.
       obj.log(obj.WARN,varargin{:});
     end
-    
+
     function error(obj, varargin)
     % ERROR(varargin) Log an error message, same args as fprintf. If
     %   the VerboseLevel >= ERROR, calls error function.
-      obj.log(obj.ERROR,varargin{:});      
+      obj.log(obj.ERROR,varargin{:});
     end
   end
-  
+
   methods (Access = private)
     function log(obj, level, varargin)
       if level <= obj.verboseLevel
@@ -114,7 +116,7 @@ classdef Logger < handle
         obj.logToFile(level,varargin)
       end
     end
-    
+
     function displayLog(obj,level,varargin)
       % Change this method if you want to change the format
       % of displayed log messages.
@@ -130,7 +132,7 @@ classdef Logger < handle
           obj.logLabel,str));
       end
     end
-    
+
     function logToFile(obj,level,varargin)
       % Change this method if you want to change the format of log
       % messages stored in a log file.
