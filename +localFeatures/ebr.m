@@ -83,8 +83,7 @@ classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
     function compile()
       import localFeatures.*;
       % When unpacked, ebr is not executable
-      chmodCmd = sprintf('chmod +x %s',ebr.binPath);
-      system(chmodCmd);
+      helpers.setFileExecutable(ebr.binPath);
     end
 
   end % ---- end of static methods ----

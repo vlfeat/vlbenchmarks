@@ -8,7 +8,6 @@ function unpack( url, distDir )
 
 import helpers.*;
 
-wgetCommand = 'wget %s -O %s'; % Command for downloading archives
 unbzipCommand = 'tar xvjf %s';
 unTarGzipCommand = 'tar xvzf %s';
 unGzipCommand = 'gunzip %s';
@@ -38,17 +37,13 @@ switch ext
   otherwise
     error(['Unknown archive extension ' ext]);
 end 
-    
-vl_xmkdir(distDir);
 
 % Download the file
-archivePath = fullfile(pwd,distDir,[filename ext]);
-wgetC = sprintf(wgetCommand,url,archivePath);
+archivePath = helpers.downloadFile(url, distDir);
 
-status = system(wgetC,'-echo');
-if status ~= 0 
+if isempty(archivePath)
   delete(distDir);
-  error('Error downloading, exit status %d',status); 
+  error('Error downloading file from %s.',url); 
 end
 
 % Unpack the file

@@ -1,6 +1,6 @@
-% CMPHESSIAN class to wrap around the CMP Hessian Affine detector implementation
+% cmpBinHessian class to wrap around the CMP Hessian Affine detector implementation
 %
-%   obj = localFeatures.cmpHessian('Option','OptionValue',...);
+%   obj = localFeatures.cmpBinHessian('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
 %   This class implements the genericDetector interface and wraps around the
@@ -12,38 +12,39 @@
 %
 %   (No options available currently)
 
-classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
+classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
     helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     binPath
   end
   
   properties (Constant)
-    rootInstallDir = fullfile('data','software','cmpHessian','');
-    softwareUrl = 'http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz';
+    rootInstallDir = fullfile('data','software','cmpBinHessian','');
+    url = 'http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09';
+    binName = 'haff_cvpr09';
   end
 
   methods
     % The constructor is used to set the options for the cmp
     % hessian binary.
-    function obj = cmpHessian(varargin)
+    function obj = cmpBinHessian(varargin)
       import localFeatures.*;
-      obj.name = 'CMP Hessian Affine';
+      obj.name = 'CMP Hessian Affine (bin)';
       obj.detectorName = obj.name;
-      obj.descriptorName = 'CMP SIFT';
+      obj.descriptorName = 'CMP SIFT (bin)';
       if ~obj.isInstalled(),
-        obj.warn('cmpHessian not found installed');
+        obj.warn('cmpBinHessian not found installed');
         obj.installDeps();
       end
 
       % Check platform dependence
       machineType = computer();
       switch(machineType)
-        case  {'GLNX86','GLNXA64'}
-          obj.binPath = fullfile(cmpHessian.rootInstallDir,'hesaff');
+        case  {'GLNXA64'}
+          obj.binPath = fullfile(obj.rootInstallDir,obj.binName);
         otherwise
           obj.isOk = false;
-          obj.errMsg = sprintf('Arch: %s not supported by cmpHessian',...
+          obj.errMsg = sprintf('Arch: %s not supported by cmpBinHessian',...
                                 machineType);
       end
       obj.configureLogger(obj.name,varargin);
@@ -62,14 +63,14 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
         obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
       end
       
-      img = imread(imagePath);
-
-      tmpName = tempname;
-      imgFile = [tmpName '.png'];
-      featFile = [tmpName '.png.hesaff.sift'];
-
-      imwrite(img,imgFile);
-      args = sprintf(' "%s" ',imgFile);
+      % Write image in correct format
+      image = imread(imagePath);
+      tempName = tempname;
+      imageFile = [tempName '.ppm'];
+      featFile = [tempName '.ppm.hesaff.sift'];
+      helpers.writeppm(image, imageFile);
+      
+      args = sprintf(' "%s" ',imageFile);
       cmd = [obj.binPath ' ' args];
 
       [status,msg] = system(cmd);
@@ -99,18 +100,28 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
 
   methods (Static)
     
-    function [urls dstPaths] = getTarballsList()
-      import localFeatures.*;
-      urls = {cmpHessian.softwareUrl};
-      dstPaths = {cmpHessian.rootInstallDir};
-    end
-    
     function deps = getDependencies()
-      deps = {helpers.Installer() helpers.OpenCVInstaller()};
+      deps = {helpers.Installer()};
     end
     
     function compile()
-      error('Not implemented.');
+      import localFeatures.*;
+      import helpers.*;
+      filePath = helpers.downloadFile(cmpBinHessian.url,...
+        cmpBinHessian.rootInstallDir);
+      if isempty(filePath)
+        error('Unable to download %s',cmpBinHessian.url)
+      end
+      
+      % Set executable flags
+      helpers.setFileExecutable(filePath);
+    end
+    
+    function res = isCompiled()
+      import localFeatures.*;
+      bin = fullfile(cmpBinHessian.rootInstallDir,...
+        cmpBinHessian.binName);
+      res = exist(bin,'file');
     end
 
   end % ---- end of static methods ----

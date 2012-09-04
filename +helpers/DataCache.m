@@ -7,7 +7,7 @@ classdef DataCache
   %   all sizes exceeds allowed size DataCache.dataPath the last recently
   %   used data are removed.
   %
-  %   When DataCache.lockFiles = true the storage tries to be thread safe
+  %   When DataCache.lock = true the storage tries to be thread safe
   %   however critical section is implemented as creation of empty file
   %   which does not prevent all collisions.
   %
@@ -19,10 +19,9 @@ classdef DataCache
   %     autoClear - Check whether storage size has not exceeded the allowed
   %       size after each storeData call when true. If so, the oldest data
   %       are removed
-  %     lockFiles - Lock files when are being read/written so they would
-  %       not be overwritten/deleted. However the file is locked by writing
-  %       empty file which does not get rid of all race conditions. Use
-  %       carefully.
+  %     lock - Lock cache when data being erased. However the cache is
+  %       locked by writing empty file which does not get rid of all race
+  %       conditions. Use carefully.
   %
   %   METHODS (Static)
   %     data = getData(key) - Get data from the cache indexed by string
@@ -37,8 +36,8 @@ classdef DataCache
     dataPath = fullfile(pwd,'data','cache',''); % Cached data storage
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
-    lockFiles = false; % Prevent removal of accessed data, for SMP
-    disabled = false; % Disable caching
+    lockCache = false; % Prevent removal of accessed data, for SMP
+    disabled = true; % Disable caching
   end
   
   methods (Static)
@@ -48,19 +47,17 @@ classdef DataCache
       %   If the data has not been found, returns [];
       import helpers.DataCache;
       if DataCache.disabled, data = []; return; end
+      DataCache.waitForUnlock();
       dataFile = DataCache.buildDataFileName(key);
 
       if exist(dataFile,'file')
-        DataCache.lockFile(dataFile)
         packedData = load(dataFile,'packedData');
         packedData = packedData.packedData;
         if packedData.key == key
           DataCache.updateModificationDate(dataFile);
-          DataCache.unlockFile(dataFile)
           data = packedData.data;
         else
           warning(strcat('Data collision for ',key));
-          DataCache.unlockFile(dataFile)
           DataCache.removeData(key);
           data = [];
         end
@@ -73,6 +70,7 @@ classdef DataCache
       % STOREDATA(DATA,KEY) - Store data DATA identified by key KEY.
       import helpers.DataCache;
       import helpers.*;
+      DataCache.waitForUnlock();
       dataFile = DataCache.buildDataFileName(key);
       
       if ~exist(DataCache.dataPath,'dir')
@@ -81,16 +79,8 @@ classdef DataCache
       
       packedData.key = key;
       packedData.data = data;
-
-      if DataCache.lockFiles
-        while DataCache.isLocked(dataFile)
-          pause(0.1)
-        end
-      end
       
-      DataCache.lockFile(dataFile)
       save(dataFile,'packedData',DataCache.dataFileVersion);
-      DataCache.unlockFile(dataFile)
       
       if DataCache.autoClear
         DataCache.clearCache();
@@ -100,13 +90,10 @@ classdef DataCache
     function removeData(key)
       % REMOVEDATA(KEY) - Remove data defined by KEY from the cache.
       import helpers.DataCache;
+      DataCache.waitForUnlock();
       dataFile = DataCache.buildDataFileName(key);
       if exist(dataFile,'file')
-        if ~DataCache.isLocked(dataFile)
-          delete(dataFile);
-        else
-          warning(strcat('Cannot delete locked data ',key));
-        end
+        delete(dataFile);
       else
         error(strcat('Cache data file for key ', key, ...
           'cannot be deleted (', dataFile, ').'));
@@ -119,6 +106,7 @@ classdef DataCache
       %   DataCache.maxDataSize.
       import helpers.DataCache;
       maxDataSizeBytes = DataCache.maxDataSize;
+      DataCache.lock();
       
       dataFiles = dir(fullfile(DataCache.dataPath,'*.mat'));
       dataModDates = [dataFiles.datenum];
@@ -137,12 +125,10 @@ classdef DataCache
       if ~isempty(filesToDelete)
         fprintf('Deleting the oldest %d files from cache...\n',numel(filesToDelete));
         for fileName=filesToDelete
-          % If file is locked it will be probably updated soon
-          if ~DataCache.isLocked(fileName)
-            delete(fullfile(DataCache.dataPath,fileName{:}));
-          end
+          delete(fullfile(DataCache.dataPath,fileName{:}));
         end
       end
+      DataCache.unlock();
     end
 
   end
@@ -159,32 +145,48 @@ classdef DataCache
       helpers.touch(fileName);
     end
     
-    function lockFile(fileName)
+    function lock()
       import helpers.DataCache;
-      if DataCache.lockFiles
-        lockFileName = strcat(fileName,'.lock');
+      if DataCache.lockCache
+        lockFileName = strcat('.lock');
         lockFile = fopen(lockFileName,'w');
         fclose(lockFile);
       end
     end
     
-    function unlockFile(fileName)
+    function unlock()
       import helpers.DataCache;
-      if DataCache.lockFiles
-        lockFileName = strcat(fileName,'.lock');
+      if DataCache.lockCache
+        lockFileName = strcat('.lock');
         if exist(lockFileName,'file')
           delete(lockFileName); 
         end
       end
     end
     
-    function locked = isLocked(fileName)
+    function locked = isLocked()
       import helpers.DataCache;
-      if DataCache.lockFiles
-        lockFileName = strcat(fileName,'.lock');
+      if DataCache.lock
+        lockFileName = strcat('.lock');
         locked = exist(lockFileName,'file');
       else
         locked = false;
+      end
+    end
+
+    function waitForUnlock()
+      import helpers.*;
+      if ~DataCache.lockCache, return; end;
+      maxWaitTime = 10*60;
+      waitTime = 0;
+      fprintf('Cache locked. Waiting.\n');
+      while DataCache.isLocked()
+        pause(1)
+        waitTime = waitTime + 1;
+        if waitTime > maxWaitTime
+          warning('Data cache is locked for too long. Unlock forced.');
+          DataCache.unlock();
+        end
       end
     end
   end
