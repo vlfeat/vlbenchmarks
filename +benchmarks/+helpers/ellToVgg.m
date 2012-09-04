@@ -30,8 +30,8 @@ vggEll(3,:) = A1;
 vggEll(4,:) = A2;
 vggEll(5,:) = A4;
 
-vggEll(6,:) = sqrt(eigVal(1,:));
-vggEll(7,:) = sqrt(eigVal(2,:));
+vggEll(6,:) = sqrt(eigVal(2,:));
+vggEll(7,:) = sqrt(eigVal(1,:));
 
 % TODO wrong bbox, see repeatability 219
 vggEll([8 9],:) = sqrt(ell([3 5],:));
