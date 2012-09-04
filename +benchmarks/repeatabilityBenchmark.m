@@ -56,6 +56,9 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %     'standard' and 'km' for precise reproduction of IJCV2005 benchmark
 %     results.
 %
+%   DescriptorsDistanceMetric :: ['L2']
+%     Distance metric used for matching the descriptors. See documentation
+%     of `vl_alldist2` for details.
 
 % Author: Karel Lenc, Andrea Vedaldi
 
@@ -73,6 +76,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     defWarpMethod = 'standard';
     defMatchFramesGeometry = true;
     defMatchFramesDescriptors = false;
+    defDescriptorsDistanceMetric = 'L2';
     keyPrefix = 'repeatability';
   end
 
@@ -88,6 +92,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       obj.opts.warpMethod = obj.defWarpMethod;
       obj.opts.matchFramesGeometry = obj.defMatchFramesGeometry;
       obj.opts.matchFramesDescriptors = obj.defMatchFramesDescriptors;
+      obj.opts.descriptorsDistanceMetric = obj.defDescriptorsDistanceMetric;
       if numel(varargin) > 0
         [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       end
@@ -275,7 +280,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 
       if obj.opts.matchFramesDescriptors
         obj.info('Computing cross distances between all descriptors');
-        dists = vl_alldist2(single(descriptorsA),single(descriptorsB));
+        dists = vl_alldist2(single(descriptorsA),single(descriptorsB),...
+          obj.opts.descriptorsDistanceMetric);
         obj.info('Sorting distances')
         [dists, perm] = sort(dists(:),'ascend');
 
