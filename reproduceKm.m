@@ -39,6 +39,9 @@ matchBenchmark = repeatabilityBenchmark(...
 
 kmBenchmark = kristianEvalBenchmark('CommonPart',1);
 
+%% Define Figure
+fig = figure('Visible','off');
+
 %% Define dataset
 
 import datasets.*;
@@ -78,10 +81,10 @@ for category=categories
 
   %% Show scores
 
-  resultsDir = 'ijcc05_res';
+  resultsDir = 'ijcv05_res';
   category = dataset.category;
 
-  figure(1); clf;
+  clf;
   titleText = 'Detectors Repeatability [%%]';
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
@@ -121,10 +124,10 @@ for category=categories
 
   %%
 
-  resultsDir = 'ijcc05_res';
+  resultsDir = 'ijcv05_res';
   category = dataset.category;
 
-  figure(1); clf;
+  clf;
   titleText = 'Detectors Repeatability [%%]';
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
@@ -182,7 +185,7 @@ function printScores(scores, scoreLineNames, name, fileName)
   if exist('fileName','var');
     [dir name] = fileparts(fileName);
     vl_xmkdir(dir);
-    save([dir name],'scores');
+    save(fullfile(dir,name),'scores');
     csvwrite(fullfile(dir, [name '.csv']), scores);
   end
 end
