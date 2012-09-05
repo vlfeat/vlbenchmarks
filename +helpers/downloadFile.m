@@ -7,6 +7,8 @@ function archivePath = downloadFile( url, distDir )
 %     Current implementation uses `wget` which should be available in 
 %     system path.
 
+import helpers.*;
+
 wgetCommand = 'wget %s -O %s'; % Command for downloading archives
 
 [address filename ext] = fileparts(url);
