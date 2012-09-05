@@ -7,196 +7,209 @@ function reproduceKm()
 
 import localFeatures.*;
 
-detectors{1} = cvSurf('HessianThreshold',1000,'FloatDescriptors',true);
-%detectors{1} = vggMser('es',2); % Custom options
-%detectors{2} = vggNewAffine('Detector', 'hessian','Threshold',500);
-%detectors{3} = vggNewAffine('Detector', 'harris','Threshold',1000);
+descDet = vggAffine();
 
+detectors{1} = vggAffine('Detector', 'haraff','Threshold',1000);
+detectors{2} = vggAffine('Detector', 'hesaff','Threshold',500);
+detectors{3} = descriptorAdapter(vggMser('es',2),descDet);
+detectors{4} = descriptorAdapter(ibr('ScaleFactor',1),descDet);
+detectors{5} = descriptorAdapter(ebr(),descDet);
 
+detNames = {'Harris-Affine','Hessian-Affine','MSER','IBR','EBR'};
 
-%% Define dataset
-
-import datasets.*;
-
-dataset = vggAffineDataset('category','graf');
 
 %% Define benchmarks
 
 import benchmarks.*;
 
-repBenchmark = repeatabilityBenchmark();
-matchBenchmark = matchingBenchmark();
-kmBenchmark = kristianEvalBenchmark();
+repBenchmark = repeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',false,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4);
+matchBenchmark = repeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',true,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4);
 
-%% Run the benchmarks in parallel
+kmBenchmark = kristianEvalBenchmark('CommonPart',1);
 
-numDetectors = numel(detectors);
-numImages = dataset.numImages;
+%% Define dataset
 
-repeatability = zeros(numDetectors, numImages);
-numCorresp = zeros(numDetectors, numImages);
+import datasets.*;
 
-matchingScore = zeros(numDetectors, numImages);
-numMatches = zeros(numDetectors, numImages);
+categories = vggAffineDataset.allCategories;
 
-kmRepeatability = zeros(numDetectors, numImages);
-kmNumCorresp = zeros(numDetectors, numImages);
+for category=categories
+  fprintf('\n######## TESTING DATASET %s #######\n',category{:});
+  dataset = vggAffineDataset('category',category{:});
 
+  %% Run the new benchmarks in parallel
 
-% Test all detectors
-for detectorIdx = 1:numDetectors
-  detector = detectors{detectorIdx};
-  imageAPath = dataset.getImagePath(1);
-  
-  for imageIdx = 2:numImages
-    imageBPath = dataset.getImagePath(imageIdx);
-    tf = dataset.getTransformation(imageIdx);
-    [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
-      repBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
-    
-    %[kmRepeatability(detectorIdx,imageIdx) kmNumCorresp(detectorIdx,imageIdx)] = ...
-    %  kmBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
-    [matchingScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
-      matchBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+  numDetectors = numel(detectors);
+  numImages = dataset.numImages;
+
+  repeatability = zeros(numDetectors, numImages);
+  numCorresp = zeros(numDetectors, numImages);
+
+  matchingScore = zeros(numDetectors, numImages);
+  numMatches = zeros(numDetectors, numImages);
+
+  % Test all detectors
+  for detectorIdx = 1:numDetectors
+    detector = detectors{detectorIdx};
+    imageAPath = dataset.getImagePath(1);
+    parfor imageIdx = 2:numImages
+      imageBPath = dataset.getImagePath(imageIdx);
+      H = dataset.getTransformation(imageIdx);
+      [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
+        repBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+      [matchingScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+        matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+    end
   end
+
+
+
+  %% Show scores
+
+  resultsDir = 'ijcc05_res';
+  category = dataset.category;
+
+  figure(1); clf;
+  titleText = 'Detectors Repeatability [%%]';
+  printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
+  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
+
+  titleText = 'Detectors Num. Correspondences';
+  printScores(numCorresp, detNames, titleText,fullfile(resultsDir,[category '_ncorresp']));
+  subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
+
+  titleText = 'Detectors Matching Score [%%]';
+  printScores(matchingScore.*100, detNames, titleText,fullfile(resultsDir,[category '_matching']));
+  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, titleText);
+
+  titleText = 'Detectors Num. Matches';
+  printScores(numMatches, detNames, titleText,fullfile(resultsDir,[category '_nmatches']));
+  subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
+
+  set(gcf,'PaperPositionMode','auto')
+  set(gcf,'PaperType','A4');
+  set(gcf, 'Position', [0, 0, 900,700]);
+  print(gcf,fullfile(resultsDir, ['fig13_rm_' dataset.category '.eps']),'-depsc');
+
+  %% For comparison, run KM Benchmark
+
+  % Test all detectors
+  for detectorIdx = 1:numDetectors
+    detector = detectors{detectorIdx};
+    imageAPath = dataset.getImagePath(1);
+    parfor imageIdx = 2:numImages
+      imageBPath = dataset.getImagePath(imageIdx);
+      H = dataset.getTransformation(imageIdx);
+      [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
+        kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+      [tmp tmp2 matchingScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+        kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+    end
+  end
+
+  %%
+
+  resultsDir = 'ijcc05_res';
+  category = dataset.category;
+
+  figure(1); clf;
+  titleText = 'Detectors Repeatability [%%]';
+  printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_rep']));
+  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
+
+  titleText = 'Detectors Num. Correspondences';
+  printScores(numCorresp, detNames, titleText,fullfile(resultsDir,['km_' category '_ncorresp']));
+  subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
+
+  titleText = 'Detectors Matching Score [%%]';
+  printScores(matchingScore.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_matching']));
+  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, titleText);
+
+  titleText = 'Detectors Num. Matches';
+  printScores(numMatches, detNames, titleText,fullfile(resultsDir,['km_' category '_nmatches']));
+  subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
+
+  set(gcf,'PaperPositionMode','auto')
+  set(gcf,'PaperType','A4');
+  set(gcf, 'Position', [0, 0, 900,700]);
+  print(gcf,fullfile(resultsDir, ['fig13_rm_' dataset.category '.eps']),'-depsc');
+
+
 end
-
-
-
-%% Show scores
-
-printScores(detectors, repeatability.*100, 'Detectors Repeatability');
-figure(1); clf; plotScores(detectors, dataset, repeatability.*100, ...
- 'Detectors Repeatability', 'Number of correspondences');
-
-printScores(detectors, numCorresp, 'Number of correspondences');
-figure(2); clf; plotScores(detectors, dataset, numCorresp, ...
- 'Number of correspondences', 'Number of correspondences');
-
-printScores(detectors, matchingScore.*100, 'Detectors Matching Score');
-figure(3); clf; plotScores(detectors, dataset, matchingScore.*100, ...
- 'Detectors Matching Score', 'Detectors Matching Score');
-
-printScores(detectors, numMatches, 'Number of matches');
-figure(4); clf; plotScores(detectors, dataset, numMatches, ...
- 'Number of matches', 'Number of matches');
-
-%printScores(detectors, kmRepeatability.*100, 'KM Detectors Repeatability');
-%figure(3); clf; plotScores(detectors, dataset, kmRepeatability.*100, ...
-% 'KM Detectors Repeatability', 'KM Number of correspondences');
-
-%printScores(detectors, kmNumCorresp, 'KM Number of correspondences');
-%figure(4); clf; plotScores(detectors, dataset, kmNumCorresp, ...
-% 'KM Number of correspondences', 'KM Number of correspondences');
 
 
 %% Helper functions
 
-function printScores(detectors, scores, name, outFile)
+function printScores(scores, scoreLineNames, name, fileName)
   % PRINTSCORES
-  % Print the scores measured in the unified format to the standard 
-  % output. If outFile defined, save the results to a file as well.
-  numDetectors = numel(detectors);
-  saveResults = nargin > 3 && ~isempty(outFile);
-
-  if saveResults
-    helpers.vl_xmkdir(fileparts(outFile));
-    fH = fopen(outFile,'w');
-    fidOut = [1 fH];
-  else
-    fidOut = 1;
-  end
+  numScores = numel(scoreLineNames);
 
   maxNameLen = 0;
-  detNames = cell(numDetectors,1);
-  for k = 1:numDetectors
-    detNames{k} = detectors{k}.detectorName;
-    maxNameLen = max(maxNameLen,length(detNames{k}));
+  for k = 1:numScores
+    maxNameLen = max(maxNameLen,length(scoreLineNames{k}));
   end
 
   maxNameLen = max(length('Method name'),maxNameLen);
-  printf_lst(fidOut,strcat('\nPriting ', name,':\n'));
+  fprintf(['\n', name,':\n']);
   formatString = ['%' sprintf('%d',maxNameLen) 's:'];
 
-  printf_lst(fidOut,formatString,'Method name');
+  fprintf(formatString,'Method name');
   for k = 1:size(scores,2)
-    printf_lst(fidOut,'\tImg#%02d',k);
+    fprintf('\tImg#%02d',k);
   end
-  printf_lst(fidOut,'\n');
+  fprintf('\n');
 
-  for k = 1:numDetectors
-    printf_lst(fidOut,formatString,detNames{k});
-    for l = 1:size(scores,2)
-      printf_lst(fidOut,'\t%6s',sprintf('%.2f',scores(k,l)));
+  for k = 1:numScores
+    fprintf(formatString,scoreLineNames{k});
+    for l = 2:size(scores,2)
+      fprintf('\t%6s',sprintf('%.2f',scores(k,l)));
     end
-    printf_lst(fidOut,'\n');
+    fprintf('\n');
   end
-
-  if saveResults
-    fclose(fH);
+  
+  if exist('fileName','var');
+    [dir name] = fileparts(fileName);
+    vl_xmkdir(dir);
+    save([dir name],'scores');
+    csvwrite(fullfile(dir, [name '.csv']), scores);
   end
-
-  function printf_lst(fids,format,varargin)
-  % printf_lst
-  % Helper extending printf to more outputs.
-  % Parameters:
-  %   fids    Array of output file idxs
-  %   format, varargin See fprintf.
-  for m = 1:numel(fids)
-    fprintf(fids(m),format,varargin{:});
-  end
-  end
-
 end
 
-function plotScores(detectors, dataset, score, titleText, yLabel, outFile)
+function plotScores(scores, detNames, dataset, titleText)
   % PLOTSCORES
-  % Plot the scores into unified figure number figureNum. If 
-  % opts.SaveResults is true, save the figure to opts.SaveDir/outFile
-  %
-  % Parameters:
-  if isempty(score)
-    warning('No scores to plot.');
-    return
-  end
-
-  saveResults = nargin > 5 && ~isempty(outFile);
-
-  xstart = max([find(sum(score,1) == 0, 1) + 1 1]);
-
-  xend = size(score,2);
+  import helpres.*;
+  titleText = sprintf(titleText);
+  
   xLabel = dataset.imageNamesLabel;
-  xTicks = dataset.imageNames;
-  plot(xstart:xend,score(:,xstart:xend)','linewidth', 3) ; hold on ;
-  ylabel(yLabel) ;
+  xVals = dataset.imageNames;
+  plot(xVals,scores(:,2:6)','linewidth', 3) ; hold on ;
+  ylabel(titleText) ;
   xlabel(xLabel);
-  set(gca,'XTick',xstart:1:xend);
-  set(gca,'XTickLabel',xTicks);
   title(titleText);
-  set(gca,'xtick',1:size(score,2));
 
-  maxScore = max([max(max(score)) 1]);
-  meanEndValue = mean(score(:,xend));
-  legendLocation = 'SouthEast';
-  if meanEndValue < maxScore/2
-    legendLocation = 'NorthEast';
-  end
+  maxScore = max([max(max(scores)) 100]);
 
-  legendStr = cell(1,numel(detectors));
-  for m = 1:numel(detectors) 
-    legendStr{m} = detectors{m}.detectorName; 
+  legendLocation = 'NorthEast';
+
+  legendStr = cell(1,numel(detNames));
+  for m = 1:numel(detNames) 
+    legendStr{m} = detNames{m}; 
   end
   legend(legendStr,'Location',legendLocation);
   grid on ;
-  axis([xstart xend 0 maxScore]);
-
-  if saveResults
-    helpers.vl_xmkdir(fileparts(outFile));
-    fprintf('\nSaving figure as eps graphics: %s\n',outFile);
-    print('-depsc2', [outFile '.eps']);
-    fprintf('Saving figure as matlab figure to: %s\n',figFile);
-    saveas(gca,outFile,'fig');
-  end
+  axis([min(xVals)*0.9 max(xVals)*1.1 0 maxScore]);
 end
 
 end
