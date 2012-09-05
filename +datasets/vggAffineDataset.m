@@ -26,6 +26,26 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
     rootInstallDir = fullfile('data','datasets','vggAffineDataset','');
     allCategories = {'bikes','trees','graf','wall','bark',...
                      'boat','leuven','ubc'};
+    categoryImageNames = {...
+      'Increasing blur',... % bikes
+      'Increasing blur',... % trees
+      'Viewpoint angle',... % graf
+      'Viewpoint angle',... % wall
+      'Scale changes',...   % bark
+      'Scale changes',...   % boat
+      'Decreasing light',...% lueven
+      'JPEG compression %'... % ubc
+      };
+    categoryImageLabels = {...
+      [2 3 4 5 6],... % bikes
+      [2 3 4 5 6],... % trees
+      [20 30 40 50 60],... % graf
+      [20 30 40 50 60],... % wall
+      [0.3 1.8 2.5 3 4],...   % bark
+      [1.12 1.38 1.9 2.35 2.8],...   % boat
+      [2 3 4 5 6],...% lueven
+      [60 80 90 95 98]... % ubc
+      };
     rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
     defCategory = 'graf';
   end
@@ -41,7 +61,8 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       end
       opts.category= obj.defCategory;
       opts = vl_argparse(opts,varargin);
-      assert(ismember(opts.category,obj.allCategories),...
+      [valid loc] = ismember(opts.category,obj.allCategories);
+      assert(valid,...
         sprintf('Invalid category for vgg dataset: %s\n',opts.category));
       obj.datasetName = ['vggAffineDataset-' opts.category];
       obj.category= opts.category;
@@ -56,9 +77,8 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       else
         error('Ivalid dataset image files.');
       end
-      imageLabels = textscan(num2str(1:obj.numImages),'%s');
-      obj.imageNames = cellstr(imageLabels{1});
-      obj.imageNamesLabel = 'Image #';
+      obj.imageNames = obj.categoryImageLabels{loc};
+      obj.imageNamesLabel = obj.categoryImageNames{loc};
     end
 
     function imgPath = getImagePath(obj,imgIdx)
