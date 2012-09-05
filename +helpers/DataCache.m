@@ -37,7 +37,7 @@ classdef DataCache
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
     lockCache = false; % Prevent removal of accessed data, for SMP
-    disabled = true; % Disable caching
+    disabled = false; % Disable caching
   end
   
   methods (Static)
