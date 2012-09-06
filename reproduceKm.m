@@ -16,6 +16,7 @@ detectors{4} = descriptorAdapter(ibr('ScaleFactor',1),descDet);
 detectors{5} = descriptorAdapter(ebr(),descDet);
 
 detNames = {'Harris-Affine','Hessian-Affine','MSER','IBR','EBR'};
+numDetectors = numel(detectors);
 
 
 %% Define benchmarks
@@ -49,13 +50,44 @@ import datasets.*;
 categories = vggAffineDataset.allCategories;
 datasetNum = 1;
 
+
+%% Regions sizes histograms
+numFrames = cell(1,numDetectors);
+runTime = cell(1,numDetectors);
+dataset = vggAffineDataset('category','graf');
+
+confFig(fig);
+
+for di = 1:numDetectors
+  refImgPath = dataset.getImagePath(1);
+  % Removed cached data in order to force compuation
+  detectors{di}.disableCaching();
+  startTime = tic;
+  frames = detectors{di}.extractFeatures(refImgPath);
+  runTime{di} = toc(startTime);
+  detectors{di}.enableCaching();
+  numFrames{di} = size(frames,2);
+  scales = getFrameScale(frames);
+  subplot(2,3,di);
+  scalesHist = hist(scales,0:100);
+  bar(scalesHist);
+  axis([0 100 0 ceil(max(scalesHist)/10)*10]); 
+  grid on;
+  title(detNames{di});
+  xlabel('Average region size');
+  ylabel('Number of detected regions');
+end
+
+print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+  dataset.category '.eps']),'-depsc');
+
+%% Repeatability / Matching scores
+
 for category=categories
   fprintf('\n######## TESTING DATASET %s #######\n',category{:});
   dataset = vggAffineDataset('category',category{:});
 
   %% Run the new benchmarks in parallel
-
-  numDetectors = numel(detectors);
   numImages = dataset.numImages;
 
   repeatability = zeros(numDetectors, numImages);
@@ -85,7 +117,8 @@ for category=categories
   resultsDir = 'ijcv05_res';
   category = dataset.category;
 
-  clf;
+  confFig(fig);
+
   titleText = 'Detectors Repeatability [%%]';
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
@@ -102,10 +135,7 @@ for category=categories
   printScores(numMatches, detNames, titleText,fullfile(resultsDir,[category '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
-  set(gcf,'PaperPositionMode','auto')
-  set(gcf,'PaperType','A4');
-  set(gcf, 'Position', [0, 0, 900,700]);
-  print(gcf,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+  print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
     dataset.category '.eps']),'-depsc');
 
   %% For comparison, run KM Benchmark
@@ -129,7 +159,8 @@ for category=categories
   resultsDir = 'ijcv05_res';
   category = dataset.category;
 
-  clf;
+  confFig(fig);
+
   titleText = 'Detectors Repeatability [%%]';
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
@@ -146,10 +177,7 @@ for category=categories
   printScores(numMatches, detNames, titleText,fullfile(resultsDir,['km_' category '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
-  set(gcf,'PaperPositionMode','auto')
-  set(gcf,'PaperType','A4');
-  set(gcf, 'Position', [0, 0, 900,700]);
-  print(gcf,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+  print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
     dataset.category '.eps']),'-depsc');
 
   datasetNum = datasetNum + 1;
@@ -216,6 +244,18 @@ function plotScores(scores, detNames, dataset, titleText)
   legend(legendStr,'Location',legendLocation);
   grid on ;
   axis([min(xVals)*0.9 max(xVals)*1.1 0 maxScore]);
+end
+
+function scale = getFrameScale(frames)
+  det = prod(frames([3 5],:)) - frames(4,:).^2;
+  scale = sqrt(sqrt(det));
+end
+
+function confFigure(fig)
+  clf(fig);
+  set(fig,'PaperPositionMode','auto')
+  set(fig,'PaperType','A4');
+  set(fig, 'Position', [0, 0, 900,700]);
 end
 
 end
