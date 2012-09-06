@@ -68,6 +68,21 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
         obj.descExtractor.getSignature()];
     end
 
+    function disableCaching(obj)
+      % DISABLECACHING Do not use cached features and always run the
+      % features extractor.
+      obj.useCache = false;
+      obj.frameDetector.disableCaching();
+      obj.descExtractor.disableCaching();
+    end
+
+    function enableCaching(obj)
+      % ENABLECACHING Do cache extracted features
+      obj.useCache = true;
+      obj.frameDetector.enableCaching();
+      obj.descExtractor.enableCaching();
+    end
+
   end % ------- end of methods --------
 
 end % -------- end of class ---------

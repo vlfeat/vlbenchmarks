@@ -7,7 +7,7 @@
 %   (see +localFeatures/exampleDetector.m for a simple example)
 
 classdef genericLocalFeatureExtractor < handle & helpers.Logger
-  
+
   properties (SetAccess=public, GetAccess=public)
     name % General name of the feature extractor
     detectorName = '' % Particular name of the frames detector
@@ -16,7 +16,11 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     % frames, set to true.
     extractsDescriptors = false;
   end
-  
+
+  properties (SetAccess=protected, GetAccess = public)
+    useCache = true; % Do cache results
+  end
+
   properties (Constant)
     framesKeyPrefix = 'frames'; % Prefix of the cached features key
     descsKeyPrefix = '+desc'; % Prefix of the cached features key
@@ -66,21 +70,26 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     % parameters had changed, the signature must be different as well.
  
   end
-  
+
   methods (Access = public)
-    function clearCache(obj,imagePath)
-      import helpers.*;
-      
-      key = obj.getFeaturesKey(imagePath,true);
-      DataCache.removeData(key);
-      key = obj.getFeaturesKey(imagePath,false);
-      DataCache.removeData(key);
+    function disableCaching(obj)
+      % DISABLECACHING Do not use cached features and always run the
+      % features extractor.
+      obj.useCache = false;
+    end
+
+    function enableCaching(obj)
+      % ENABLECACHING Do cache extracted features
+      obj.useCache = true;
     end
   end
 
   methods (Access = protected)
     function [frames descriptors] = loadFeatures(obj,imagePath,loadDescriptors)
       import helpers.*;
+      frames = [];
+      descriptors = [];
+      if ~obj.useCache, return; end
       
       key = obj.getFeaturesKey(imagePath,loadDescriptors);
       data = DataCache.getData(key);
@@ -92,12 +101,12 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
           obj.debug('Frames loaded from cache');
         end
       else
-        frames = [];
-        descriptors = [];
+        return
       end
     end
     
     function storeFeatures(obj, imagePath, frames, descriptors)
+      if ~obj.useCache, return; end
       hasDescriptors = true;
       if nargin < 4 || isempty(descriptors)
         descriptors = [];

@@ -90,6 +90,10 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %     Normalise the frames to constant scale (defaults is true for
 %     detector repeatability tests, see Mikolajczyk et. al 2005).
 %
+%   NormalisedScale:: 30
+%     When frames scale normalisation applied, fixed scale to which it is
+%     normalised to.
+%
 %   CropFrames:: true
 %     Crop the frames out of overlaping regions (regions present in both
 %     images).
@@ -130,6 +134,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     defMatchFramesGeometry = true;
     defMatchFramesDescriptors = false;
     defDescriptorsDistanceMetric = 'L2';
+    defNormalisedScale = 30;
     keyPrefix = 'repeatability';
   end
 
@@ -146,6 +151,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       obj.opts.matchFramesGeometry = obj.defMatchFramesGeometry;
       obj.opts.matchFramesDescriptors = obj.defMatchFramesDescriptors;
       obj.opts.descriptorsDistanceMetric = obj.defDescriptorsDistanceMetric;
+      obj.opts.normalisedScale = obj.defNormalisedScale;
       if numel(varargin) > 0
         [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       end
@@ -299,7 +305,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 
       % Find all ellipse overlaps (in one-to-n array)
       frameOverlaps = fastEllipseOverlap(reprojFramesB, framesA, ...
-        'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh);
+        'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh,...
+        'NormalisedScale',obj.opts.normalisedScale);
 
       matches = zeros(0, numFramesA) ;
 
