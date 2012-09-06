@@ -1,9 +1,35 @@
-This package implements detector benchmarks for various publically available
-interest point detectors.
+                    VLBenchmakrs Version 1.0-beta
+                              Karel Lenc
+                            Varun Gulshan
+                            Andrea Vedaldi
+
+
+This package implements a collection of benchmkar routines to evaluate
+feature detectors and descriptors. The following benchmakrs are
+implemented:
+
+  A. Wide-baseline matching
+    A1. Detector repeatability [ref]
+    A2. Descriptor matching score [ref]
+  B. Image retrieval
+    B1. Bag-of-words object instance retrieval [ref]
+
+CHANGES
+
+v1.0-beta  First public release.
+
+REFERENCES
+
+
+
+
+
 
 1. FIRST TIME INSTALLATION INSTRUCTIONS
-Run the following commands from the matlab prompt. Make sure your present working
-directory (pwd) is at the root (i.e. pwd looks like .../vlfeat_benchmarks/)
+
+Run the following commands from the matlab prompt. Make sure your
+present working directory (pwd) is at the root (i.e. pwd looks like
+.../vlfeat_benchmarks/)
 
 compile_mex(); % To compile the mex files, you need to have the mex compiler
                % setup properly for this to work
