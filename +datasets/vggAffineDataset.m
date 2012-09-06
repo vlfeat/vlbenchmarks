@@ -25,7 +25,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
   properties (Constant)
     rootInstallDir = fullfile('data','datasets','vggAffineDataset','');
     allCategories = {'graf','wall','boat','bark','bikes','trees',...
-      'ubc','lueven'};
+      'ubc','leuven'};
     categoryImageNames = {...
       'Viewpoint angle',... % graf
       'Viewpoint angle',... % wall
@@ -34,7 +34,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       'Increasing blur',... % bikes
       'Increasing blur',... % trees
       'JPEG compression %',... % ubc
-      'Decreasing light'...% lueven
+      'Decreasing light'...% leuven
       };
     categoryImageLabels = {...
       [20 30 40 50 60],... % graf
@@ -44,7 +44,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       [2 3 4 5 6],... % bikes
       [2 3 4 5 6],... % trees
       [60 80 90 95 98],... % ubc
-      [2 3 4 5 6]...% lueven
+      [2 3 4 5 6]...% leuven
       };
     rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
     defCategory = 'graf';
