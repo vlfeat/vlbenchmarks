@@ -49,7 +49,7 @@ import datasets.*;
 
 categories = vggAffineDataset.allCategories;
 datasetNum = 1;
-
+resultsDir = 'ijcv05_res';
 
 %% Regions sizes histograms
 numFrames = cell(1,numDetectors);
@@ -117,21 +117,23 @@ for category=categories
   resultsDir = 'ijcv05_res';
   category = dataset.category;
 
-  confFig(fig);
-
-  titleText = 'Detectors Repeatability [%%]';
+  clf;
+  titleText = ['Detectors Repeatability [%%] (',category,')'];
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
 
-  titleText = 'Detectors Num. Correspondences';
+  printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
+  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
+
+  titleText = ['Detectors Num. Correspondences (',category,')'];
   printScores(numCorresp, detNames, titleText,fullfile(resultsDir,[category '_ncorresp']));
   subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
 
-  titleText = 'Detectors Matching Score [%%]';
+  titleText = ['Detectors Matching Score [%%] (',category,')'];
   printScores(matchingScore.*100, detNames, titleText,fullfile(resultsDir,[category '_matching']));
   subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, titleText);
 
-  titleText = 'Detectors Num. Matches';
+  titleText = ['Detectors Num. Matches (',category,')'];
   printScores(numMatches, detNames, titleText,fullfile(resultsDir,[category '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
@@ -156,7 +158,6 @@ for category=categories
 
   %%
 
-  resultsDir = 'ijcv05_res';
   category = dataset.category;
 
   confFig(fig);
@@ -165,15 +166,15 @@ for category=categories
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
 
-  titleText = 'Detectors Num. Correspondences';
+  titleText = ['KM Detectors Num. Correspondences (',category,')'];
   printScores(numCorresp, detNames, titleText,fullfile(resultsDir,['km_' category '_ncorresp']));
   subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
 
-  titleText = 'Detectors Matching Score [%%]';
+  titleText = ['KM Detectors Matching Score [%%] (',category,')'];
   printScores(matchingScore.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_matching']));
   subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, titleText);
 
-  titleText = 'Detectors Num. Matches';
+  titleText = ['KM Detectors Num. Matches (',category,')'];
   printScores(numMatches, detNames, titleText,fullfile(resultsDir,['km_' category '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
@@ -228,7 +229,7 @@ function plotScores(scores, detNames, dataset, titleText)
   
   xLabel = dataset.imageNamesLabel;
   xVals = dataset.imageNames;
-  plot(xVals,scores(:,2:6)','linewidth', 3) ; hold on ;
+  plot(xVals,scores(:,2:6)','linewidth', 1) ; hold on ;
   ylabel(titleText) ;
   xlabel(xLabel);
   title(titleText);
@@ -243,7 +244,7 @@ function plotScores(scores, detNames, dataset, titleText)
   end
   legend(legendStr,'Location',legendLocation);
   grid on ;
-  axis([min(xVals)*0.9 max(xVals)*1.1 0 maxScore]);
+  axis([min(xVals)*0.9 max(xVals)*1.05 0 maxScore]);
 end
 
 function scale = getFrameScale(frames)
@@ -251,7 +252,7 @@ function scale = getFrameScale(frames)
   scale = sqrt(sqrt(det));
 end
 
-function confFigure(fig)
+function confFig(fig)
   clf(fig);
   set(fig,'PaperPositionMode','auto')
   set(fig,'PaperType','A4');
