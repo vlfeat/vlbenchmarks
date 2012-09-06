@@ -51,6 +51,68 @@ categories = vggAffineDataset.allCategories;
 datasetNum = 1;
 resultsDir = 'ijcv05_res';
 
+%% Repeatability vs. overlap error
+
+confFig(fig);
+dataset = vggAffineDataset('category','graf');
+overlapErrs = 0.1:0.1:0.6;
+imageBIdx = 4;
+overlapReps = zeros(numDetectors,numel(overlapErrs));
+for oei = 1:numel(overlapErrs)
+  rBenchm = repeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',false,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',overlapErrs(oei));
+
+  imageAPath = dataset.getImagePath(1);
+  imageBPath = dataset.getImagePath(imageBIdx);
+  H = dataset.getTransformation(imageBIdx);
+  for detectorIdx = 1:numDetectors
+    detector = detectors{detectorIdx};
+    [overlapReps(detectorIdx,oei) tmp] = ...
+      rBenchm.testDetector(detector, H, imageAPath,imageBPath);
+  end
+end
+
+saveResults(overlapReps, fullfile(resultsDir,'rep_vs_overlap'));
+subplot(2,2,1); 
+plot(overlapErrs.*100,overlapReps.*100); grid on;
+xlabel('Overlap error %'); ylabel('Repeatability %');
+axis([5 65 0 100]);
+legend(detNames,'Location','NorthWest');
+
+%% Repeatability vs. region size
+
+regSizes = [15 30 50 75 90 110];
+regSizeReps = zeros(numDetectors,size(regSizes));
+for rsi = 1:numel(regSizes)
+  rBenchm = repeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',false,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4,...
+  'NormalisedScale',regSizes(rsi));
+  imageAPath = dataset.getImagePath(1);
+  imageBPath = dataset.getImagePath(imageBIdx);
+  H = dataset.getTransformation(imageBIdx);
+  for detectorIdx = 1:numDetectors
+    detector = detectors{detectorIdx};
+    [regSizeReps(detectorIdx,rsi) tmp] = ...
+      rBenchm.testDetector(detector, H, imageAPath,imageBPath);
+  end
+end
+saveResults(overlapReps, fullfile(resultsDir,'rep_vs_norm_reg_size'));
+subplot(2,2,2); 
+plot(regSizes,regSizeReps.*100); grid on;
+xlabel('Normalised region size'); ylabel('Repeatability %');
+axis([10 120 0 100]);
+legend(detNames,'Location','SouthEast');
+
 %% Regions sizes histograms
 numFrames = cell(1,numDetectors);
 runTime = cell(1,numDetectors);
@@ -114,10 +176,7 @@ for category=categories
 
   %% Show scores
 
-  resultsDir = 'ijcv05_res';
-  category = dataset.category;
-
-  clf;
+  confFig(fig);
   titleText = ['Detectors Repeatability [%%] (',category,')'];
   printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
@@ -158,8 +217,6 @@ for category=categories
 
   %%
 
-  category = dataset.category;
-
   confFig(fig);
 
   titleText = 'Detectors Repeatability [%%]';
@@ -183,7 +240,6 @@ for category=categories
 
   datasetNum = datasetNum + 1;
 end
-
 
 %% Helper functions
 
@@ -215,11 +271,15 @@ function printScores(scores, scoreLineNames, name, fileName)
   end
   
   if exist('fileName','var');
-    [dir name] = fileparts(fileName);
-    vl_xmkdir(dir);
-    save(fullfile(dir,name),'scores');
-    csvwrite(fullfile(dir, [name '.csv']), scores);
+    saveResults(scores,fileName);
   end
+end
+
+function saveResults(scores, fileName)
+  [dir name] = fileparts(fileName);
+  vl_xmkdir(dir);
+  save(fullfile(dir,name),'scores');
+  csvwrite(fullfile(dir, [name '.csv']), scores);
 end
 
 function plotScores(scores, detNames, dataset, titleText)
@@ -234,15 +294,9 @@ function plotScores(scores, detNames, dataset, titleText)
   xlabel(xLabel);
   title(titleText);
 
-  maxScore = max([max(max(scores)) 100]);
+  maxScore = ceil(max([max(max(scores)) 100])/10)*10;
 
-  legendLocation = 'NorthEast';
-
-  legendStr = cell(1,numel(detNames));
-  for m = 1:numel(detNames) 
-    legendStr{m} = detNames{m}; 
-  end
-  legend(legendStr,'Location',legendLocation);
+  legend(detNames,'Location','NorthEast');
   grid on ;
   axis([min(xVals)*0.9 max(xVals)*1.05 0 maxScore]);
 end
