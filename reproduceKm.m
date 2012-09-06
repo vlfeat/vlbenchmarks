@@ -47,6 +47,7 @@ fig = figure('Visible','off');
 import datasets.*;
 
 categories = vggAffineDataset.allCategories;
+datasetNum = 1;
 
 for category=categories
   fprintf('\n######## TESTING DATASET %s #######\n',category{:});
@@ -104,7 +105,8 @@ for category=categories
   set(gcf,'PaperPositionMode','auto')
   set(gcf,'PaperType','A4');
   set(gcf, 'Position', [0, 0, 900,700]);
-  print(gcf,fullfile(resultsDir, ['fig13_rm_' dataset.category '.eps']),'-depsc');
+  print(gcf,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+    dataset.category '.eps']),'-depsc');
 
   %% For comparison, run KM Benchmark
 
@@ -147,9 +149,10 @@ for category=categories
   set(gcf,'PaperPositionMode','auto')
   set(gcf,'PaperType','A4');
   set(gcf, 'Position', [0, 0, 900,700]);
-  print(gcf,fullfile(resultsDir, ['fig13_rm_' dataset.category '.eps']),'-depsc');
+  print(gcf,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+    dataset.category '.eps']),'-depsc');
 
-
+  datasetNum = datasetNum + 1;
 end
 
 

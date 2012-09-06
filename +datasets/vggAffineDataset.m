@@ -24,27 +24,27 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
 
   properties (Constant)
     rootInstallDir = fullfile('data','datasets','vggAffineDataset','');
-    allCategories = {'bikes','trees','graf','wall','bark',...
-                     'boat','leuven','ubc'};
+    allCategories = {'graf','wall','boat','bark','bikes','trees',...
+      'ubc','lueven'};
     categoryImageNames = {...
-      'Increasing blur',... % bikes
-      'Increasing blur',... % trees
       'Viewpoint angle',... % graf
       'Viewpoint angle',... % wall
-      'Scale changes',...   % bark
-      'Scale changes',...   % boat
-      'Decreasing light',...% lueven
-      'JPEG compression %'... % ubc
+      'Scale changes',... % boat
+      'Scale changes',... % bark
+      'Increasing blur',... % bikes
+      'Increasing blur',... % trees
+      'JPEG compression %',... % ubc
+      'Decreasing light'...% lueven
       };
     categoryImageLabels = {...
-      [2 3 4 5 6],... % bikes
-      [2 3 4 5 6],... % trees
       [20 30 40 50 60],... % graf
       [20 30 40 50 60],... % wall
+      [1.12 1.38 1.9 2.35 2.8],... % boat
       [0.3 1.8 2.5 3 4],...   % bark
-      [1.12 1.38 1.9 2.35 2.8],...   % boat
-      [2 3 4 5 6],...% lueven
-      [60 80 90 95 98]... % ubc
+      [2 3 4 5 6],... % bikes
+      [2 3 4 5 6],... % trees
+      [60 80 90 95 98],... % ubc
+      [2 3 4 5 6]...% lueven
       };
     rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
     defCategory = 'graf';
