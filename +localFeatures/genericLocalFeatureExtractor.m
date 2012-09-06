@@ -1,12 +1,15 @@
-% GENERICDETECTOR Abstract class that defines the interface for a
-%   generic affine interest point detector.
-%
-%   It inherits from the handle class, so that means you can maintain state
-%   inside an object of this class. If you have to add your own detector make
-%   sure it inherits this class.
-%   (see +localFeatures/exampleDetector.m for a simple example)
-
 classdef genericLocalFeatureExtractor < handle & helpers.Logger
+% GENERICLOCALFEATUREEXTRACTOR Interface of a local feature extractor wrapper
+%   GENERICLOCALFEATUREEXTRACTOR defines the interface of a wrapper of
+%   a local feature. This class inherits from HANDLE, so it is copied
+%   by reference, not by value.
+%
+%   Derive this class to add your own feature extractor. See
+%   EXAMPLELOCALFEATUREEXTRACTOR() for instructions.
+
+% Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
+
+% AUTORIGHTS
 
   properties (SetAccess=public, GetAccess=public)
     name % General name of the feature extractor
@@ -55,20 +58,20 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     % calculated. When invoked with two output arguments, descriptors of
     % the frames are calculated. However descriptor calculation may
     % invalidate some frames.
-    
+
     [frames descriptors] = extractDescriptors(obj, imagePath, frames)
     % EXTRACTDESCRIPTOR Extract descriptors of input frames
-    % Extract descriptors of regions defined by frames in an image 
+    % Extract descriptors of regions defined by frames in an image
     % defined by its path imagePath. Outputs refined list of frames and
     % descriptors.
-    
+
     sign = getSignature(obj)
     % GETSIGNATURE
     % Returns unique signature for detector parameters.
     %
     % This function is used for caching detected results. When the detector
     % parameters had changed, the signature must be different as well.
- 
+
   end
 
   methods (Access = public)
@@ -90,7 +93,7 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
       frames = [];
       descriptors = [];
       if ~obj.useCache, return; end
-      
+
       key = obj.getFeaturesKey(imagePath,loadDescriptors);
       data = DataCache.getData(key);
       if ~isempty(data)
@@ -104,7 +107,7 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
         return
       end
     end
-    
+
     function storeFeatures(obj, imagePath, frames, descriptors)
       if ~obj.useCache, return; end
       hasDescriptors = true;
@@ -112,11 +115,11 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
         descriptors = [];
         hasDescriptors = false;
       end
-      
+
       key = obj.getFeaturesKey(imagePath, hasDescriptors);
       helpers.DataCache.storeData({frames,descriptors},key);
     end
-    
+
     function key = getFeaturesKey(obj, imagePath, hasDescriptors)
       import localFeatures.*;
       import helpers.*;
