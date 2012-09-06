@@ -40,7 +40,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       [20 30 40 50 60],... % graf
       [20 30 40 50 60],... % wall
       [1.12 1.38 1.9 2.35 2.8],... % boat
-      [0.3 1.8 2.5 3 4],...   % bark
+      [1.2 1.8 2.5 3 4],...   % bark
       [2 3 4 5 6],... % bikes
       [2 3 4 5 6],... % trees
       [60 80 90 95 98],... % ubc
