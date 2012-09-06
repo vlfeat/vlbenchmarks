@@ -95,7 +95,7 @@ classdef DataCache
       if exist(dataFile,'file')
         delete(dataFile);
       else
-        error(strcat('Cache data file for key ', key, ...
+        warning(strcat('Cache data file for key ', key, ...
           'cannot be deleted (', dataFile, ').'));
       end
     end
