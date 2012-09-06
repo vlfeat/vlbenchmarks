@@ -1,64 +1,117 @@
 classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
-% REPEATABILITYBENCHMARK Compute the repeatability of detected features
+% REPEATABILITYBENCHMARK evaluates the repeatability and matching scores of features
 %   REPEATABILITYBENCHMARK(resultsStorage,'OptionName',optionValue,...)
-%   constructs an object to compute the repeatabiliy of detected
-%   features. Options:
-%   Repeatability measure can be calculated between two sets of frames
-%   FRMS_A and FRMS_B(descriptors) detected in a pair of images which
-%   are related by a linear transformation (homography). In ideal case
-%   the frames would be related by the same homography as the images are.
-%   Repeatability express a ratio of frames which fulfill this proportion
-%   to a number of detected frames.
-%   A key is a definition of a match of two frames. Match is a one-to-one
-%   relation between two nodes (frames) in weighted complete bipartite
-%   graph where the edges can be weighted by overlaps of appropriate
-%   frames (in case of 'MatchFramesGeometry') or by the distances
-%   of their image descriptors ('MatchFramesDescriptors' is true).
-%   One-to-one matches are calculated using greedy maximum weighted
-%   matching, i.e. that the closest/max overlaping frames are matched
-%   first.
-%   When frames are matched both by their geometry and descriptor
-%   distances, two matchings are calculated and their union is deemed as
-%   correct.
-%   The repeatability score is caluclated as:
+%   constructs an object to compute the repeatabiliy and matching
+%   scores [1] of detected features.
 %
-%                 numMatches
-%   Score = ----------------------
-%            min(framesA, framesB)
+%   DETAILS ON THE REPEATABILITY AND MATCHING SCORE MEASURES
 %
-%   MatchFramesGeometry :: [true]
+%   The repeatability measure is calculated for two sets of feature
+%   frames FRAMESA and FRAMESB detected in a reference image IMAGEA
+%   and a second image IMAGEB. The two images are assumed to be
+%   related by a known homography H mapping pixels in the domain of
+%   IMAGEA to pixels in the domain of IMAGEB (e.g. static camera, no
+%   parallax, or moving camera looking at a flat scene).
+%
+%   ** WHAT CONVENTION IS USED BY THE HOMOGRAPHY? DOES IT ASSUMES
+%   (1,1) AS ORIGIN OR (0,0) ? **
+%
+%   A perfect co-variant detectior would detect the same features in
+%   both images regardless of a change in viewpoint (for the features
+%   that are visible in both cases). A good detector would also be
+%   robust to noise and other distortion. Repeatability is the
+%   percentage of detected features that survive a viewpoint change or
+%   some other alteration of the image.
+%
+%   More in detail, repeatability is by default computed as follows:
+%
+%   1. The elliptical or circular feature frames FRAMEA and FRAMEB,
+%      the image sizes SIZEA and SIZEB, and the homography H are given
+%      as input.
+%
+%   2. Only features (ellipses or circles) that are fully visible in
+%      both images are retained. This tests whether a feature is
+%      contained in the images where it is detected as well as in the
+%      other image once reprojected by the homography.
+%
+%   3. For each pair of feature frames A and B, the normalised
+%      overlap measure OVERLAP(A,B) is computed. This is defined as
+%      the ratio of the area of the intersection over the area of
+%      the union of the ellpise/circle FRAMESA(:,A) and FRAMES(:,B)
+%      reprojected on IMAGEA by the homography H. Furthermore,
+%      after reprojection the size of the ellpises/circles are
+%      rescaled so that FRAMESA(:,A) has an area of 30^2 pixels.
+%
+%   4. Feature are matched optimistically. A pair of features (A,B) is
+%      considered as a candidate match if OVERLAP(A,B) is larger than
+%      a threshold of 0.6. Then, a final set of matches M={(A,B)} is
+%      selected by performing a greedy bypartite matching between the
+%      two sets of features. This means that each feature in IMAGEA
+%      can be matched to at most anoter feature in IMAGEB, and matches
+%      are selected in order of decreasing OVERLAP(A,B).
+%
+%   5. Repeatability is defined as the ratio of the number of
+%      matches M and the minimum of the number of features in
+%      FRAMESA and FRAMESB:
+%
+%                                    |M|
+%        repeatability = -------------------------.
+%                        min(|framesA|, |framesB|)
+%
+%   The class also compute the descriptor matching score (see the
+%   'MatchFramesGeometry' and 'MatchFramesDescriptors'
+%   options). This is defined in a similar way, except that:
+%
+%   1. All pairs of feature descriptors are considered, their
+%      distances DIST(DESCRA(:,A),DESCRB(:,B)) are computed, and a set
+%      of bipartite matches M={(A,B)} is greedly formed by increasing
+%      descriptor distance.
+%
+%   2. From the matches M, the ones for which OVERLAP(A,P) is below
+%      the 0.6 threshold are removed.
+%
+%   3. Given M, the matching score is defined as the repeatability.
+%
+%   The test behaviour can be adjusted by modifying the following options:
+%
+%   MatchFramesGeometry:: true
 %     Calculate one to one matches based on frames geometry (overlaps).
 %
-%   MatchFramesDescriptors :: [false]
+%   MatchFramesDescriptors:: false
 %     Create one to one matches based on distances of the image
 %     descirptors of frames.
 %
-%   OverlapError:: [0.4]
+%   OverlapError:: 0.4
 %     Maximal overlap error of frames to be considered as
 %     correspondences.
 %
-%   NormaliseFrames:: [true]
+%   NormaliseFrames:: true
 %     Normalise the frames to constant scale (defaults is true for
 %     detector repeatability tests, see Mikolajczyk et. al 2005).
 %
-%   CropFrames:: [true]
+%   CropFrames:: true
 %     Crop the frames out of overlaping regions (regions present in both
 %     images).
 %
-%   Magnification :: [3]
+%   Magnification:: 3
 %     When frames are not normalised, this parameter is magnification
 %     applied to the input frames. Usually is equal to magnification
 %     factor used for descriptor calculation.
 %
-%   WarpMethod :: ['standard']
+%   WarpMethod:: 'standard'
 %     Numerical method used for warping ellipses. Available values are
 %     'standard' and 'km' for precise reproduction of IJCV2005 benchmark
 %     results.
 %
-%   DescriptorsDistanceMetric :: ['L2']
-%     Distance metric used for matching the descriptors. See documentation
-%     of `vl_alldist2` for details.
+%   DescriptorsDistanceMetric:: 'L2'
+%     Distance metric used for matching the descriptors. See
+%     documentation of VL_ALLDIST2() for details.
+%
+%   REFERENCES
+%   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
+%       J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
+%       comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
 
 % Author: Karel Lenc, Andrea Vedaldi
 
@@ -166,14 +219,14 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     function [score numMatches matches reprojFrames] = ...
                 testFeatures(obj, tf, imageAPath, imageBPath, ...
                 framesA, framesB, descriptorsA, descriptorsB)
-      %TESTFEATURES Compute matching score of a given frames and descriptors.
-      %  [SCORE NUM_MATCHES] = TESTFEATURES(TF, IMAGE_A_PATH,
-      %     IMAGE_B_PATH, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute
-      %     matching score SCORE between frames FRAMES_A and FRAMES_B
-      %     and their descriptors DESCS_A and DESCS_B which were extracted
-      %     from images defined by their path IMAGEA_PATH and IMAGEB_PATH
-      %     which geometry is related by homography TF. NUM_MATHCES is
-      %     number of matches.
+      % TESTFEATURES Compute matching score of a given frames and descriptors.
+      %   [SCORE NUM_MATCHES] = TESTFEATURES(TF, IMAGE_A_PATH, IMAGE_B_PATH,
+      %   FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute matching score
+      %   SCORE between frames FRAMES_A and FRAMES_B and their
+      %   descriptors DESCS_A and DESCS_B which were extracted from
+      %   images defined by their path IMAGEA_PATH and IMAGEB_PATH
+      %   which geometry is related by homography TF. NUM_MATHCES is
+      %   number of matches.
       import benchmarks.helpers.*;
       import helpers.*;
 
