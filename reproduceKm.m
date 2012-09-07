@@ -332,7 +332,7 @@ for category=categories
   printScores(numMatches, detNames, titleText,fullfile(resultsDir,['km_' category '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
-  print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+  print(fig,fullfile(resultsDir, ['km_fig' num2str(datasetNum) '_rm_' ...
     dataset.category '.eps']),'-depsc');
 
   datasetNum = datasetNum + 1;
