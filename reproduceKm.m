@@ -113,6 +113,94 @@ xlabel('Normalised region size'); ylabel('Repeatability %');
 axis([10 120 0 100]);
 legend(detNames,'Location','SouthEast');
 
+
+%% Repeatability vs. region sizes
+
+numBins = 10;
+imageBIdx = 3;
+dataset = vggAffineDataset('category','graf');
+
+regSizeReps = zeros(numDetectors,numBins);
+binAvgs = zeros(numDetectors,numBins);
+numFramesInBin = zeros(numDetectors,numBins);
+framesA = cell(numDetectors,1);
+framesB = cell(numDetectors,1);
+
+imageAPath = dataset.getImagePath(1);
+imageBPath = dataset.getImagePath(imageBIdx);
+H = dataset.getTransformation(imageBIdx);
+
+% Detect the frames
+parfor di = 1:numDetectors
+  detector = detectors{di};
+  framesA{di} = detector.extractFeatures(imageAPath);
+  framesB{di} = detector.extractFeatures(imageBPath);
+end
+
+subplot(2,2,4); hold on;
+
+% Process the results
+for di = 1:numDetectors
+  % Divide the frames based on scales into equaly distributed ones
+  scalesA = getFrameScale(framesA{di});
+  binA = ceil(numBins * tiedrank(scalesA) / length(scalesA));
+  for rsi = 1:numBins
+    sFramesA = framesA{di}(:,binA == rsi);
+    sFramesB = framesB{di};
+    numFramesInBin(di,rsi) = size(sFramesA,2);
+    binAvgs(di,rsi) = mean(scalesA(binA == rsi));
+    regSizeReps(di,rsi)= regSizeReps(di,rsi) +...
+      rBenchm.testFeatures(H, imageAPath, imageBPath, ...
+        sFramesA,sFramesB);
+  end
+  plot(binAvgs(di,:),regSizeReps(di,:).*100,'+-',...
+    'Color',detColorMap(di,:));
+end
+
+saveResults(regSizeReps, fullfile(resultsDir,'rep_vs_reg_size'));
+grid on;
+xlabel('Region size'); ylabel('Repeatability %');
+axis([0 max(binAvgs(:)) 0 100]);
+legend(detNames,'Location','SouthEast');
+
+% Plot the number of frames per bin for each detector
+subplot(2,2,3);
+bar(mean(numFramesInBin,2));
+set(gca,'XTick',1:numDetectors)
+set(gca,'XTickLabel',detNames);
+ylabel('Number of frames per region size bin');
+
+print(fig,fullfile(resultsDir, 'fig_rep_graf.eps'),'-depsc');
+
+%% Matching vs. magnification factor
+dataset = vggAffineDataset('category','graf');
+imageBIdx = 4;
+magFactors = 1:5;
+magnifMatchings = zeros(numDetectors,numel(magFactors));
+confFig(fig);
+
+for mf = 1:numel(magFactors)
+  magFactor = magFactors(mf);
+  imageAPath = dataset.getImagePath(1);
+  imageBPath = dataset.getImagePath(imageBIdx);
+  H = dataset.getTransformation(imageBIdx);
+  parfor detectorIdx = 1:numDetectors
+    descrExtr = vggAffine('Magnification',magFactor);
+    detector = descriptorAdapter(detectors{detectorIdx},descrExtr);
+    magnifMatchings(detectorIdx,mf) = ...
+      matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+    matchBenchmark.enableCaching();
+  end
+end
+saveResults(magnifMatchings, fullfile(resultsDir,'matching_vs_mag'));
+subplot(2,2,4); 
+plot(magFactors,magnifMatchings'.*100,'+-'); grid on;
+xlabel('Magnification factor'); ylabel('Matching %');
+axis([0.5 5.5 0 100]);
+legend(detNames,'Location','NorthEast');
+
+print(fig,fullfile(resultsDir, 'fig_matching_graf.eps'),'-depsc');
+
 %% Regions sizes histograms
 dataset = vggAffineDataset('category','graf');
 refImgPath = dataset.getImagePath(1);
