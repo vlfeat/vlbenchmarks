@@ -12,12 +12,10 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %   and a second image IMAGEB. The two images are assumed to be
 %   related by a known homography H mapping pixels in the domain of
 %   IMAGEA to pixels in the domain of IMAGEB (e.g. static camera, no
-%   parallax, or moving camera looking at a flat scene).
+%   parallax, or moving camera looking at a flat scene). The homography
+%   assumes image coordinates with origin in (0,0).
 %
-%   ** WHAT CONVENTION IS USED BY THE HOMOGRAPHY? DOES IT ASSUMES
-%   (1,1) AS ORIGIN OR (0,0) ? **
-%
-%   A perfect co-variant detectior would detect the same features in
+%   A perfect co-variant detector would detect the same features in
 %   both images regardless of a change in viewpoint (for the features
 %   that are visible in both cases). A good detector would also be
 %   robust to noise and other distortion. Repeatability is the
@@ -41,15 +39,15 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %      the union of the ellpise/circle FRAMESA(:,A) and FRAMES(:,B)
 %      reprojected on IMAGEA by the homography H. Furthermore,
 %      after reprojection the size of the ellpises/circles are
-%      rescaled so that FRAMESA(:,A) has an area of 30^2 pixels.
+%      rescaled so that FRAMESA(:,A) has an area of \pi*30^2 pixels.
 %
 %   4. Feature are matched optimistically. A pair of features (A,B) is
 %      considered as a candidate match if OVERLAP(A,B) is larger than
-%      a threshold of 0.6. Then, a final set of matches M={(A,B)} is
-%      selected by performing a greedy bypartite matching between the
-%      two sets of features. This means that each feature in IMAGEA
-%      can be matched to at most anoter feature in IMAGEB, and matches
-%      are selected in order of decreasing OVERLAP(A,B).
+%      a threshold of 0.6 (1-OverlapError). Then, a final set of matches
+%      M={(A,B)} is selected by performing a greedy (weighted) bipartite
+%      matching between the two sets of features. This means that each
+%      feature in IMAGEA can be matched to at most one anoter feature in
+%      IMAGEB, and matches are selected in order of decreasing OVERLAP(A,B).
 %
 %   5. Repeatability is defined as the ratio of the number of
 %      matches M and the minimum of the number of features in
@@ -65,11 +63,12 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %
 %   1. All pairs of feature descriptors are considered, their
 %      distances DIST(DESCRA(:,A),DESCRB(:,B)) are computed, and a set
-%      of bipartite matches M={(A,B)} is greedly formed by increasing
+%      of bipartite matches M_d={(A,B)} is greedly formed by increasing
 %      descriptor distance.
 %
-%   2. From the matches M, the ones for which OVERLAP(A,P) is below
-%      the 0.6 threshold are removed.
+%   2. From the matches M = intersect(M_d,M_g), where M_g is calculated as
+%      matching for repeatability defined above, the ones for which
+%      OVERLAP(A,P) is below the 0.6 threshold are removed.
 %
 %   3. Given M, the matching score is defined as the repeatability.
 %
@@ -104,13 +103,13 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %     factor used for descriptor calculation.
 %
 %   WarpMethod:: 'standard'
-%     Numerical method used for warping ellipses. Available values are
+%     Numerical method used for warping ellipses. Available mathods are
 %     'standard' and 'km' for precise reproduction of IJCV2005 benchmark
 %     results.
 %
 %   DescriptorsDistanceMetric:: 'L2'
 %     Distance metric used for matching the descriptors. See
-%     documentation of VL_ALLDIST2() for details.
+%     documentation of VL_ALLDIST2 for details.
 %
 %   REFERENCES
 %   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
