@@ -11,7 +11,7 @@ descDet = vggAffine();
 
 detectors{1} = vggAffine('Detector', 'haraff','Threshold',1000);
 detectors{2} = vggAffine('Detector', 'hesaff','Threshold',500);
-detectors{3} = descriptorAdapter(vggMser('es',2),descDet);
+detectors{3} = descriptorAdapter(vggMser('es',1),descDet);
 detectors{4} = descriptorAdapter(ibr('ScaleFactor',1),descDet);
 detectors{5} = descriptorAdapter(ebr(),descDet);
 
