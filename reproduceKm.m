@@ -42,6 +42,7 @@ kmBenchmark = kristianEvalBenchmark('CommonPart',1);
 
 %% Define Figure
 fig = figure('Visible','off');
+detColorMap = hsv(numDetectors);
 
 %% Define dataset
 
