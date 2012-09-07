@@ -70,7 +70,7 @@ for oei = 1:numel(overlapErrs)
   imageAPath = dataset.getImagePath(1);
   imageBPath = dataset.getImagePath(imageBIdx);
   H = dataset.getTransformation(imageBIdx);
-  for detectorIdx = 1:numDetectors
+  parfor detectorIdx = 1:numDetectors
     detector = detectors{detectorIdx};
     [overlapReps(detectorIdx,oei) tmp] = ...
       rBenchm.testDetector(detector, H, imageAPath,imageBPath);
@@ -79,15 +79,15 @@ end
 
 saveResults(overlapReps, fullfile(resultsDir,'rep_vs_overlap'));
 subplot(2,2,1); 
-plot(overlapErrs.*100,overlapReps.*100); grid on;
+plot(overlapErrs.*100,overlapReps.*100,'+-'); grid on;
 xlabel('Overlap error %'); ylabel('Repeatability %');
 axis([5 65 0 100]);
 legend(detNames,'Location','NorthWest');
 
-%% Repeatability vs. region size
+%% Repeatability vs. normalised region size
 
 regSizes = [15 30 50 75 90 110];
-regSizeReps = zeros(numDetectors,size(regSizes));
+normRegSizeReps = zeros(numDetectors,size(regSizes));
 for rsi = 1:numel(regSizes)
   rBenchm = repeatabilityBenchmark(...
   'MatchFramesGeometry',true,...
@@ -100,36 +100,43 @@ for rsi = 1:numel(regSizes)
   imageAPath = dataset.getImagePath(1);
   imageBPath = dataset.getImagePath(imageBIdx);
   H = dataset.getTransformation(imageBIdx);
-  for detectorIdx = 1:numDetectors
+  parfor detectorIdx = 1:numDetectors
     detector = detectors{detectorIdx};
-    [regSizeReps(detectorIdx,rsi) tmp] = ...
+    normRegSizeReps(detectorIdx,rsi) = ...
       rBenchm.testDetector(detector, H, imageAPath,imageBPath);
   end
 end
 saveResults(overlapReps, fullfile(resultsDir,'rep_vs_norm_reg_size'));
 subplot(2,2,2); 
-plot(regSizes,regSizeReps.*100); grid on;
+plot(regSizes,normRegSizeReps.*100,'+-'); grid on;
 xlabel('Normalised region size'); ylabel('Repeatability %');
 axis([10 120 0 100]);
 legend(detNames,'Location','SouthEast');
 
 %% Regions sizes histograms
-numFrames = cell(1,numDetectors);
-runTime = cell(1,numDetectors);
 dataset = vggAffineDataset('category','graf');
+refImgPath = dataset.getImagePath(1);
+
+numFrames = zeros(numDetectors,1);
+runTime = zeros(numDetectors,1);
+detFrames = cell(1,numDetectors);
 
 confFig(fig);
 
-for di = 1:numDetectors
-  refImgPath = dataset.getImagePath(1);
-  % Removed cached data in order to force compuation
+% Detect the frames
+parfor di = 1:numDetectors
+  % Disable caching in order to force computation
   detectors{di}.disableCaching();
   startTime = tic;
-  frames = detectors{di}.extractFeatures(refImgPath);
-  runTime{di} = toc(startTime);
+  detFrames{di} = detectors{di}.extractFeatures(refImgPath);
+  runTime(di) = toc(startTime);
   detectors{di}.enableCaching();
-  numFrames{di} = size(frames,2);
-  scales = getFrameScale(frames);
+end
+
+% Process the results
+for di = 1:numDetectors
+  numFrames(di) = size(detFrames{di},2);
+  scales = getFrameScale(detFrames{di});
   subplot(2,3,di);
   scalesHist = hist(scales,0:100);
   bar(scalesHist);
@@ -140,10 +147,12 @@ for di = 1:numDetectors
   ylabel('Number of detected regions');
 end
 
-print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
-  dataset.category '.eps']),'-depsc');
+saveResults(runTime, fullfile(resultsDir,'det_run_time_graf_img1ppm'));
+saveResults(numFrames, fullfile(resultsDir,'det_num_frames_graf_img1ppm'));
 
-%% Repeatability / Matching scores
+print(fig,fullfile(resultsDir, 'fig_hist_graf.eps'),'-depsc');
+
+%% Repeatability and Matching scores
 
 for category=categories
   fprintf('\n######## TESTING DATASET %s #######\n',category{:});
@@ -289,7 +298,7 @@ function plotScores(scores, detNames, dataset, titleText)
   
   xLabel = dataset.imageNamesLabel;
   xVals = dataset.imageNames;
-  plot(xVals,scores(:,2:6)','linewidth', 1) ; hold on ;
+  plot(xVals,scores(:,2:6)','linewidth', 1,'+-') ; hold on ;
   ylabel(titleText) ;
   xlabel(xLabel);
   title(titleText);
