@@ -37,7 +37,9 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
       import localFeatures.*;
       
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
-      if numel(frames) > 0; return; end;
+      % Check also whether caching is not blocked in the det. or descr.
+      if numel(frames) > 0 && obj.frameDetector.useCache ...
+          && obj.descExtractor.useCache; return; end;
       
       startTime = tic;
       if nargout == 1
