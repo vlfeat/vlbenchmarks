@@ -169,7 +169,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       
       if obj.opts.magnification ~= obj.builtInMagnification
         % Magnify the frames accordnig to set magnif. factor
-        magFactor = obj.builtInMagnification / obj.opts.magnification;
+        magFactor = obj.opts.magnification / obj.builtInMagnification;
         magFactor = magFactor ^ 2;
         frames(3:5,:) = frames(3:5,:) .* magFactor;
       end
