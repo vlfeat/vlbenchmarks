@@ -23,7 +23,6 @@ function plotFrameMatches(bestMatches, reprojectedFrames,...
   matchLineStyle = 'bx-';
                         
   imageA = imread(imageAPath);
-  imageB = imread(imageBPath);
 
   [framesA,framesB,reprojFramesA,reprojFramesB] = reprojectedFrames{:};
 
@@ -47,6 +46,7 @@ function plotFrameMatches(bestMatches, reprojectedFrames,...
     'Matched transf. image frames','Unmatched transf. image frames');
 
   if nargin > 4
+    imageB = imread(imageBPath);
     figure(figB); imshow(imageB);  colormap gray; hold on ; 
     bF = vl_plotframe(framesB,'linewidth', 1);
     unmatchedAFrames = setdiff(1:size(framesA,2),matchedAFrames);
