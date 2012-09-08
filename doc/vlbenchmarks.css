@@ -1,0 +1,243 @@
+//div, p, ul, li, ol, img {border: 1px solid red ;}
+html, body, div, img, table, td, tr, tbody {
+    margin: 0px ;
+    padding: 0px ;
+}
+pre, code {
+    font-family: 'Lucida Console', 'Andale Mono', 'Courier', monospaced ;
+}
+a.clean {
+    text-decoration: inherit ! important ;
+    color: inherit ! important ;
+}
+table {
+    font: inherit ;
+    color: inherit ;
+}
+html {
+    background: #f3f3f3 ;
+}
+body {
+    margin-left: auto ;
+    margin-right: auto ;
+    margin-bottom: 0.5em ;
+    width: 60em ;
+    font-family: 'Arial', 'Helvetica', sans-serif ;
+    font-size: 14px ;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-weight: normal ;
+}
+#pagebody {
+    background-color: white ;
+    padding-bottom: 1em ;
+    border: 1px solid #aaa ;
+    border-top: none ;
+}
+#content {
+    float: right ;
+    width: 48em ;
+    line-height: 1.3em ;
+    padding-right: 1em ;
+//    font-family: Georgia, serif;
+}
+#sidebar {
+    float: left ;
+    width: 9.9em ;
+    padding: 0em ;
+}
+#sidebar ul {
+    margin: 0 ;
+    padding: 0 ;
+    margin-left: 1em ;
+    margin-top: 1em ;
+    margin-bottom: 0em ;
+    color: #555 ;
+}
+#sidebar ul ul {
+    margin-top: 0em ;
+    margin-bottom: 1em ;
+}
+#sidebar li {
+    list-style: none ; /* for buggy IE */
+    display: block ;
+    margin: 0px ;
+    padding: 0px ;
+    margin-top: 0.5em ;
+    margin-bottom: 1em ;
+    font-weight: bold ;
+}
+#sidebar li li {
+    font-weight: normal ;
+    text-transform: none ;
+    margin-bottom: 0.5em ;
+}
+#sidebar li .active {
+    color: white ;
+    background: #555 ;
+    padding: 3px ;
+}
+#sidebar li a {
+    color: #555 ;
+    text-decoration: none ;
+}
+#sidebar li .active a {
+    color: white ;
+    text-decoration: none ;
+}
+#header {
+    padding-top: 1em ;
+    padding-left: 1em ;
+    padding-bottom: 1em ;
+}
+
+#headerbanner {
+  background-color: #555 ;
+  font-weight: bold ;
+  color: white ;
+  padding: 0.5em 1em ;
+}
+#header h1 {
+    margin: 0 ;
+    color: #555 ;
+}
+#header #cse-search-box {
+    float: right ;
+    margin-right: 1em ;
+}
+#footer {
+    clear: both ;
+    text-align: center ;
+    color: #555 ;
+    padding: 0.5em ;
+    font-size: 0.9em ;
+}
+div.clear {
+    clear: both ;
+    font-size: 1px ;
+    line-height: 1px ;
+    margin: 0px ;
+    padding: 0px ;
+}
+.standout {
+    margin: 1em ! important ;
+//    font-family: Georgia, serif ;
+    font-style: italic ;
+    color: red ! important ;
+}
+#google {
+    float: right ;
+    width: 50% ;
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                                               only content style */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+#content h1,
+#content h2,
+#content h3,
+#content h4,
+#content h5,
+#content h6 {
+    clear: both ;
+    margin: 1em 0 ;
+    margin-top: 1.5em ;
+}
+#content h1 {font-size:1.7em; margin-bottom: 0.59em;}
+#content h2 {font-size:1.5em; margin-bottom: 0.67em;}
+#content h3 {font-size:1.3em; margin-bottom: 0.77em;}
+#content h4 {font-size:1.2em; margin-bottom: 0.83em;}
+#content h5 {font-size:1.0em; margin-bottom: 1.00em;}
+#content h6 {font-size:0.8em; margin-bottom: 1.15em;}
+#content p,
+#content blockquote {
+    margin: 1em 0 ;
+    padding: 0 ;
+    padding-right: 10em ;
+}
+#content blockquote {
+    margin: 1em ;
+    font-style: italic ;
+}
+#content pre {
+    margin: 1em 0 ;
+    padding: 0 ;
+}
+#content ul,
+#content ol {
+    margin-left: 0;
+    padding-left: 0 ;
+}
+#content li {
+    margin-left: 1.2em ;
+    padding-left: 0 ;
+}
+#content ol li {
+    margin-left: 2em ;
+}
+#content dt {
+    display: block ;
+    float: left ;
+    font-weight: bold ;
+    width: 7em ;
+    margin: 0 ;
+    padding: 0 ;
+    text-align: right;
+}
+#content dd {
+    display: block ;
+    margin: 0.1em  0 ;
+    padding-left: 8em ;
+}
+#content .centered {
+    display: block ;
+    margin-left: 2em ;
+}
+#content div.figure {
+    margin-left: 2em ;
+    margin-top: 1em ;
+    margin-bottom: 1em ;
+}
+#content div.caption {
+    font-family: Georgia, serif ;
+    font-style: italic ;
+}
+#content img.image-right {
+    float: right ;
+}
+#content img.icon-right {
+    float: right ;
+    width: 64px ;
+    padding-right: 2em ;
+    margin-bottom: 1em ;
+}
+#content img.icon-left {
+    float: left ;
+    width: 64px ;
+    margin-right : 1em ;
+    margin-bottom: 1em ;
+}
+#content div.highlight {
+    padding: 0.5em 1em ;
+    border-top: 1px solid #ddd ;
+    border-bottom: 1px solid #ddd ;
+    background-color: #fafafa ;
+}
+#content code {
+    color: #8f0000 ;
+}
+#content div.frame {
+    border: 1px solid #eee ;
+/*    border-radius: 3px;*/
+    padding: 0em 1em ; ;
+    background-color: #fafafa ;
+    margin-bottom: 1em ;
+}
+#content h1.frame {
+    color: white ;
+    background-color: #555 ;
+    font-size: 0.9em ;
+    margin: 0 ;
+    padding: 0.1em 0.5em ;
+}
