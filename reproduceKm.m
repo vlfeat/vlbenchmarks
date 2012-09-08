@@ -1,16 +1,32 @@
 function reproduceKm()
-% BENCHMARKDEMO Script demonstrating how to run the benchmarks for
-%   different algorithms.
+% REPRODUCEKM Reproduce results from the IJCV05 article
+%   REPRODUCEKM computes results presented in [1] and stores them as
+%   graphs and data files (*.mat + *.csv).
+%
+%   This function does not reproduce figures which require tuning of
+%   detector parameters (21c, 22a and 22b) as some of the available
+%   binaries does not allow to affect a number of detected frames.
+%
+%   REFERENCES
+%   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
+%       J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
+%       comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
 %
 
-%% Define Local features detectors
-
+import datasets.*;
 import localFeatures.*;
+import benchmarks.*;
 
-descDet = vggAffine();
+resultsDir = 'ijcv05_res'; % Directory to store generated files
 
-detectors{1} = vggAffine('Detector', 'haraff','Threshold',1000);
-detectors{2} = vggAffine('Detector', 'hesaff','Threshold',500);
+%% Define Local features extractors
+% Create local features extractor such that each of them uses the same
+% algorithm and parameters for computing SIFT descriptors.
+descDet = vggAffine('CropFrames',true,'Magnification',3); % Descriptor calc.
+detectors{1} = descriptorAdapter(...
+  vggAffine('Detector','haraff','Threshold',1000), descDet);
+detectors{2} = descriptorAdapter(...
+  vggAffine('Detector','hesaff','Threshold',500), descDet);
 detectors{3} = descriptorAdapter(vggMser('es',1),descDet);
 detectors{4} = descriptorAdapter(ibr('ScaleFactor',1),descDet);
 detectors{5} = descriptorAdapter(ebr(),descDet);
@@ -20,9 +36,6 @@ numDetectors = numel(detectors);
 
 
 %% Define benchmarks
-
-import benchmarks.*;
-
 repBenchmark = repeatabilityBenchmark(...
   'MatchFramesGeometry',true,...
   'MatchFramesDescriptors',false,...
@@ -44,52 +57,48 @@ kmBenchmark = kristianEvalBenchmark('CommonPart',1);
 fig = figure('Visible','off');
 detColorMap = hsv(numDetectors);
 
-%% Define dataset
-
-import datasets.*;
-
-categories = vggAffineDataset.allCategories;
-datasetNum = 1;
-resultsDir = 'ijcv05_res';
-
 %% Repeatability vs. overlap error
+fprintf('\n######## REPEATABILITY VS. OVERLAP ERR (Fig. 21a) #######\n');
 
-confFig(fig);
 dataset = vggAffineDataset('category','graf');
-overlapErrs = 0.1:0.1:0.6;
+overlapErrValues = 0.1:0.1:0.6;
 imageBIdx = 4;
-overlapReps = zeros(numDetectors,numel(overlapErrs));
-for oei = 1:numel(overlapErrs)
+
+oeScores = zeros(numDetectors,numel(overlapErrValues));
+confFig(fig);
+for oei = 1:numel(overlapErrValues)
   rBenchm = repeatabilityBenchmark(...
   'MatchFramesGeometry',true,...
   'MatchFramesDescriptors',false,...
   'WarpMethod','km',...
   'CropFrames',true,...
   'NormaliseFrames',true,...
-  'OverlapError',overlapErrs(oei));
+  'OverlapError',overlapErrValues(oei));
 
   imageAPath = dataset.getImagePath(1);
   imageBPath = dataset.getImagePath(imageBIdx);
   H = dataset.getTransformation(imageBIdx);
   parfor detectorIdx = 1:numDetectors
     detector = detectors{detectorIdx};
-    [overlapReps(detectorIdx,oei) tmp] = ...
+    [oeScores(detectorIdx,oei) tmp] = ...
       rBenchm.testDetector(detector, H, imageAPath,imageBPath);
   end
 end
 
-saveResults(overlapReps, fullfile(resultsDir,'rep_vs_overlap'));
+saveResults(oeScores, fullfile(resultsDir,'rep_vs_overlap'));
 subplot(2,2,1); 
-plot(overlapErrs.*100,overlapReps.*100,'+-'); grid on;
+plot(overlapErrValues.*100,oeScores.*100,'+-'); grid on;
 xlabel('Overlap error %'); ylabel('Repeatability %');
 axis([5 65 0 100]);
 legend(detNames,'Location','NorthWest');
 
 %% Repeatability vs. normalised region size
+fprintf('\n######## REPEATABILITY VS. NORM. REG. SIZE (Fig. 21b) #######\n');
 
-regSizes = [15 30 50 75 90 110];
-normRegSizeReps = zeros(numDetectors,size(regSizes));
-for rsi = 1:numel(regSizes)
+normRegSizes = [15 30 50 75 90 110];
+nrsScores = zeros(numDetectors,size(normRegSizes));
+
+for nrsi = 1:numel(normRegSizes)
   rBenchm = repeatabilityBenchmark(...
   'MatchFramesGeometry',true,...
   'MatchFramesDescriptors',false,...
@@ -97,32 +106,33 @@ for rsi = 1:numel(regSizes)
   'CropFrames',true,...
   'NormaliseFrames',true,...
   'OverlapError',0.4,...
-  'NormalisedScale',regSizes(rsi));
+  'NormalisedScale',normRegSizes(nrsi));
   imageAPath = dataset.getImagePath(1);
   imageBPath = dataset.getImagePath(imageBIdx);
   H = dataset.getTransformation(imageBIdx);
   parfor detectorIdx = 1:numDetectors
     detector = detectors{detectorIdx};
-    normRegSizeReps(detectorIdx,rsi) = ...
+    nrsScores(detectorIdx,nrsi) = ...
       rBenchm.testDetector(detector, H, imageAPath,imageBPath);
   end
 end
-saveResults(overlapReps, fullfile(resultsDir,'rep_vs_norm_reg_size'));
+saveResults(oeScores, fullfile(resultsDir,'rep_vs_norm_reg_size'));
 subplot(2,2,2); 
-plot(regSizes,normRegSizeReps.*100,'+-'); grid on;
+plot(normRegSizes,nrsScores.*100,'+-'); grid on;
 xlabel('Normalised region size'); ylabel('Repeatability %');
 axis([10 120 0 100]);
 legend(detNames,'Location','SouthEast');
 
 
 %% Repeatability vs. region sizes
+fprintf('\n######## REPEATABILITY VS. REGION SIZE (Fig. 21d) #######\n');
 
 numBins = 10;
 imageBIdx = 3;
 dataset = vggAffineDataset('category','graf');
 
-regSizeReps = zeros(numDetectors,numBins);
-binAvgs = zeros(numDetectors,numBins);
+rsScores = zeros(numDetectors,numBins);
+binAvgs = zeros(numDetectors,numBins); % Centres of frame scales bins
 numFramesInBin = zeros(numDetectors,numBins);
 framesA = cell(numDetectors,1);
 framesB = cell(numDetectors,1);
@@ -145,20 +155,20 @@ for di = 1:numDetectors
   % Divide the frames based on scales into equaly distributed ones
   scalesA = getFrameScale(framesA{di});
   binA = ceil(numBins * tiedrank(scalesA) / length(scalesA));
-  for rsi = 1:numBins
-    sFramesA = framesA{di}(:,binA == rsi);
+  for nrsi = 1:numBins
+    sFramesA = framesA{di}(:,binA == nrsi);
     sFramesB = framesB{di};
-    numFramesInBin(di,rsi) = size(sFramesA,2);
-    binAvgs(di,rsi) = mean(scalesA(binA == rsi));
-    regSizeReps(di,rsi)= regSizeReps(di,rsi) +...
+    numFramesInBin(di,nrsi) = size(sFramesA,2);
+    binAvgs(di,nrsi) = mean(scalesA(binA == nrsi));
+    rsScores(di,nrsi)= rsScores(di,nrsi) +...
       rBenchm.testFeatures(H, imageAPath, imageBPath, ...
         sFramesA,sFramesB);
   end
-  plot(binAvgs(di,:),regSizeReps(di,:).*100,'+-',...
+  plot(binAvgs(di,:),rsScores(di,:).*100,'+-',...
     'Color',detColorMap(di,:));
 end
 
-saveResults(regSizeReps, fullfile(resultsDir,'rep_vs_reg_size'));
+saveResults(rsScores, fullfile(resultsDir,'rep_vs_reg_size'));
 grid on;
 xlabel('Region size'); ylabel('Repeatability %');
 axis([0 max(binAvgs(:)) 0 100]);
@@ -174,10 +184,13 @@ ylabel('Number of frames per region size bin');
 print(fig,fullfile(resultsDir, 'fig_rep_graf.eps'),'-depsc');
 
 %% Matching vs. magnification factor
+fprintf('\n######## MATCHING SCORE VS. REGION MAGNIF. (Fig. 22c) #######\n');
+
 dataset = vggAffineDataset('category','graf');
 imageBIdx = 4;
 magFactors = 1:5;
-magnifMatchings = zeros(numDetectors,numel(magFactors));
+
+magnifScores = zeros(numDetectors,numel(magFactors));
 confFig(fig);
 
 for mf = 1:numel(magFactors)
@@ -188,14 +201,14 @@ for mf = 1:numel(magFactors)
   parfor detectorIdx = 1:numDetectors
     descrExtr = vggAffine('Magnification',magFactor);
     detector = descriptorAdapter(detectors{detectorIdx},descrExtr);
-    magnifMatchings(detectorIdx,mf) = ...
+    magnifScores(detectorIdx,mf) = ...
       matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
     matchBenchmark.enableCaching();
   end
 end
-saveResults(magnifMatchings, fullfile(resultsDir,'matching_vs_mag'));
+saveResults(magnifScores, fullfile(resultsDir,'matching_vs_mag'));
 subplot(2,2,4); 
-plot(magFactors,magnifMatchings'.*100,'+-'); grid on;
+plot(magFactors,magnifScores'.*100,'+-'); grid on;
 xlabel('Magnification factor'); ylabel('Matching %');
 axis([0.5 5.5 0 100]);
 legend(detNames,'Location','NorthEast');
@@ -203,6 +216,8 @@ legend(detNames,'Location','NorthEast');
 print(fig,fullfile(resultsDir, 'fig_matching_graf.eps'),'-depsc');
 
 %% Regions sizes histograms
+fprintf('\n######## REGION SIZE HISTOGRAMS (Fig. 10) #######\n');
+
 dataset = vggAffineDataset('category','graf');
 refImgPath = dataset.getImagePath(1);
 
@@ -242,7 +257,10 @@ saveResults(numFrames, fullfile(resultsDir,'det_num_frames_graf_img1ppm'));
 print(fig,fullfile(resultsDir, 'fig_hist_graf.eps'),'-depsc');
 
 %% Repeatability and Matching scores
+fprintf('\n######## REPEATABILITY AND MATCHING SCORES (Fig. 13-20) #######\n');
 
+datasetNum = 1;
+categories = vggAffineDataset.allCategories;
 for category=categories
   fprintf('\n######## TESTING DATASET %s #######\n',category{:});
   dataset = vggAffineDataset('category',category{:});
@@ -257,15 +275,15 @@ for category=categories
   numMatches = zeros(numDetectors, numImages);
 
   % Test all detectors
-  for detectorIdx = 1:numDetectors
-    detector = detectors{detectorIdx};
+  for di = 1:numDetectors
+    detector = detectors{di};
     imageAPath = dataset.getImagePath(1);
     parfor imageIdx = 2:numImages
       imageBPath = dataset.getImagePath(imageIdx);
       H = dataset.getTransformation(imageIdx);
-      [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
+      [repeatability(di,imageIdx) numCorresp(di,imageIdx)] = ...
         repBenchmark.testDetector(detector, H, imageAPath,imageBPath);
-      [matchingScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+      [matchingScore(di,imageIdx) numMatches(di,imageIdx)] = ...
         matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
     end
   end
@@ -275,23 +293,31 @@ for category=categories
   %% Show scores
 
   confFig(fig);
-  titleText = ['Detectors Repeatability [%%] (',category,')'];
-  printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
-  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
+  titleText = ['Detectors Repeatability [%%] (',category{:},')'];
+  printScores(repeatability.*100, detNames, titleText,...
+    fullfile(resultsDir,[category{:} '_rep']));
+  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset,...
+    titleText);
 
-  printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,[category '_rep']));
-  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
+  printScores(repeatability.*100, detNames, titleText,...
+    fullfile(resultsDir,[category{:} '_rep']));
+  subplot(2,2,1); plotScores(repeatability.*100, detNames,...
+    dataset, titleText);
 
-  titleText = ['Detectors Num. Correspondences (',category,')'];
-  printScores(numCorresp, detNames, titleText,fullfile(resultsDir,[category '_ncorresp']));
+  titleText = ['Detectors Num. Correspondences (',category{:},')'];
+  printScores(numCorresp, detNames, titleText,...
+    fullfile(resultsDir,[category{:} '_ncorresp']));
   subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
 
-  titleText = ['Detectors Matching Score [%%] (',category,')'];
-  printScores(matchingScore.*100, detNames, titleText,fullfile(resultsDir,[category '_matching']));
-  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, titleText);
+  titleText = ['Detectors Matching Score [%%] (',category{:},')'];
+  printScores(matchingScore.*100, detNames, titleText,...
+    fullfile(resultsDir,[category{:} '_matching']));
+  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset,...
+    titleText);
 
-  titleText = ['Detectors Num. Matches (',category,')'];
-  printScores(numMatches, detNames, titleText,fullfile(resultsDir,[category '_nmatches']));
+  titleText = ['Detectors Num. Matches (',category{:},')'];
+  printScores(numMatches, detNames, titleText,...
+    fullfile(resultsDir,[category{:} '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
   print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
@@ -300,15 +326,15 @@ for category=categories
   %% For comparison, run KM Benchmark
 
   % Test all detectors
-  for detectorIdx = 1:numDetectors
-    detector = detectors{detectorIdx};
+  for di = []%1:numDetectors
+    detector = detectors{di};
     imageAPath = dataset.getImagePath(1);
     parfor imageIdx = 2:numImages
       imageBPath = dataset.getImagePath(imageIdx);
       H = dataset.getTransformation(imageIdx);
-      [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
+      [repeatability(di,imageIdx) numCorresp(di,imageIdx)] = ...
         kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
-      [tmp tmp2 matchingScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+      [tmp tmp2 matchingScore(di,imageIdx) numMatches(di,imageIdx)] = ...
         kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
     end
   end
@@ -318,19 +344,25 @@ for category=categories
   confFig(fig);
 
   titleText = 'Detectors Repeatability [%%]';
-  printScores(repeatability.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_rep']));
-  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset, titleText);
+  printScores(repeatability.*100, detNames, titleText,...
+    fullfile(resultsDir,['km_' category{:} '_rep']));
+  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset,...
+    titleText);
 
-  titleText = ['KM Detectors Num. Correspondences (',category,')'];
-  printScores(numCorresp, detNames, titleText,fullfile(resultsDir,['km_' category '_ncorresp']));
+  titleText = ['KM Detectors Num. Correspondences (',category{:},')'];
+  printScores(numCorresp, detNames, titleText,...
+    fullfile(resultsDir,['km_' category{:} '_ncorresp']));
   subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
 
-  titleText = ['KM Detectors Matching Score [%%] (',category,')'];
-  printScores(matchingScore.*100, detNames, titleText,fullfile(resultsDir,['km_' category '_matching']));
-  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, titleText);
+  titleText = ['KM Detectors Matching Score [%%] (',category{:},')'];
+  printScores(matchingScore.*100, detNames, titleText,...
+    fullfile(resultsDir,['km_' category{:} '_matching']));
+  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, ...
+    titleText);
 
-  titleText = ['KM Detectors Num. Matches (',category,')'];
-  printScores(numMatches, detNames, titleText,fullfile(resultsDir,['km_' category '_nmatches']));
+  titleText = ['KM Detectors Num. Matches (',category{:},')'];
+  printScores(numMatches, detNames, titleText,...
+    fullfile(resultsDir,['km_' category{:} '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
   print(fig,fullfile(resultsDir, ['km_fig' num2str(datasetNum) '_rm_' ...
@@ -387,7 +419,7 @@ function plotScores(scores, detNames, dataset, titleText)
   
   xLabel = dataset.imageNamesLabel;
   xVals = dataset.imageNames;
-  plot(xVals,scores(:,2:6)','linewidth', 1,'+-') ; hold on ;
+  plot(xVals,scores(:,2:6)','+-','linewidth', 1) ; hold on ;
   ylabel(titleText) ;
   xlabel(xLabel);
   title(titleText);
