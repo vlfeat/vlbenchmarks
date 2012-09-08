@@ -321,9 +321,15 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
           end
         end
         corresp = cat(2,corresp{:}) ;
+        if isempty(corresp)
+          score = 0; numMatches = 0; matches = zeros(1,numFramesA); return;
+        end
 
         % Remove edges with unsufficient overlap
         corresp = corresp(:,corresp(3,:)>overlapThresh);
+        if isempty(corresp)
+          score = 0; numMatches = 0; matches = zeros(1,numFramesA); return;
+        end
 
         % Create ranked list of edges based on the overlap
         [drop, perm] = sort(corresp(3,:), 'descend');
