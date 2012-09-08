@@ -1,0 +1,3 @@
+[submodule "doc/webdoc"]
+	path = doc/webdoc
+	url = git@github.com:vedaldi/webdoc.git
