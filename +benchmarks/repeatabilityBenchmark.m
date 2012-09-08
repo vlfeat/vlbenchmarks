@@ -194,7 +194,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       imageBSign = helpers.fileSignature(imageBPath);
       resultsKey = cell2str({obj.keyPrefix, obj.getSignature(), ...
         detector.getSignature(), imageASign, imageBSign});
-      cachedResults = DataCache.getData(resultsKey);
+      cachedResults = obj.loadResults(resultsKey);
 
       if isempty(cachedResults)
         if obj.opts.matchFramesDescriptors
@@ -212,8 +212,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
           [score numMatches bestMatches reprojFrames] = ...
             obj.testFeatures(tf,imageAPath, imageBPath,framesA, framesB);
         end
-        results = {score numMatches bestMatches reprojFrames };
-        helpers.DataCache.storeData(results, resultsKey);
+        results = {score numMatches bestMatches reprojFrames};
+        obj.storeResults(results, resultsKey);
       else
         [score numMatches bestMatches reprojFrames] = cachedResults{:};
         obj.debug('Results loaded from cache');

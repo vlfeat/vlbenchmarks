@@ -78,7 +78,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       imageBSign = helpers.fileSignature(imageBPath);
       resultsKey = cell2str({obj.keyPrefix, nargout, obj.getSignature(),...
         detector.getSignature(), imageASign, imageBSign});
-      cachedResults = DataCache.getData(resultsKey);
+      cachedResults = obj.loadResults(resultsKey);
       
       if isempty(cachedResults)
         if nargout == 4
@@ -101,7 +101,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
         end
         
         results = {repScore numCorresp matchScore numMatches};
-        DataCache.storeData(results, resultsKey);
+        obj.storeResults(results, resultsKey);
       else
         obj.debug('Results loaded from cache');
         
