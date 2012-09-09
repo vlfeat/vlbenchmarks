@@ -1,58 +1,172 @@
-% vggRetrievalDataset 
+% VGGRETRIEVALDATASET Wrapper of VGG image retrieval datasets.
+%   This class handles VGG image retrieval datasets [1] of images which are
+%   accompanied with groundtruth queries. In these datasets each query q
+%   specify following data:
+%
+%     q.name - Name of the query
+%     q.imageName - Name of the image file which contain the query region
+%     q.imageId - Unique identifier of the query image.
+%     q.box [xmin ymin xmax ymax] - Box of the query region
+%
+%   And three sets of image ids [1]:
+%     q.good -  A nice, clear picture of the object/building
+%     q.ok - More than 25% of the object is clearly visible.
+%     q.junk - Less than 25% of the object is visible, or there are very 
+%       high levels of occlusion or distortion.
+%
+%   Images which are not present in these three sets are considered to be
+%   in a 'bad' set, i.e. object is not present.
+%
+%   This class allows to pick only a susbset of the database by defining
+%   the 'Lite' parameter to true. In this case, all images from query sets
+%   'good' and 'ok' are preserved together with a subset of 'junk' sets
+%   (defined by 'LiteJunkImagesNum' parameter). This limits the number of
+%   irrelevant images for each query therefore improves the retrieval
+%   performance. Main purpose of the lite dataset is to limit number of
+%   images and therefore make the testing faster.
+%
+%   Please be aware, as a subset of the database can be used, the imageId
+%   (which is used in the queries) and image number (used in getImagePath)
+%   can differ. For getting the path of image of a particular Id use method
+%   getImagePathById.
+%
+%   Downloaded data are parsed and a database of the images and queries is
+%   created and on default is cached. However the validity of cached data
+%   is checked only based on the class options and not on the files.
+%   Therefore if you want change the contents of the database, make sure
+%   that caching is disabled (option 'CacheDatabase').
+%
+% Options:
+%   Category :: 'oxbuild'
+%     Dataset category. Available are 'oxbuild'.
+%
+%   Lite :: true
+%     Use only a subset of the whole database. All images from 'good' and 
+%     'ok' sets of used queries are preserved and only a subset of 'junk'
+%     images is preserved (defined by 'LiteJunkImagesNum' parameter).
+%
+%   LiteJunkImagesNum :: 300
+%     Number of 'junk' images preserved in the databse.
+%
+%   CacheDatabase :: true
+%     Cache parsed images and queries database.
+%
+%   REFERENCES
+%   [1] J. Philbin, O. Chum, M. Isard, J. Sivic and A. Zisserman.
+%       Object retrieval with large vocabularies and fast spatial matching
+%       CVPR, 2007
 
-classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger
+classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
+    & helpers.GenericInstaller
   properties (SetAccess=protected, GetAccess=public)
-    category;
-    dataDir;
-    imdb;
-    numQueries;
+    opts;
+    imagesDir;  % Directory with current category images
+    gtDir;      % Directory with current category ground truth data
+    images;     % Array of structs defining the dataset images
+    queries;    % Array of structs with the dataset queries
+    numQueries; % Number of queries
   end
 
   properties (Constant)
     rootInstallDir = fullfile('data','datasets','vggRetrievalDataset','');
-    allCategories = {'oxbuild_lite'};
+    allCategories = {'oxbuild'};
+    imagesUrls = {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/oxbuild_images.tgz'};
+    gtDataUrls = {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/gt_files_170407.tgz'};
+    % Default values
+    defCategory = 'oxbuild';
+    defLite = true;
+    defLiteJunkImagesNum = 300;
+    defCacheDatabase = true;
   end
 
   methods
     function obj = vggRetrievalDataset(varargin)
+      % OBJ = VGGRETRIEVALDATASET('OptionName',OptionValue)
+      %   Constructs the object of the retrieval dataset with the given
+      %   option. For details see the class documentation.
       import datasets.*;
       import helpers.*;
       if ~obj.isInstalled(),
         obj.warn('Vgg retreival dataset is not installed');
-        vggRetrievalDataset.installDeps();
+        obj.install();
       end
-      opts.category= obj.allCategories{1};
-      opts = helpers.vl_argparse(opts,varargin);
-      assert(ismember(opts.category,obj.allCategories),...
-             sprintf('Invalid category for vgg retreival dataset: %s\n', ...
-             opts.category));
-      obj.datasetName = ['vggAffineDataset-' opts.category];
-      obj.category= opts.category;
-      obj.dataDir = fullfile(obj.rootInstallDir,opts.category,'');
+      obj.opts.category= obj.defCategory;
+      obj.opts.lite = obj.defLite;
+      obj.opts.liteJunkImagesNum = obj.defLiteJunkImagesNum;
+      obj.opts.cacheDatabase = obj.defCacheDatabase;
+      [obj.opts varargin] = helpers.vl_argparse(obj.opts,varargin);
+      assert(ismember(obj.opts.category,obj.allCategories),...
+             sprintf('Invalid category for vgg retreival dataset: %s\n',...
+             obj.opts.category));
+      obj.datasetName = ['vggAffineDataset-' obj.opts.category];
+      if obj.opts.lite
+        obj.datasetName = [obj.datasetName '-lite'];
+      end
+      obj.configureLogger(obj.datasetName, varargin);
+      obj.imagesDir = fullfile(obj.rootInstallDir,obj.opts.category,'');
+      obj.gtDir = fullfile(obj.rootInstallDir,...
+        [obj.opts.category '_gt'],'');
 
-      imdbPath = obj.getImdbFilePath(opts.category);
-      obj.imdb = load(imdbPath);
-      obj.numImages = numel(obj.imdb.images.id);
-      obj.numQueries = numel(obj.imdb.queries);
+      if obj.opts.cacheDatabase
+        dataKey = [obj.datasetName ';' struct2str(obj.opts)];
+        data = DataCache.getData(dataKey);
+        if ~isempty(data)
+          obj.debug('Database loaded from cache.');
+          [obj.images obj.queries] = data{:};
+        else
+          [obj.images obj.queries] = obj.buildImageDatabase();
+          DataCache.storeData({obj.images obj.queries},dataKey);
+        end
+      else
+        [obj.images obj.queries] = obj.buildImageDatabase();
+      end
+      obj.numImages = numel(obj.images.id);
+      obj.numQueries = numel(obj.queries);
     end
 
-    function imgPath = getImagePath(obj,imgIdx)
-      if imgIdx >= 1 && imgIdx <= obj.numImages
-        imgPath = fullfile(obj.dataDir,obj.imdb.images.names{imgIdx});
+    function imgPath = getImagePath(obj,imageNo)
+      % GETIMAGEPATHB Get a path of an image from the database.
+      %   IMG_PATH = GETIMAGEPATH(IMG_NO) Get path IMG_PATH of an image 
+      %   defined by its number 0 < IMG_NO < obj.numImages. When a subset
+      %   of images is used, only this subset of images can be accessed
+      %   with this method.
+      if imageNo >= 1 && imageNo <= obj.numImages
+        realImId = obj.images.id(imageNo);
+        imgPath = fullfile(obj.imagesDir,obj.images.names{realImId});
+      else
+        obj.error('Out of bounds image number.\n');
+      end
+    end
+
+    function imgPath = getImagePathById(obj,imageId)
+      % GETIMAGEPATHBYID Get a path of an image by its Id
+      %   IMG_PATH = GETIMAGEPATHBYID(IMG_ID) Get path IMG_PATH of an image 
+      %   defined by its id IMG_ID which is used in queries. In this way
+      %   all the images from the original dataset can be accessed, not
+      %   only their subset.
+      if imageId >= 1 && imageId <= numel(obj.images.names)
+        imgPath = fullfile(obj.imagesDir,obj.images.names{imageId});
       else
         obj.error('Out of bounds idx\n');
       end
     end
 
     function query = getQuery(obj,queryIdx)
+      % GETQUERY Get a dataset query
+      %  QUERY = GETQUERY(QUERYID) Returns struct QUERY defined by 
+      %    0 < QUERYID < obj.numQueries. For query definition see class
+      %    documentation.
       if queryIdx >= 1 && queryIdx <= obj.numQueries
-        query = obj.imdb.queries(queryIdx);
+        query = obj.queries(queryIdx);
       else
         obj.error('Out of bounds idx');
       end
     end
 
     function signature = getQueriesSignature(obj)
+      % GETQUERIESSIGNATURE Get signature of all dataset queries
+      %   SIGNATURE = GETQUERIESSIGNATURE() Get a unique signature of all
+      %   queries in the dataset.
       import helpers.*;
       querySignatures = '';
       for queryIdx = 1:obj.numQueries
@@ -63,6 +177,9 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger
     end
 
     function querySignature = getQuerySignature(obj, query)
+      % GETQUERYSIGNATURE Get a signature of a query
+      %  QUERY_SIGNATURE = GETQUERYSIGNATURE(QUERY) Get an unique string
+      %  signatures QUERY_SIGNATURE of a query struct. QUERY.
       import helpers.*;
       imagePath = obj.getImagePath(query.imageId);
       imageSign = fileSignature(imagePath);
@@ -71,61 +188,33 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger
     end
   end
 
-  methods(Static)
-    function installDeps()
+  methods(Access = protected)
+    function [images queries] = buildImageDatabase(obj)
       import datasets.*;
-      if(vggRetrievalDataset.isInstalled()),
-        fprintf('vggRetrievalDataset already installed, nothing to do\n');
-        return;
-      end
-      installDir = vggRetrievalDataset.rootInstallDir;
-      for i = 1:numel(vggRetrievalDataset.allCategories)
-        curCategory = vggRetrievalDataset.allCategories{i};
-        catDir = fullfile(installDir,curCategory,'');
-        if(~exist(catDir,'dir'))
-          % TODO move bootstrap script to Matlab
-          actDir = pwd;
-          bootstrapScript = fullfile(pwd,'+datasets','retrieval-bootstrap.sh');
-          cd installDir;
-          system(bootstrapScript);
-          cd actDir;
-        end
-        imdbPath = vggRetrievalDataset.getImdbFilePath(curCategory);
-        if ~exist(imdbPath,'file')
-          installDir = vggRetrievalDataset.rootInstallDir;
-          gtPath = fullfile(installDir,[curCategory '_gt'],'');
-          imdb = vggRetrievalDataset.preprocessImagesDir(catDir,gtPath);
-          save(imdbPath, '-STRUCT', 'imdb');
-        end
-      end
-    end
+      obj.info('Loading dataset %s.',obj.datasetName);
+      names = dir(fullfile(obj.imagesDir, '*.jpg')) ;
+      numImages = numel(names);
+      images.id = 1:numImages ;
+      images.names = {names.name} ;
 
-    function imdb = preprocessImagesDir(imPath, gtPath)
-      import datasets.*;
-      
-      names = dir(fullfile(imPath, '*.jpg')) ;
-
-      imdb.dir = imPath ;
-      imdb.images.id = 1:numel(names) ;
-      imdb.images.names = {names.name} ;
-
-      numImages = numel(imdb.images.id);
       postfixless = cell(numImages,1);
       for i = 1:numImages
-        [ans,postfixless{i}] = fileparts(imdb.images.names{i}) ;
+        [ans,postfixless{i}] = fileparts(images.names{i}) ;
       end
       function i = toindex(x)
         [ok,i] = ismember(x,postfixless) ;
         i = i(ok) ;
       end
-      names = dir(fullfile(gtPath,'*_query.txt'));
+      names = dir(fullfile(obj.gtDir,'*_query.txt'));
       names = {names.name} ;
       if numel(names) == 0
-        obj.warn('No queries in %s',gtPath);
+        obj.warn('No queries in %s',obj.gtDir);
       end
+
       for i = 1:numel(names)
         base = names{i} ;
-        [imageName,x0,y0,x1,y1] = textread(fullfile(gtPath, base), '%s %f %f %f %f') ;
+        [imageName,x0,y0,x1,y1] = textread(fullfile(obj.gtDir, base), ...
+          '%s %f %f %f %f') ;
         name = base ;
         name = name(1:end-10) ;
         imageName = cell2mat(imageName) ;
@@ -134,39 +223,46 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger
         queries(i).imageName = imageName ;
         queries(i).imageId = toindex(imageName) ;
         queries(i).box = [x0;y0;x1;y1] ;
-        queries(i).good = toindex(textread(fullfile(gtPath, sprintf('%s_good.txt',name)), '%s')) ;
-        queries(i).ok = toindex(textread(fullfile(gtPath, sprintf('%s_ok.txt',name)), '%s')) ;
-        queries(i).junk = toindex(textread(fullfile(gtPath, sprintf('%s_junk.txt',name)), '%s')) ;
+        queries(i).good = toindex(textread(fullfile(obj.gtDir, ...
+          sprintf('%s_good.txt',name)), '%s'))' ;
+        queries(i).ok = toindex(textread(fullfile(obj.gtDir, ...
+          sprintf('%s_ok.txt',name)), '%s'))' ;
+        queries(i).junk = toindex(textread(fullfile(obj.gtDir, ...
+          sprintf('%s_junk.txt',name)), '%s'))' ;
       end
 
-      % check for empty queries due to subsetting of the data
-      ok = true(1,numel(queries)) ;
-      for i = 1:numel(queries)
-        ok(i) = ~isempty(queries(i).imageId) & ...
-                ~isempty(queries(i).good) ;
+      if obj.opts.lite
+        goodImages = [queries(:).good];
+        okImages = [queries(:).ok];
+        junkImages = [queries(:).junk];
+        numJunkImages = obj.opts.liteJunkImagesNum;
+
+        % This method of picking images suppose that query images are part
+        % of the good set
+        pickedImages = [goodImages, okImages, junkImages(1:numJunkImages)];
+        pickedImages = unique(pickedImages);
+        obj.debug('Number of Lite images: %d',numel(pickedImages));
+        images.id = pickedImages;
       end
-      queries = queries(ok) ;
-      imdb.queries = queries;
-      fprintf('%d of %d are covered by the selected database subset\n',sum(ok),numel(ok)) ;
     end
+  end
 
-    function response = isInstalled()
+  methods (Static)
+    function [urls dstPaths] = getTarballsList()
       import datasets.*;
-      response = false;
+      numCategories = numel(vggRetrievalDataset.allCategories);
+      urls = cell(1,numCategories*2);
+      dstPaths = cell(1,numCategories*2);
       installDir = vggRetrievalDataset.rootInstallDir;
-      for i = 1:numel(vggRetrievalDataset.allCategories)
+      for i = 1:numCategories
         curCategory = vggRetrievalDataset.allCategories{i};
-        catDir = fullfile(installDir,curCategory,'');
-        imdbPath = vggRetrievalDataset.getImdbFilePath(curCategory);
-        if(~exist(catDir,'dir')), return; end
-        if(~exist(imdbPath,'file')), return; end
+        % Images
+        urls{2*(i-1)+1} = vggRetrievalDataset.imagesUrls{i};
+        dstPaths{2*(i-1)+1} = fullfile(installDir,curCategory);
+        % Ground truth data
+        urls{2*(i-1)+2} = vggRetrievalDataset.gtDataUrls{i};
+        dstPaths{2*(i-1)+2} = fullfile(installDir,[curCategory '_gt']);
       end
-      response = true;
-    end
-
-    function path = getImdbFilePath(category)
-      installDir = datasets.vggRetrievalDataset.rootInstallDir;
-      path = fullfile(installDir,[category,'_imdb.mat']);
     end
   end
 end % -------- end of class ---------
