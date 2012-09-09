@@ -49,6 +49,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
     validDescriptors = {'sift','jla','gloh','mom','koen','kf','sc',...
       'spin','pca','cc'};
     builtInMagnification = 3;
+    supportedImageFormats = {'.png','.ppm','.pgm'};
   end
 
   methods
@@ -90,24 +91,25 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       obj.configureLogger(obj.name,varargin);
     end
 
-    function [frames descriptors] = extractFeatures(obj, imagePath)
+    function [frames descriptors] = extractFeatures(obj, origImagePath)
       import helpers.*;
       import localFeatures.*;
 
-      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      [frames descriptors] = obj.loadFeatures(origImagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-
-      startTime = tic;
       if nargout == 1
-        obj.info('Computing frames of image %s.',getFileName(imagePath));
+        obj.info('Computing frames of image %s.',getFileName(origImagePath));
       else
         obj.info('Computing frames and descriptors of image %s.',...
-          getFileName(imagePath));
+          getFileName(origImagePath));
       end
-      
+
+      [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
+        obj.supportedImageFormats);
+      if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
+
       tmpName = tempname;
       framesFile = [tmpName '.' obj.opts.detector];
-      
       detArgs = '';
       if obj.opts.threshold >= 0
         detArgs = sprintf('-thres %f ',obj.opts.threshold);
@@ -117,14 +119,13 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
                      imagePath,framesFile);
 
       detCmd = [obj.detBinPath ' ' detArgs];
-
+      startTime = tic;
       [status,msg] = system(detCmd);
+      timeElapsed = toc(startTime);
       if status
         error('%d: %s: %s', status, detCmd, msg) ;
       end
-      
       frames = helpers.readFramesFile(framesFile);
-      
       if nargout ==2
         if obj.opts.magnification == obj.builtInMagnification ...
             && ~obj.opts.cropFrames
@@ -135,14 +136,11 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
           [frames descriptors] = obj.extractDescriptors(imagePath,frames);
         end
       end
-      
       delete(framesFile);
-      
-      timeElapsed = toc(startTime);
+      if imIsTmp, delete(imagePath); end;
       obj.debug('Image %s processed in %gs',...
-        getFileName(imagePath),timeElapsed);
-      
-      obj.storeFeatures(imagePath, frames, descriptors);
+        getFileName(origImagePath),timeElapsed);
+      obj.storeFeatures(origImagePath, frames, descriptors);
     end
   
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
@@ -157,7 +155,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       if size(frames,1) ~= 5
         frames = helpers.frameToEllipse(frames);
       end
-      
+
       if obj.opts.cropFrames
         imgSize = size(imread(imagePath));
         imgbox = [1 1 imgSize(2)+1 imgSize(1)+1];
@@ -166,19 +164,17 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         isVisible = benchmarks.helpers.isEllipseInBBox(imgbox,magFrames);
         frames = frames(:,isVisible);
       end
-      
+
       if obj.opts.magnification ~= obj.builtInMagnification
         % Magnify the frames accordnig to set magnif. factor
         magFactor = obj.opts.magnification / obj.builtInMagnification;
         magFactor = magFactor ^ 2;
         frames(3:5,:) = frames(3:5,:) .* magFactor;
       end
-      
+
       framesFile = [tmpName '.frames'];
       helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
-      
       [frames descriptors] = obj.computeDescriptors(imagePath,framesFile);
-      
       if obj.opts.magnification ~= obj.builtInMagnification
         % Resize the frames back to their size
         frames(3:5,:) = frames(3:5,:) ./ magFactor;
@@ -186,13 +182,16 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
     end
     
     
-    function [frames descriptors] = computeDescriptors(obj, imagePath, framesFile)
+    function [frames descriptors] = computeDescriptors(obj, origImagePath, ...
+        framesFile)
       % COMPUTEDESCRIPTORS Compute descriptors from frames stored in a file
       import localFeatures.*;
-
       tmpName = tempname;
       outDescFile = [tmpName '.descs'];
 
+      [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
+        obj.supportedImageFormats);
+      if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
       % Prepare the options
       descrArgs = sprintf('-%s -i "%s" -p1 "%s" -o1 "%s"', ...
         obj.opts.descriptor, imagePath, framesFile, outDescFile);
@@ -200,18 +199,18 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       if obj.opts.noAngle
         descrArgs = strcat(descrArgs,' -noangle');
       end             
-
       descrCmd = [obj.descrBinPath ' ' descrArgs];
-
       obj.info('Computing descriptors.');
       startTime = tic;
       [status,msg] = system(descrCmd);
+      elapsedTime = toc(startTime);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
-      obj.debug('Descriptors computed in %gs',toc(startTime));
+      obj.debug('Descriptors computed in %gs',elapsedTime);
       delete(outDescFile);
+      if imIsTmp, delete(imagePath); end;
     end
     
     function sign = getSignature(obj)
@@ -239,7 +238,6 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         if status ~= 0, error(msg); end
       end
     end
-    
   end % ---- end of static methods ----
 
 end % ----- end of class definition ----

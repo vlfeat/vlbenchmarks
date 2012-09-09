@@ -22,6 +22,7 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
     rootInstallDir = fullfile('data','software','cmpBinHessian','');
     url = 'http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09';
     binName = 'haff_cvpr09';
+    supportedImageFormats = {'.ppm','.pgm'};
   end
 
   methods
@@ -50,27 +51,29 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
       obj.configureLogger(obj.name,varargin);
     end
 
-    function [frames descriptors] = extractFeatures(obj, imagePath)
+    function [frames descriptors] = extractFeatures(obj, origImagePath)
       import helpers.*;
       
-      [frames descriptors] = obj.loadFeatures(imagePath,true);
+      [frames descriptors] = obj.loadFeatures(origImagePath,true);
       if numel(frames) > 0; return; end;
       
       startTime = tic;
       if nargout == 1
-        obj.info('Computing frames of image %s.',getFileName(imagePath));
+        obj.info('Computing frames of image %s.',getFileName(origImagePath));
       else
-        obj.info('Computing frames and descriptors of image %s.',getFileName(imagePath));
+        obj.info('Computing frames and descriptors of image %s.',...
+          getFileName(origImagePath));
       end
-      
+
       % Write image in correct format
-      image = imread(imagePath);
+      [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
+        obj.supportedImageFormats);
+      if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
+
       tempName = tempname;
-      imageFile = [tempName '.ppm'];
-      featFile = [tempName '.ppm.hesaff.sift'];
-      helpers.writeppm(image, imageFile);
+      featFile = [tempName '.hesaff.sift'];
       
-      args = sprintf(' "%s" ',imageFile);
+      args = sprintf(' "%s" ',imagePath);
       cmd = [obj.binPath ' ' args];
 
       [status,msg] = system(cmd);
@@ -80,12 +83,13 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
       
       [frames descriptors] = vl_ubcread(featFile,'format','oxford');
       delete(featFile);
+      if imIsTmp, delete(imagePath); end;
       
       timeElapsed = toc(startTime);
       obj.debug(sprintf('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));
+        getFileName(origImagePath),timeElapsed));
       
-      obj.storeFeatures(imagePath, frames, descriptors);
+      obj.storeFeatures(origImagePath, frames, descriptors);
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
