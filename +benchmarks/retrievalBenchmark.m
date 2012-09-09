@@ -145,7 +145,6 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
         descriptors = cell(numImages,1);
         featStartTime = tic;
         parfor imgNo = 1:numImages
-          obj.info('Computing features of image %d/%d.',imgNo,numImages);
           imagePath = dataset.getImagePath(imgNo);
           [frames{imgNo} descriptors{imgNo}] = ...
             detector.extractFeatures(imagePath);
