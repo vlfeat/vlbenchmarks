@@ -116,9 +116,11 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       votes = votes./sqrt(numDescriptors);
       [temp, rankedList]= sort(votes, 'descend'); 
 
-      [precision recall inf]  = retrievalBenchmark.calcPR(query, votes);
-      ap = inf.ap;
-      pr = {precision recall inf};
+      %[precision recall inf]  = retrievalBenchmark.calcPR(query, votes);
+      %ap = inf.ap;
+      %pr = {precision recall inf};
+      ap = retrievalBenchmark.philbinComputeAp(query, rankedList);
+      pr = {[] [] []};
 
       obj.debug('AP calculated in %fs.',toc(startTime));
       obj.info('Computed average precision is: %f',ap);
@@ -168,6 +170,30 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       [precision recall info] = vl_pr(y, scores);
     end
     
+    function ap = philbinComputeAp(query, rankedList)
+      oldRecall = 0.0;
+      oldPrecision = 1.0;
+      ap = 0.0;
+      ambiguous = query.junk;
+      positive = [query.good;query.ok];
+      intersectSize = 0;
+      j = 0;
+      for i = 1:numel(rankedList)
+        if ismember(rankedList(i),ambiguous)
+          continue; 
+        end
+        if ismember(rankedList(i),positive)
+          intersectSize = intersectSize + 1;
+        end
+        recall = intersectSize / numel(positive);
+        precision = intersectSize / (j + 1.0);
+        ap = ap + (recall - oldRecall)*((oldPrecision + precision)/2.0);
+        oldRecall = recall;
+        oldPrecision = precision;
+        j = j + 1;
+      end
+    end
+
     function deps = getDependencies()
       import helpers.*;
       deps = {Installer(),benchmarks.helpers.Installer(),...
