@@ -59,7 +59,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       parfor q = 1:numQueries
         obj.info('Computing query %d/%d.',q,numQueries);
         query = dataset.getQuery(q);
-        queriesAp(q) = obj.evalQuery(frames, descriptors, query);
+        queriesAp(q) = obj.evalQuery(frames, descriptors, query, dataset);
       end
 
       mAP = mean(queriesAp);
@@ -70,7 +70,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       DataCache.storeData(results, resultsKey);
     end
 
-    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, query)
+    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, query, dataset)
       import helpers.*;
       import benchmarks.*;
 
@@ -79,9 +79,10 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
 
       qImgId = query.imageId;
       % Pick only features in the query box
-      qFrames = localFeatures.helpers.frameToEllipse(frames{qImgId});
+      qImgNo = dataset.imgIdToImgNo(qImgId);
+      qFrames = localFeatures.helpers.frameToEllipse(frames{qImgNo});
       visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
-      qDescriptors = single(descriptors{qImgId}(:,visibleFrames));
+      qDescriptors = single(descriptors{qImgNo}(:,visibleFrames));
       qNumDescriptors = size(qDescriptors,2);
       allDescriptors = single([descriptors{:}]);
 
@@ -138,9 +139,11 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
         frames = cell(numImages,1);
         descriptors = cell(numImages,1);
         featStartTime = tic;
-        parfor imgIdx = 1:numImages
-          imagePath = dataset.getImagePath(imgIdx);
-          [frames{imgIdx} descriptors{imgIdx}] = detector.extractFeatures(imagePath);
+        parfor imgNo = 1:numImages
+          obj.info('Computing features of image %d/%d.',imgNo,numImages);
+          imagePath = dataset.getImagePath(imgNo);
+          [frames{imgNo} descriptors{imgNo}] = ...
+            detector.extractFeatures(imagePath);
         end
         obj.debug('Features computed in %fs.',toc(featStartTime));
         DataCache.storeData({frames, descriptors},featuresKey);

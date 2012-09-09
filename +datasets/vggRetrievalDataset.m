@@ -150,6 +150,11 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
         obj.error('Out of bounds idx\n');
       end
     end
+    
+    function imgNo = imgIdToImgNo(obj, imgId)
+      % IMGIDTOIMNO Convert image ID to image number.
+      imgNo = find(obj.images.id == imgId);
+    end
 
     function query = getQuery(obj,queryIdx)
       % GETQUERY Get a dataset query
