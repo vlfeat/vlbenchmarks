@@ -25,11 +25,6 @@
 %   performance. Main purpose of the lite dataset is to limit number of
 %   images and therefore make the testing faster.
 %
-%   Please be aware, as a subset of the database can be used, the imageId
-%   (which is used in the queries) and image number (used in getImagePath)
-%   can differ. For getting the path of image of a particular Id use method
-%   getImagePathById.
-%
 %   Downloaded data are parsed and a database of the images and queries is
 %   created and on default is cached. However the validity of cached data
 %   is checked only based on the class options and not on the files.
@@ -98,7 +93,7 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
       assert(ismember(obj.opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
              obj.opts.category));
-      obj.datasetName = ['vggAffineDataset-' obj.opts.category];
+      obj.datasetName = ['vggRetrievalDataset-' obj.opts.category];
       if obj.opts.lite
         obj.datasetName = [obj.datasetName '-lite'];
       end
@@ -131,29 +126,10 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
       %   of images is used, only this subset of images can be accessed
       %   with this method.
       if imageNo >= 1 && imageNo <= obj.numImages
-        realImId = obj.images.id(imageNo);
-        imgPath = fullfile(obj.imagesDir,obj.images.names{realImId});
+        imgPath = fullfile(obj.imagesDir,obj.images.names{imageNo});
       else
         obj.error('Out of bounds image number.\n');
       end
-    end
-
-    function imgPath = getImagePathById(obj,imageId)
-      % GETIMAGEPATHBYID Get a path of an image by its Id
-      %   IMG_PATH = GETIMAGEPATHBYID(IMG_ID) Get path IMG_PATH of an image 
-      %   defined by its id IMG_ID which is used in queries. In this way
-      %   all the images from the original dataset can be accessed, not
-      %   only their subset.
-      if imageId >= 1 && imageId <= numel(obj.images.names)
-        imgPath = fullfile(obj.imagesDir,obj.images.names{imageId});
-      else
-        obj.error('Out of bounds idx\n');
-      end
-    end
-    
-    function imgNo = imgIdToImgNo(obj, imgId)
-      % IMGIDTOIMNO Convert image ID to image number.
-      imgNo = find(obj.images.id == imgId);
     end
 
     function query = getQuery(obj,queryIdx)
@@ -247,7 +223,18 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
         pickedImages = [goodImages, okImages, junkImages(1:numJunkImages)];
         pickedImages = unique(pickedImages);
         obj.debug('Number of Lite images: %d',numel(pickedImages));
-        images.id = pickedImages;
+        
+        % Change the queries for the picked image subset
+        map = zeros(1,numImages);
+        map(pickedImages) = 1:numel(pickedImages);
+        for i=1:numel(queries)
+          queries(i).imageId = map([queries(i).imageId]);
+          queries(i).good = map([queries(i).good]);
+          queries(i).ok = map([queries(i).ok]);
+          queries(i).junk = map([queries(i).junk]);
+        end
+        images.id = 1:numel(pickedImages);
+        images.names = images.names(pickedImages);
       end
     end
   end

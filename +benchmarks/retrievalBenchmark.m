@@ -63,7 +63,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       parfor q = 1:numQueries
         obj.info('Computing query %d/%d.',q,numQueries);
         query = dataset.getQuery(q);
-        queriesAp(q) = obj.evalQuery(frames, descriptors, query, dataset);
+        queriesAp(q) = obj.evalQuery(frames, descriptors, query);
       end
 
       mAP = mean(queriesAp);
@@ -74,7 +74,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       DataCache.storeData(results, resultsKey);
     end
 
-    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, query, dataset)
+    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, query)
       import helpers.*;
       import benchmarks.*;
 
@@ -83,8 +83,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
 
       qImgId = query.imageId;
       % Pick only features in the query box
-      qImgNo = dataset.imgIdToImgNo(qImgId);
-      qFrames = localFeatures.helpers.frameToEllipse(frames{qImgNo});
+      qFrames = localFeatures.helpers.frameToEllipse(frames{qImgId});
       visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
       qDescriptors = single(descriptors{qImgNo}(:,visibleFrames));
       qNumDescriptors = size(qDescriptors,2);
