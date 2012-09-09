@@ -175,7 +175,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       oldPrecision = 1.0;
       ap = 0.0;
       ambiguous = query.junk;
-      positive = [query.good;query.ok];
+      positive = [query.good query.ok];
       intersectSize = 0;
       j = 0;
       for i = 1:numel(rankedList)
