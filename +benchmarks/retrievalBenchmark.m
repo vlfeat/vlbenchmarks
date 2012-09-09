@@ -27,6 +27,10 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       obj.opts.distMetric = obj.defDistMetric;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.configureLogger(obj.benchmarkName,varargin);
+      if ~obj.isInstalled()
+        obj.warn('Not installed.');
+        obj.install();
+      end
     end
 
     function [mAP queriesAp ] = evalDetector(obj, detector, dataset)
