@@ -81,9 +81,9 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       obj.imageNamesLabel = obj.categoryImageNames{loc};
     end
 
-    function imgPath = getImagePath(obj,imgIdx)
-      assert(imgIdx >= 1 && imgIdx <= obj.numImages,'Out of bounds idx\n');
-      imgPath = fullfile(obj.dataDir,sprintf('img%d.%s',imgIdx,obj.imgExt));
+    function imgPath = getImagePath(obj,imgNo)
+      assert(imgNo >= 1 && imgNo <= obj.numImages,'Out of bounds idx\n');
+      imgPath = fullfile(obj.dataDir,sprintf('img%d.%s',imgNo,obj.imgExt));
     end
 
     function tfs = getTransformation(obj,imgIdx)

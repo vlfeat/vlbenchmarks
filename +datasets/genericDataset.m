@@ -7,10 +7,10 @@ classdef genericDataset < handle
   end
 
   methods(Abstract)
-    imgPath = getImagePath(obj,imgIdx)
+    imgPath = getImagePath(obj,imgNo)
     % GETIMAGEPATH Get path of an image from the dataset
-    %   IMG_PATH = getImagePath(IMG_IDX) Returns path IMG_PATH of an
-    %   image with id IMG_IDX \in [1:numImages]
+    %   IMG_PATH = getImagePath(IMG_NO) Returns path IMG_PATH of an
+    %   image with number IMG_NO \in [1:numImages]
   end
   
   methods
@@ -21,8 +21,8 @@ classdef genericDataset < handle
     %   MD5 of all images file signatures (see help `getFileSignature`).
       import helpers.*;
       imgSignatures = '';
-      for imgIdx = 1:obj.numImages
-        imgPath = obj.getImagePath(imgIdx);
+      for imgNo = 1:obj.numImages
+        imgPath = obj.getImagePath(imgNo);
         sign = fileSignature(imgPath);
         imgSignatures = strcat(imgSignatures, sign);
       end

@@ -10,9 +10,9 @@ classdef genericTransfDataset < datasets.genericDataset
   end
 
   methods(Abstract)
-    tf = getTransformation(obj,imgIdx) 
+    tf = getTransformation(obj,imgNo) 
     % GETTRANSFORMATION Get transformation between an image and ref. image.
-    %   TF = getTransformation(IMG_IDX) Return the 3x3 homography TF from 
-    %   image 1 to image IMG_IDX.
+    %   TF = getTransformation(IMG_NO) Return the 3x3 homography TF from 
+    %   image 1 to image IMG_NO.
   end
 end % -------- end of class ---------
