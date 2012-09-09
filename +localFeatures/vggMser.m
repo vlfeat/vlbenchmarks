@@ -57,7 +57,7 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       
       if ~obj.isInstalled(),
         obj.warn('vggMser not found installed');
-        obj.installDeps();
+        obj.install();
       end
       
       % Check platform dependence

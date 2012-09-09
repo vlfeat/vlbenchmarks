@@ -27,7 +27,7 @@ classdef GenericInstaller < handle
 %   If you want to test if your software is compiled, reimplement
 %   method isInstalled().
 %
-%   The method installDeps() executes all the installation steps.
+%   The method install() executes all the installation steps.
 
 % AUTORIGHTS
   properties (Constant)
@@ -49,8 +49,8 @@ classdef GenericInstaller < handle
         && obj.mexFilesCompiled();
     end
 
-    function installDeps(obj)
-    % INSTALLDEPS Install class dependencies
+    function install(obj)
+    % INSTALL Install class dependencies
     %   Install unmet dependencies, downloads and unpack tarballs,
     %   run the compile script based on isCompiled() return value and
     %   compiles the mex files.
@@ -147,7 +147,7 @@ classdef GenericInstaller < handle
       deps = obj.getDependencies();
       res = true;
       for dep = deps
-        dep{:}.installDeps();
+        dep{:}.install();
       end
     end
 

@@ -30,7 +30,7 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
       
       if ~obj.isInstalled(),
         obj.warn('IBR not found installed');
-        obj.installDeps();
+        obj.install();
       end
       
       % Check platform dependence

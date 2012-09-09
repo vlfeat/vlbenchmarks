@@ -158,7 +158,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 
       if ~obj.isInstalled()
         obj.warn('Benchmark not installed.');
-        obj.installDeps();
+        obj.install();
       end
 
       if ~obj.opts.matchFramesGeometry && ~obj.opts.matchFramesDescriptors

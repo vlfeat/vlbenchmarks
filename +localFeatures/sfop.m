@@ -10,7 +10,7 @@
 %   The options are documented in the SFOP code, which you can see at
 %   +affineDetectors/thirdParty/sfop/sfop-0.9/matlab/sfopParams.m
 %   (the above file only exists once you have installed all the third party
-%   software using installDeps command)
+%   software using install command)
 
 classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
@@ -41,7 +41,7 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
       
       if ~obj.isInstalled(),
         obj.warn('Not installed');
-        obj.installDeps();
+        obj.install();
       end
     end
 

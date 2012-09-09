@@ -22,7 +22,7 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
       obj.cvsift_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
-        obj.installDeps();
+        obj.install();
       end
       
       obj.binPath = {which('localFeatures.mex.cvSift')};

@@ -59,7 +59,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
 
       if ~obj.isInstalled(),
         obj.warn('Not found installed');
-        obj.installDeps();
+        obj.install();
       end
 
       % Default options

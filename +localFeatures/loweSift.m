@@ -25,7 +25,7 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
       obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
-        obj.installDeps();
+        obj.install();
       end
       
       execDir = loweSift.dir;

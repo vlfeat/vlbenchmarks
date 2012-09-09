@@ -52,7 +52,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       
       if(~obj.isInstalled())
         obj.warn('Kristian''s benchmark not found, installing dependencies...');
-        obj.installDeps();
+        obj.install();
       end   
     end
     

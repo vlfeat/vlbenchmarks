@@ -2,7 +2,6 @@
 %
 %   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
 %
-
 %   obj = vggAffineDataset('Option','OptionValue')
 %
 %   This class perform automatic installation when the dataset data are
@@ -57,7 +56,7 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       import helpers.*;
       if ~obj.isInstalled(),
         obj.warn('Vgg Affine dataset is not installed');
-        obj.installDeps();
+        obj.install();
       end
       opts.category= obj.defCategory;
       opts = vl_argparse(opts,varargin);

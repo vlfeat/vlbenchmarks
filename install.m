@@ -10,5 +10,5 @@ installers = {...
   };
 
 for installer=installers
-  installer{:}.installDeps();
+  installer{:}.install();
 end

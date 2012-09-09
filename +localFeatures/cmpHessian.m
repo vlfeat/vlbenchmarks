@@ -33,7 +33,7 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
       obj.descriptorName = 'CMP SIFT';
       if ~obj.isInstalled(),
         obj.warn('cmpHessian not found installed');
-        obj.installDeps();
+        obj.install();
       end
 
       % Check platform dependence

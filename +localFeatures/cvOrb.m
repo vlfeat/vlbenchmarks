@@ -32,7 +32,7 @@ classdef cvOrb < localFeatures.genericLocalFeatureExtractor & ...
       
       if ~obj.isInstalled()
         obj.warn('Not installed.')
-        obj.installDeps();
+        obj.install();
       end
       
       obj.binPath = {which('localFeatures.mex.cvOrb')};

@@ -34,7 +34,7 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
       obj.descriptorName = 'CMP SIFT (bin)';
       if ~obj.isInstalled(),
         obj.warn('cmpBinHessian not found installed');
-        obj.installDeps();
+        obj.install();
       end
 
       % Check platform dependence

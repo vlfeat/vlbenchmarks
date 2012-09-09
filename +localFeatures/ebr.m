@@ -20,7 +20,7 @@ classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
       
       if ~obj.isInstalled(),
         obj.warn('ebr not found installed');
-        obj.installDeps();
+        obj.install();
       end
       
       % Check platform dependence
