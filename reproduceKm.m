@@ -203,7 +203,6 @@ for mf = 1:numel(magFactors)
     detector = descriptorAdapter(detectors{detectorIdx},descrExtr);
     magnifScores(detectorIdx,mf) = ...
       matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
-    matchBenchmark.enableCaching();
   end
 end
 saveResults(magnifScores, fullfile(resultsDir,'matching_vs_mag'));
