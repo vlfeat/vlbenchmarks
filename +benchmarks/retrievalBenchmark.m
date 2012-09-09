@@ -85,7 +85,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       % Pick only features in the query box
       qFrames = localFeatures.helpers.frameToEllipse(frames{qImgId});
       visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
-      qDescriptors = single(descriptors{qImgNo}(:,visibleFrames));
+      qDescriptors = single(descriptors{qImgId}(:,visibleFrames));
       qNumDescriptors = size(qDescriptors,2);
       allDescriptors = single([descriptors{:}]);
 

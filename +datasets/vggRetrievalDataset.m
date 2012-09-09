@@ -162,7 +162,7 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
       %  QUERY_SIGNATURE = GETQUERYSIGNATURE(QUERY) Get an unique string
       %  signatures QUERY_SIGNATURE of a query struct. QUERY.
       import helpers.*;
-      imagePath = obj.getImagePathById(query.imageId);
+      imagePath = obj.getImagePath(query.imageId);
       imageSign = fileSignature(imagePath);
       querySignature = strcat(imageSign,mat2str(query.good),...
         mat2str(query.ok),mat2str(query.junk));
