@@ -1,5 +1,5 @@
 classdef genericLocalFeatureExtractor < handle & helpers.Logger
-% GENERICLOCALFEATUREEXTRACTOR Interface of a local feature extractor wrapper
+% GENERICLOCALFEATUREEXTRACTOR Base class of a local feature extractor wrapper
 %   GENERICLOCALFEATUREEXTRACTOR defines the interface of a wrapper of
 %   a local feature. This class inherits from HANDLE, so it is copied
 %   by reference, not by value.
@@ -29,49 +29,65 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     descsKeyPrefix = '+desc'; % Prefix of the cached features key
   end
 
-  methods(Abstract)
-    % The constructor of every class that inherits from this class
-    % is expected to be used to set the options specific to that
-    % detector
+  methods
+    % The constructor of every class that inherits from this class is
+    % expected to be used to set the options specific to that
+    % detector.
 
-    [frames descriptors] = extractFeatures(obj, imagePath)
-    % EXTRACTFEATURES
-    % Expect path to the source image on which the feature extraction
-    % should be performed. For caching the results use methods
-    % cacheFeatures and loadFeatures.
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+    % EXTRACTFEATURES Extracts features frames and descriptors from image
+    %   [FRAMES, DESCRIPTORS] = EXTRACTFEATURES(IMAGEPATH) is expected to
+    %   extract fetures frames and optionally their descriptors from
+    %   the image whose path is specified as input.
     %
-    % The frames can be of the following format:
-    % Output:
-    %   frames: 3 x nFrames array storing the output regions as circles
-    %     or
-    %   frames: 5 x nFrames array storing the output regions as ellipses
+    %   An implementation is also expected to cache the results by
+    %   using the methods CACHEFEATURES and LOADFEATURES.
     %
-    %   frames(1,:) stores the X-coordinates of the points
-    %   frames(2,:) stores the Y-coordinates of the points
+    %   FRAMES has a column for each feature frame (keypoint, region)
+    %   detected. A column FRAME can have one of the followin formats:
     %
-    %   if frames is 3 x nFrames, then frames(3,:) is the radius of the circles
-    %   if frames is 5 x nFrames, then frames(3,:), frames(4,:) and frames(5,:)
-    %   store respectively the S11, S12, S22 such that
-    %   ELLIPSE = {x: x' inv(S) x = 1}.
+    %     * CIRCLES
+    %       + FRAME(1:2)   center
+    %       + FRAME(3)     radius
     %
-    % When called only with one output argument, only frames are
-    % calculated. When invoked with two output arguments, descriptors of
-    % the frames are calculated. However descriptor calculation may
-    % invalidate some frames.
+    %     * ORIENTED CIRCLES
+    %       + FRAME(1:2)   center
+    %       + FRAME(3)     radius
+    %       + FRAME(4)     orientation
+    %
+    %     * ELLIPSES
+    %       + FRAME(1:2)   center
+    %       + FRAME(3:5)   S11, S12, S22 such that ELLIPSE = {x: x' inv(S) x = 1}.
+    %
+    %     * ORIENTED ELLIPSES
+    %       + FRAME(1:2)   center
+    %       + FRAME(3:6)   stacking of A such that ELLIPSE = {A x : |x| = 1}
+    %
+    %
+    %   When called only with one output argument, only frames are
+    %   calculated. When invoked with two output arguments,
+    %   descriptors of the frames are calculated. Note that the
+    %   frames computed in the two cases may differ as in certain
+    %   cases the descriptors cannot be computed for some frames
+    %   (e.g. if too close to the image boundary).
+      error('Not supported') ;
+    end
 
-    [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-    % EXTRACTDESCRIPTOR Extract descriptors of input frames
-    % Extract descriptors of regions defined by frames in an image
-    % defined by its path imagePath. Outputs refined list of frames and
-    % descriptors.
 
-    sign = getSignature(obj)
-    % GETSIGNATURE
-    % Returns unique signature for detector parameters.
-    %
-    % This function is used for caching detected results. When the detector
-    % parameters had changed, the signature must be different as well.
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+    % EXTRACTDESCRIPTOR Extract descriptors for specified features  on an image
+    %   [FRAMES, DESCRIPTORS] = EXTRACTDESCRIPTORS(OBJ, IMAGEPATH,
+    %   FRAMES) is similar to EXTRACTFEATURES() but computes
+    %   descriptors for the specified frames instead of running a
+    %   detector.
+      error('Not supported') ;
+    end
 
+    function sign = getSignature(obj)
+    % GETSIGNATURE Get a signature for a class instance
+    %   The signature is a hash that should indentify a setting of
+      error('Not supported') ;
+    end
   end
 
   methods (Access = public)

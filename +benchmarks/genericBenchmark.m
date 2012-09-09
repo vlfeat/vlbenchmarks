@@ -1,8 +1,8 @@
 classdef genericBenchmark < handle
-  %GENERICBENCHMARK Abstract class defining generic benchmark
+%  GENERICBENCHMARK The base class of a benchmark
 
   properties
-    benchmarkName         % Name of the test
+    benchmarkName % Name of the benchmark
   end
 
   properties(GetAccess=public, SetAccess = protected)
@@ -11,7 +11,7 @@ classdef genericBenchmark < handle
 
   methods (Abstract)
     signature = getSignature(obj)
-    % GETSIGNATURE Get signature of the benchmark settings
+    % GETSIGNATURE Get a signature (hash) identifying the benchmark settings
   end
 
   methods

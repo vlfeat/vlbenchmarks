@@ -2,75 +2,83 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
 % REPEATABILITYBENCHMARK evaluates the repeatability and matching scores of features
 %   REPEATABILITYBENCHMARK(resultsStorage,'OptionName',optionValue,...)
-%   constructs an object to compute the repeatabiliy and matching
-%   scores [1] of detected features.
+%   constructs an object to compute the detector repeatabiliy and the
+%   descriptor matching scores as given in [1].
 %
-%   DETAILS ON THE REPEATABILITY AND MATCHING SCORE MEASURES
+%   Using this class is a two step process. First, create an instance
+%   of the class specifying any parameter needed in the
+%   constructor. Then, use TESTFEATURES() to evaluate the scores given
+%   a pair of images, the detected features (and optionally their
+%   descriptors), and the homography between the two images.
 %
-%   The repeatability measure is calculated for two sets of feature
+%   Use TESTDETECTOR() to evaluate the test for a given detector and
+%   pair of images and being able to cache the results of the test.
+%
+%   DETAILS ON THE REPEATABILITY AND MATCHING SCORES
+%
+%   The detector repeatability is calculated for two sets of feature
 %   frames FRAMESA and FRAMESB detected in a reference image IMAGEA
 %   and a second image IMAGEB. The two images are assumed to be
 %   related by a known homography H mapping pixels in the domain of
 %   IMAGEA to pixels in the domain of IMAGEB (e.g. static camera, no
-%   parallax, or moving camera looking at a flat scene). The homography
-%   assumes image coordinates with origin in (0,0).
+%   parallax, or moving camera looking at a flat scene). The
+%   homography assumes image coordinates with origin in (0,0).
 %
 %   A perfect co-variant detector would detect the same features in
 %   both images regardless of a change in viewpoint (for the features
-%   that are visible in both cases). A good detector would also be
+%   that are visible in both cases). A good detector will also be
 %   robust to noise and other distortion. Repeatability is the
 %   percentage of detected features that survive a viewpoint change or
-%   some other alteration of the image.
+%   some other transformation or disturbance in going from IMAGEA to
+%   IMAGEB.
 %
 %   More in detail, repeatability is by default computed as follows:
 %
 %   1. The elliptical or circular feature frames FRAMEA and FRAMEB,
-%      the image sizes SIZEA and SIZEB, and the homography H are given
-%      as input.
+%      the image sizes SIZEA and SIZEB, and the homography H are
+%      obtained.
 %
-%   2. Only features (ellipses or circles) that are fully visible in
-%      both images are retained. This tests whether a feature is
-%      contained in the images where it is detected as well as in the
-%      other image once reprojected by the homography.
+%   2. Features (ellipses or circles) that are fully visible in both
+%      images are retained and the others discarded.
 %
-%   3. For each pair of feature frames A and B, the normalised
-%      overlap measure OVERLAP(A,B) is computed. This is defined as
-%      the ratio of the area of the intersection over the area of
-%      the union of the ellpise/circle FRAMESA(:,A) and FRAMES(:,B)
-%      reprojected on IMAGEA by the homography H. Furthermore,
-%      after reprojection the size of the ellpises/circles are
-%      rescaled so that FRAMESA(:,A) has an area of \pi*30^2 pixels.
+%   3. For each pair of feature frames A and B, the normalised overlap
+%      measure OVERLAP(A,B) is computed. This is defined as the ratio
+%      of the area of the intersection over the area of the union of
+%      the ellpise/circle FRAMESA(:,A) and FRAMES(:,B) reprojected on
+%      IMAGEA by the homography H. Furthermore, after reprojection the
+%      size of the ellpises/circles are rescaled so that FRAMESA(:,A)
+%      has an area equal to the one of a circle of radius 30 pixels.
 %
-%   4. Feature are matched optimistically. A pair of features (A,B) is
-%      considered as a candidate match if OVERLAP(A,B) is larger than
-%      a threshold of 0.6 (1-OverlapError). Then, a final set of matches
-%      M={(A,B)} is selected by performing a greedy (weighted) bipartite
-%      matching between the two sets of features. This means that each
-%      feature in IMAGEA can be matched to at most one anoter feature in
-%      IMAGEB, and matches are selected in order of decreasing OVERLAP(A,B).
+%   4. Feature are matched optimistically. A candidate match (A,B) is
+%      created for every pair of features A,B such that the
+%      OVELRAP(A,B) is larger than a certain threshold (defined as 1 -
+%      OverlapError) and weighted by OVERLAP(A,B). Then, the final set
+%      of matches M={(A,B)} is obtained by performing a greedy
+%      bipartite matching between in the weighted graph
+%      thus obtained. Greedy means that edges are assigned in order
+%      of decreasing overlap.
 %
-%   5. Repeatability is defined as the ratio of the number of
-%      matches M and the minimum of the number of features in
+%   5. Repeatability is defined as the ratio of the number of matches
+%      M thus obtained and the minimum of the number of features in
 %      FRAMESA and FRAMESB:
 %
 %                                    |M|
 %        repeatability = -------------------------.
 %                        min(|framesA|, |framesB|)
 %
-%   The class also compute the descriptor matching score (see the
-%   'MatchFramesGeometry' and 'MatchFramesDescriptors'
-%   options). This is defined in a similar way, except that:
+%   REPEATABILITYBENCHMARK can compute the descriptor matching score
+%   too (see the 'MatchFramesGeometry' and 'MatchFramesDescriptors'
+%   options). To define this, a second set of matches M_d is obtained
+%   similarly to the previous method, except that the descriptors
+%   distances are used in place of the overlap, no threshold is
+%   involved in the genration of canidate matches, and these are
+%   selected by increasing descriptor distance rather than by
+%   decreasing overlap during greedy bipartite matching. Then the
+%   descriptor matching score is defined as:
 %
-%   1. All pairs of feature descriptors are considered, their
-%      distances DIST(DESCRA(:,A),DESCRB(:,B)) are computed, and a set
-%      of bipartite matches M_d={(A,B)} is greedly formed by increasing
-%      descriptor distance.
-%
-%   2. From the matches M = intersect(M_d,M_g), where M_g is calculated as
-%      matching for repeatability defined above, the ones for which
-%      OVERLAP(A,P) is below the 0.6 threshold are removed.
-%
-%   3. Given M, the matching score is defined as the repeatability.
+%                              |inters(M,M_d)|
+%        matching-score = -------------------------.
+%                         min(|framesA|, |framesB|)
 %
 %   The test behaviour can be adjusted by modifying the following options:
 %
@@ -198,17 +206,14 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 
       if isempty(cachedResults)
         if obj.opts.matchFramesDescriptors
-          % Calculate bot frames and descriptors
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
-
           [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
             tf, imageAPath, imageBPath, framesA, framesB,...
             descriptorsA, descriptorsB);
         else
           [framesA] = detector.extractFeatures(imageAPath);
           [framesB] = detector.extractFeatures(imageBPath);
-
           [score numMatches bestMatches reprojFrames] = ...
             obj.testFeatures(tf,imageAPath, imageBPath,framesA, framesB);
         end
@@ -252,15 +257,19 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       overlapError = obj.opts.overlapError;
       overlapThresh = 1 - overlapError;
 
+      % convert frames from any supported format to unortiented
+      % ellipses for uniformity
       framesA = localFeatures.helpers.frameToEllipse(framesA) ;
       framesB = localFeatures.helpers.frameToEllipse(framesB) ;
 
-      % map
+      % map frames from image A to image B and viceversa
       reprojFramesA = warpEllipse(tf, framesA,...
         'Method',obj.opts.warpMethod) ;
       reprojFramesB = warpEllipse(inv(tf), framesB,...
         'Method',obj.opts.warpMethod) ;
 
+      % optionally remove frames that are not fully contained in
+      % both images
       if obj.opts.cropFrames
         imageA = imread(imageAPath);
         imageB = imread(imageBPath);
@@ -310,14 +319,15 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       matches = zeros(0, numFramesA) ;
 
       if obj.opts.matchFramesGeometry
-        % Collect all frame overlaps in a single array ~ edges in a
-        % bipartite graph
+        % Create an edge between each feature in A and in B
+        % weighted by the overlap. Each edge is a candidate match.
         corresp = cell(1,numFramesA);
         for j=1:numFramesA
           numNeighs = length(frameOverlaps.scores{j});
           if numNeighs > 0
-            corresp{j} = [j *ones(1,numNeighs); frameOverlaps.neighs{j};...
-              frameOverlaps.scores{j}];
+            corresp{j} = [j *ones(1,numNeighs); ...
+                          frameOverlaps.neighs{j}; ...
+                          frameOverlaps.scores{j}];
           end
         end
         corresp = cat(2,corresp{:}) ;
@@ -325,17 +335,17 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
           score = 0; numMatches = 0; matches = zeros(1,numFramesA); return;
         end
 
-        % Remove edges with unsufficient overlap
-        corresp = corresp(:,corresp(3,:)>overlapThresh);
+        % Remove edges (candidate matches) that have insufficient overlap
+        corresp = corresp(:,corresp(3,:) > overlapThresh) ;
         if isempty(corresp)
           score = 0; numMatches = 0; matches = zeros(1,numFramesA); return;
         end
 
-        % Create ranked list of edges based on the overlap
+        % Sort the edgest by decrasing score
         [drop, perm] = sort(corresp(3,:), 'descend');
         corresp = corresp(:, perm);
 
-        % Find on-to-one best matches based on frames geometry
+        % Approximate the best bipartite matching
         obj.info('Matching frames geometry.');
         geometryMatches = greedyBipartiteMatching(numFramesA,...
           numFramesB, corresp(1:2,:)');
