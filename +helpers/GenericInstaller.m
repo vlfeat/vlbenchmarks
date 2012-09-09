@@ -155,9 +155,9 @@ classdef GenericInstaller < handle
 
   methods (Static)
     function [srclist flags]  = getMexSources()
-      % [srclist flags] = getMexSources()
+      % [SRCLIST FLAGS] = GETMEXSOURCES()
       %   Reimplement this method if mex files compilation
-      %   is needed. Srcllist and flags are cell arrays of same
+      %   is needed. SRCLIST and FLAGS are cell arrays of same
       %   length which specify paths to C/CPP sources and mex
       %   compilation flags respectively.
       srclist = {};
@@ -165,9 +165,9 @@ classdef GenericInstaller < handle
     end
 
     function [urls dstPaths] = getTarballsList()
-      % [urls dstPaths] = getTarballsList()
+      % [URLS DSTPATHS] = GETTARBALLSLIST()
       %   Reimplement this method if your class need to download and
-      %   unpack data. urls and dstPaths are cell arrays of same
+      %   unpack data. URLS and DSTPATHS are cell arrays of same
       %   length which specify locations of the tarballs and the
       %   unpack folders respectively.
       urls = {};
@@ -175,20 +175,20 @@ classdef GenericInstaller < handle
     end
 
     function deps = getDependencies()
-      % deps = getDependenscies()
+      % DEPS = GETDEPENDENCIES()
       %   Reimplement this method if your class depends on different
       %   classes. Returns cell aray of objects.
       deps = {};
     end
 
     function res = isCompiled()
-    % isCompiled() Reimplement this method to specify whether
+    % ISCOMPILED() Reimplement this method to specify whether
     %   compilation (or another script) is neede.
       res = true;
     end
 
     function compile()
-    % compile() Reimplement this method if your class need to compile
+    % COMPILE() Reimplement this method if your class need to compile
     %   or perform another actions during installation process.
     end
 
@@ -216,12 +216,17 @@ classdef GenericInstaller < handle
     function installTarball(url,distDir)
       import helpers.*;
       [address filename ext] = fileparts(url);
+      unpackTagFile = fullfile(distDir,['.',filename,ext,...
+        GenericInstaller.unpackedTagFileExt]);
+      % Check whether the file is not already downloaded
+      if exist(unpackTagFile,'file')
+        fprintf('Archive %s already unpacked.\n',[filename,ext]);
+        return;
+      end
       fprintf('Downloading and unpacking %s.\n',url);
       helpers.unpack(url, distDir);
       
       % Create dummy file to tag that archive has been unpacked
-      unpackTagFile = fullfile(distDir,['.',filename,ext,...
-        GenericInstaller.unpackedTagFileExt]);
       f = fopen(unpackTagFile,'w');
       fclose(f);
     end
