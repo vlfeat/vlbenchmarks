@@ -96,7 +96,7 @@ legend(detNames,'Location','NorthWest');
 fprintf('\n######## REPEATABILITY VS. NORM. REG. SIZE (Fig. 21b) #######\n');
 
 normRegSizes = [15 30 50 75 90 110];
-nrsScores = zeros(numDetectors,size(normRegSizes));
+nrsScores = zeros(numDetectors,numel(normRegSizes));
 
 for nrsi = 1:numel(normRegSizes)
   rBenchm = repeatabilityBenchmark(...
