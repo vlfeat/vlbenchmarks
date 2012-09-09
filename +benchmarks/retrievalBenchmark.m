@@ -1,6 +1,12 @@
 classdef retrievalBenchmark < benchmarks.genericBenchmark ...
-    & helpers.GenericInstaller
+    & helpers.GenericInstaller & helpers.Logger
   %RETREIVALBENCHMARK
+  %
+  % REFERENCES
+  % [1] H. Jegou, M. Douze and C. Schmid,
+  %     Exploiting descriptor distances for precise image search,
+  %     Research report, INRIA 2011
+  %     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
 
   properties
     opts;
@@ -8,9 +14,8 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
 
   properties(Constant)
     defK = 50;
-    defMaxComparisonsFactor = inf;
+    defDistMetric = 'L2';
     resultsKeyPrefix = 'retreivalResults';
-    kdtreeKeyPrefix = 'kdtree';
     datasetFeaturesKeyPrefix = 'datasetFeatures';
   end
 
@@ -18,8 +23,8 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
     function obj = retrievalBenchmark(varargin)
       obj.benchmarkName = 'RetrBenchmark';
       obj.opts.k = obj.defK;
-      obj.opts.maxComparisonsFactor = obj.defMaxComparisonsFactor;
       obj.opts.maxNumQueries = inf;
+      obj.opts.distMetric = obj.defDistMetric;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.configureLogger(obj.benchmarkName,varargin);
     end
@@ -47,22 +52,6 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
 
       % Retreive features of all images
       [frames descriptors] = obj.getAllDatasetFeatures(dataset, detector);
-      
-      % Compute the KDTree
-      %kdtreeKey = strcat(obj.kdtreeKeyPrefix,detector.getSignature(),...
-      %  dataset.getImagesSignature());
-      %kdtree = DataCache.getData(kdtreeKey);
-      %if isempty(kdtree)
-      %  allFeaturesNum = size([descriptors{:}],2);
-      %  obj.info('Building kdtree of %d features.',allFeaturesNum);
-      %  kdStartTime = tic;
-      %  kdtree = vl_kdtreebuild(single([descriptors{:}]));
-      %  obj.debug('Kdtree built in %fs.',toc(kdStartTime));
-      %  DataCache.storeData(kdtree,kdtreeKey);
-      %else
-      %  obj.debug(obj.benchmarkName,'Kdtree loaded from cache.');
-      %end
-      kdtree = [];
 
       % Compute average precisions
       numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
@@ -70,7 +59,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       parfor q = 1:numQueries
         obj.info('Computing query %d/%d.',q,numQueries);
         query = dataset.getQuery(q);
-        queriesAp(q) = obj.evalQuery(frames, descriptors, kdtree, query);
+        queriesAp(q) = obj.evalQuery(frames, descriptors, query);
       end
 
       mAP = mean(queriesAp);
@@ -81,17 +70,12 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       DataCache.storeData(results, resultsKey);
     end
 
-    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, kdtree, query)
+    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, query)
       import helpers.*;
       import benchmarks.*;
 
       startTime = tic;
       k = obj.opts.k;
-      kdtArgs = {'NumNeighbors', k};
-      maxCompF = obj.opts.maxComparisonsFactor;
-      if ~isinf(maxCompF) && maxCompF > 0
-        kdtArgs = [kdtArgs {'MaxComparisons', maxCompF * k}];
-      end
 
       qImgId = query.imageId;
       % Pick only features in the query box
@@ -115,9 +99,9 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       
       obj.info('Computing %d-nearest neighbours of %d descriptors.',...
         k,qNumDescriptors);
-      %[indexes, dists] = vl_kdtreequery(kdtree, allDescriptors,...
-      %  qDescriptors, kdtArgs{:}) ;
-      [indexes, dists] = obj.yaelKnn(allDescriptors, qDescriptors, k);
+      distMetric = YaelInstaller.distMetricParamMap(obj.opts.distMetric);
+      [indexes, dists] = yael_nn(single(allDescriptors), ...
+        single(qDescriptors), min(k, size(qDescriptors,2)),distMetric);
 
       nnImgIds = imageIdxs(indexes);
 
@@ -125,7 +109,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
         repmat( dists(end,:), min(k,qNumDescriptors), 1 ) - dists,...
         nnImgIds );
       votes = votes./sqrt(numDescriptors);
-      [temp, rankedList]= sort( votes, 'descend' ); 
+      [temp, rankedList]= sort(votes, 'descend'); 
 
       [precision recall inf]  = retrievalBenchmark.calcPR(query, votes);
       ap = inf.ap;
@@ -139,7 +123,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       signature = helpers.struct2str(obj.opts);
     end
 
-    function [frames descriptors] = getAllDatasetFeatures(obj,dataset, detector)
+    function [frames descriptors] = getAllDatasetFeatures(obj, dataset, detector)
       import helpers.*;
       numImages = dataset.numImages;
 
@@ -176,17 +160,11 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       y(query.imageId) = 0 ;
       [precision recall info] = vl_pr(y, scores);
     end
-
-    function [indexes dists] = yaelKnn(features, qFeatures, k)
-      yaelPath = fullfile('data','software','yael_v277','matlab','');
-      addpath(yaelPath);
-      [indexes, dists] = yael_nn(single(features), single(qFeatures), ...
-        min(k, size(qFeatures,2)));
-      rmpath(yaelPath);
-    end
     
     function deps = getDependencies()
-      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
+      import helpers.*;
+      deps = {Installer(),benchmarks.helpers.Installer(),...
+        VlFeatInstaller(),YaelInstaller()};
     end
   end  
 end
