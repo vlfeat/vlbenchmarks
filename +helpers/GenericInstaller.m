@@ -35,6 +35,12 @@ classdef GenericInstaller < handle
   end
 
   methods
+    function obj=GenericInstaller()
+      if obj.isInstalled()
+        obj.setup();
+      end
+    end
+
     function res = isInstalled(obj)
     % ISINSTALLED Test whether all the specified data are installed
       res = obj.dependenciesInstalled() ...
@@ -52,6 +58,7 @@ classdef GenericInstaller < handle
       obj.installTarballs();
       obj.compile();
       obj.compileMexFiles();
+      obj.setup();
     end
 
     function res = dependenciesInstalled(obj)
@@ -183,6 +190,11 @@ classdef GenericInstaller < handle
     function compile()
     % compile() Reimplement this method if your class need to compile
     %   or perform another actions during installation process.
+    end
+
+    function setup()
+     % SETUP() Reimplement this method if your class need to adjust Matlab
+     %   environment before it can be used.
     end
 
     function installMex(mexFile, flags)

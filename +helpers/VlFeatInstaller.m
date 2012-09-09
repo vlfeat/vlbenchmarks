@@ -53,6 +53,17 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       import helpers.*;
       res = exist(VlFeatInstaller.mexDir,'dir');
     end
+
+    function setup()
+      if(~exist('vl_demo','file')),
+        vlFeatDir = helpers.VlFeatInstaller.dir;
+        if(exist(vlFeatDir,'dir'))
+          run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
+        else
+          error('VLFeat not found, cannot setup properly.\n');
+        end
+      end
+    end
   end
     
 end
