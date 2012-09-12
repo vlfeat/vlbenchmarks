@@ -29,7 +29,11 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
     % The properties below correspond to parameters for the vggMser
     % binary accepts. See the binary help for explanation.
     binPath
-    opts
+    opts = struct(...
+      'es', -1,...
+      'per', -1,...
+      'ms', -1,...
+      'mm', -1);
   end
   
     properties (Constant)
@@ -47,10 +51,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       obj.detectorName = obj.name;
 
       % Parse the passed options
-      obj.opts.es = -1;
-      obj.opts.per = -1;
-      obj.opts.ms = -1;
-      obj.opts.mm = -1;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
       obj.configureLogger(obj.name,varargin);

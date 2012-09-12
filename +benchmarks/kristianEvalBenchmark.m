@@ -16,12 +16,12 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
   %
   
   properties
-    opts                % Options of the km eval
+    opts = struct(...
+      'overlapError', 0.4,...
+      'commonPart', 1);
   end
   
   properties (Constant)
-    defOverlapError = 0.4;
-    defCommonPart = 1;
     installDir = fullfile('data','software','repeatability','');
     keyPrefix = 'kmEval';
     testTypeKeys = {'rep','rep+match'};
@@ -34,9 +34,6 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       import helpers.*;
       
       obj.benchmarkName = 'kristian_eval'; 
-      
-      obj.opts.overlapError = kristianEvalBenchmark.defOverlapError;
-      obj.opts.commonPart = kristianEvalBenchmark.defCommonPart;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
       % Index of a value from the test results corresponding to idx*10 overlap

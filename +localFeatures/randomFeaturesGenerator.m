@@ -3,7 +3,16 @@
 
 classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
-    opts
+    opts = struct(...
+      'featuresDensity', 2e-3,... % Number of features  per pixel
+      'frameType', 3,... % Disc
+      'maxScale', 30,...
+      'minScale', 1,...
+      'descSize', 128,...
+      'descMaxValue', 255,...
+      'descMinValue', 0,...
+      'descInteger', false... 
+      );
   end
 
   properties (Constant)
@@ -12,8 +21,6 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
   end
 
   methods
-    % The constructor is used to set the options for the cmp
-    % hessian binary.
     function obj = randomFeaturesGenerator(varargin)
       import localFeatures.*;
       import helpers.*;
@@ -21,17 +28,6 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
-
-      obj.opts.featuresDensity = 2e-3; % Number of features  per pixel
-
-      obj.opts.frameType = obj.ORIENTED_DISC;
-      obj.opts.maxScale = 30;
-      obj.opts.minScale = 1;
-
-      obj.opts.descSize = 128;
-      obj.opts.descMaxValue = 255;
-      obj.opts.descMinValue = 0;
-      obj.opts.descInteger = false;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.configureLogger(obj.name,varargin);
     end

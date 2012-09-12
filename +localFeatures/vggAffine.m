@@ -36,7 +36,14 @@
 classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
     & helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
-    opts
+    opts = struct(...
+      'detector', 'hesaff',...
+      'threshold', -1,...
+      'noAngle', false,...
+      'descriptor', 'sift',...
+      'magnification', 3,...
+      'cropFrames', true...
+      );
   end
   
   properties (Constant)
@@ -63,13 +70,6 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         obj.install();
       end
 
-      % Default options
-      obj.opts.detector= 'hesaff';
-      obj.opts.threshold = -1;
-      obj.opts.noAngle = false;
-      obj.opts.descriptor = 'sift';
-      obj.opts.magnification = 3;
-      obj.opts.cropFrames = true;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
 
       if ~ismember(obj.opts.detector, obj.validDetectors)

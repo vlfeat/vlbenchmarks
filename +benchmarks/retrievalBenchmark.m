@@ -9,22 +9,17 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
   %     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
 
   properties
-    opts;
-  end
-
-  properties(Constant)
-    defK = 50;
-    defDistMetric = 'L2';
-    resultsKeyPrefix = 'retreivalResults';
-    datasetFeaturesKeyPrefix = 'datasetFeatures';
+    opts = struct(...
+      'K', 50,...
+      'DistMetric', 'L2',...
+      'ultsKeyPrefix', 'retreivalResults',...
+      'asetFeaturesKeyPrefix', 'datasetFeatures'...
+      );
   end
 
   methods
     function obj = retrievalBenchmark(varargin)
       obj.benchmarkName = 'RetrBenchmark';
-      obj.opts.k = obj.defK;
-      obj.opts.maxNumQueries = inf;
-      obj.opts.distMetric = obj.defDistMetric;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.configureLogger(obj.benchmarkName,varargin);
       if ~obj.isInstalled()

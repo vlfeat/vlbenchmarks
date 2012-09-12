@@ -54,7 +54,11 @@
 classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
     & helpers.GenericInstaller
   properties (SetAccess=protected, GetAccess=public)
-    opts;
+    opts = struct(...
+      'category','oxbuild',...
+      'lite',true,...
+      'liteJunkImagesNum',300,...
+      'cacheDatabase',true);
     imagesDir;  % Directory with current category images
     gtDir;      % Directory with current category ground truth data
     images;     % Array of structs defining the dataset images
@@ -67,11 +71,6 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
     allCategories = {'oxbuild'};
     imagesUrls = {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/oxbuild_images.tgz'};
     gtDataUrls = {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/gt_files_170407.tgz'};
-    % Default values
-    defCategory = 'oxbuild';
-    defLite = true;
-    defLiteJunkImagesNum = 300;
-    defCacheDatabase = true;
   end
 
   methods
@@ -85,10 +84,6 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
         obj.warn('Vgg retreival dataset is not installed');
         obj.install();
       end
-      obj.opts.category= obj.defCategory;
-      obj.opts.lite = obj.defLite;
-      obj.opts.liteJunkImagesNum = obj.defLiteJunkImagesNum;
-      obj.opts.cacheDatabase = obj.defCacheDatabase;
       [obj.opts varargin] = helpers.vl_argparse(obj.opts,varargin);
       assert(ismember(obj.opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...

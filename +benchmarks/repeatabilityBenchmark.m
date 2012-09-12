@@ -129,19 +129,19 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 % AUTORIGHTS
 
   properties
-    opts % Local options of repeatabilityTest
+    opts = struct(...
+      'overlapError', 0.4,...
+      'normaliseFrames', true,...
+      'cropFrames', true,...
+      'magnification', 3,...
+      'warpMethod', 'standard',...
+      'matchFramesGeometry', true,...
+      'matchFramesDescriptors', false,...
+      'descriptorsDistanceMetric', 'L2',...
+      'normalisedScale', 30);
   end
 
   properties(Constant)
-    defOverlapError = 0.4; % Default OverlapError value
-    defNormaliseFrames = true;
-    defCropFrames = true;
-    defMagnification = 3;
-    defWarpMethod = 'standard';
-    defMatchFramesGeometry = true;
-    defMatchFramesDescriptors = false;
-    defDescriptorsDistanceMetric = 'L2';
-    defNormalisedScale = 30;
     keyPrefix = 'repeatability';
   end
 
@@ -150,15 +150,6 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       import benchmarks.*;
       import helpers.*;
       obj.benchmarkName = 'repeatability';
-      obj.opts.overlapError = obj.defOverlapError;
-      obj.opts.normaliseFrames = obj.defNormaliseFrames;
-      obj.opts.magnification  = obj.defMagnification;
-      obj.opts.cropFrames = obj.defCropFrames;
-      obj.opts.warpMethod = obj.defWarpMethod;
-      obj.opts.matchFramesGeometry = obj.defMatchFramesGeometry;
-      obj.opts.matchFramesDescriptors = obj.defMatchFramesDescriptors;
-      obj.opts.descriptorsDistanceMetric = obj.defDescriptorsDistanceMetric;
-      obj.opts.normalisedScale = obj.defNormalisedScale;
       if numel(varargin) > 0
         [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       end

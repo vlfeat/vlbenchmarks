@@ -26,9 +26,15 @@
 
 classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
   properties (SetAccess=private, GetAccess=public)
-    opts
-    detBinPath
-    descrBinPath
+    detBinPath;
+    descrBinPath;
+    opts = struct(...
+      'detector', hessian',...
+      'threshold', -1,...
+      'noAngle', false,...
+      'magnification', 3,...
+      'descType', 'sift'...
+      );
   end
   
   properties (Constant)
@@ -42,21 +48,12 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
     function obj = vggNewAffine(varargin)
       import localFeatures.*;
       import helpers.*;
-
       if ~vggNewAffine.isInstalled(),
         obj.isOk = false;
         obj.errMsg = 'vggNewAffine not found installed';
         return;
       end
-
-      % Default options
-      obj.opts.detector= 'hessian';
-      obj.opts.threshold = -1;
-      obj.opts.noAngle = false;
-      obj.opts.magnification = 3;
-      obj.opts.descType = 'sift';
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-
       switch(lower(obj.opts.detector))
         case 'hessian'
           obj.opts.detectorType = 'hesaff';

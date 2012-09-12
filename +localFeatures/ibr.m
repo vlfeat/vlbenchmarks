@@ -3,7 +3,11 @@
 classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
-    opts
+    opts = struct(...
+      'scalefactor', -1,...
+      'numberofregions', -1,...
+      'stabilitythreshold', -1,...
+      'overlapthreshold', -1);
   end
   
   properties (Constant)
@@ -18,16 +22,9 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
       import helpers.*;
       obj.name = 'IBR';
       obj.detectorName = obj.name;
-
       % Parse the passed options
-      obj.opts.scalefactor = -1;
-      obj.opts.numberofregions = -1;
-      obj.opts.stabilitythreshold = -1;
-      obj.opts.overlapthreshold = -1;
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      
       obj.configureLogger(obj.name,varargin);
-      
       if ~obj.isInstalled(),
         obj.warn('IBR not found installed');
         obj.install();
