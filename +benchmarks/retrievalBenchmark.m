@@ -17,6 +17,11 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       );
   end
 
+  properties (Constant)
+    resultsKeyPrefix = 'retreivalResults';
+    datasetFeaturesKeyPrefix = 'datasetFeatures';
+  end
+
   methods
     function obj = retrievalBenchmark(varargin)
       obj.benchmarkName = 'RetrBenchmark';
