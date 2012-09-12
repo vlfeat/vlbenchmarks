@@ -95,10 +95,7 @@ classdef GenericInstaller < handle
     %   <dst_dir>/.<archive_name>.unpacked
       [urls dstPaths] = obj.getTarballsList();
       for i = 1:numel(dstPaths)
-        [address filename ext] = fileparts(urls{i});
-        % Create dummy file to tag that archive has been unpacked
-        unpackTagFile = fullfile(dstPaths{i},['.',filename,ext,...
-          obj.unpackedTagFileExt]);
+        unpackTagFile = obj.getUnapckedTagFile(urls{i}, dstPaths{i});
         if ~exist(unpackTagFile,'file')
           res = false;
           return
@@ -216,22 +213,38 @@ classdef GenericInstaller < handle
 
     function installTarball(url,distDir)
       import helpers.*;
-      [address filename ext] = fileparts(url);
-      unpackTagFile = fullfile(distDir,['.',filename,ext,...
-        GenericInstaller.unpackedTagFileExt]);
+      unpackTagFile = GenericInstaller.getUnapckedTagFile(url, distDir);
       % Check whether the file is not already downloaded
       if exist(unpackTagFile,'file')
-        fprintf('Archive %s already unpacked.\n',[filename,ext]);
+        fprintf('Archive %s already unpacked.\n',url);
         return;
       end
       fprintf('Downloading and unpacking %s.\n',url);
-      helpers.unpack(url, distDir);
+      try
+        helpers.unpack(url, distDir);
+      catch err
+        fprintf('Error downloading and unpacking archive.\n');
+        fprintf('If you want to skip this step, download archive:\n\n');
+        fprintf('%s\n\nAnd unpack it to a directory:\n\n%s\n\n',url,fullfile(pwd,distDir));
+        fprintf('And create an empty file:\n\n%s\n\n',fullfile(pwd,unpackTagFile));
+        fprintf('Which tags that the archive has been succesfully unpacked.\n');
+        throw(err);
+      end
       
       % Create dummy file to tag that archive has been unpacked
       f = fopen(unpackTagFile,'w');
       fclose(f);
     end
 
+    function unpackTagFile = getUnapckedTagFile(url, distDir)
+      % FILENAME = GETUNPACKEDTAGFILE(URL, DISTDIR) Get path to a tag file
+      %   FILENAME which signal that an tarball URL has been unpacked to a
+      %   folder DISTDIR
+      import helpers.*;
+      [address filename ext] = fileparts(url);
+      unpackTagFile = fullfile(distDir,['.',filename,ext,...
+        GenericInstaller.unpackedTagFileExt]);
+    end
   end
 
 end
