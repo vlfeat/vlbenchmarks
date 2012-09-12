@@ -103,7 +103,7 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       cmd = cell2str({OpenCVInstaller.cmakeCommand,srcDir,args},' ');
       
       cd(OpenCVInstaller.buildDir);
-      status = unix(cmd,'-echo');
+      status = helpers.os_exec(cmd,'-echo');
       cd(prevDir);
       
       if status ~= 0
