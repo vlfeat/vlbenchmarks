@@ -299,6 +299,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
           reprojFramesB(3:5,:).*magFactor];
       end
 
+      reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
       numFramesA = size(framesA,2);
       numFramesB = size(reprojFramesB,2);
 
@@ -380,8 +381,6 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       numBestMatches = sum(matches ~= 0);
       score = numBestMatches / min(size(framesA,2), size(framesB,2));
       numMatches = numBestMatches;
-
-      reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
 
       obj.info('Score: %g \t Num matches: %g', ...
         score,numMatches);

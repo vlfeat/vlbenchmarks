@@ -91,8 +91,8 @@ classdef GenericInstaller < handle
 
     function res = tarballsInstalled(obj)
     % TARBALLSINSTALLED Test whether all tarballs are downloaded.
-    %   Tests if the folder where the tarball should be unpacked
-    %   exist.
+    %   Tests whether in all dest. directories exist a dummy file 
+    %   <dst_dir>/.<archive_name>.unpacked
       [urls dstPaths] = obj.getTarballsList();
       for i = 1:numel(dstPaths)
         [address filename ext] = fileparts(urls{i});
@@ -125,7 +125,8 @@ classdef GenericInstaller < handle
     function installTarballs(obj)
     % INSTALLTARBALLS Download and unpack all tarballs (archives)
     %   List of tarballs and their unpack folder are defined by
-    %   getTarballsList() method implementation.
+    %   getTarballsList() method implementation. Only non-extracted
+    %   tarballs (i.e. without tag file) are downloaded and extracted.
       if obj.tarballsInstalled()
         return;
       end

@@ -61,7 +61,7 @@ int scoreTypeToORBPar(ScoreType st)
   return (int)st - 1;
 }
 
-vlStringEnumMap scoreTypesMap [3] = {
+VlEnumerator scoreTypesMap [3] = {
   {"harris",            (int)HARRIS_SCORE     },
   {"fast" ,             (int)FAST_SCORE       },
   {0,                   0                     }
@@ -138,7 +138,7 @@ mexFunction(int nout, mxArray *out[],
       break ;
 
     case opt_score_type :
-      scoreType = (ScoreType)vlmxGetEnum(optarg, scoreTypesMap);
+      scoreType = (ScoreType)vlmxDecodeEnumeration(optarg, scoreTypesMap,true)->value;
       if (scoreType == 0) {
         mexErrMsgTxt("'ScoreType' must be 'FAST' or 'HARRIS'.") ;
       }
