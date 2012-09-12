@@ -53,6 +53,7 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
 
     function [frames descriptors] = extractFeatures(obj, origImagePath)
       import helpers.*;
+      import localFeatures.*;
       
       [frames descriptors] = obj.loadFeatures(origImagePath,true);
       if numel(frames) > 0; return; end;
@@ -70,8 +71,7 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
         obj.supportedImageFormats);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
 
-      tempName = tempname;
-      featFile = [tempName '.hesaff.sift'];
+      featFile = [imagePath '.hesaff.sift'];
       
       args = sprintf(' "%s" ',imagePath);
       cmd = [obj.binPath ' ' args];
@@ -105,7 +105,7 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
   methods (Static)
     
     function deps = getDependencies()
-      deps = {helpers.Installer()};
+      deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15')};
     end
     
     function compile()

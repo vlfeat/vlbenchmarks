@@ -1,6 +1,6 @@
 % SFOP class to wrap around the SFOP detector implementation
 %
-%   obj = affineDetectors.sfop('Option','OptionValue',...);
+%   obj = localFeatures.sfop('Option','OptionValue',...);
 %   frames = obj.detectPoints(img)
 %
 %   obj class implements the genericDetector interface and wraps around
@@ -38,7 +38,6 @@ classdef sfop < localFeatures.genericLocalFeatureExtractor & ...
       obj.name = 'SFOP';
       obj.detectorName = obj.name;
       obj.sfop_varargin = obj.configureLogger(obj.name,varargin);
-      
       if ~obj.isInstalled(),
         obj.warn('Not installed');
         obj.install();

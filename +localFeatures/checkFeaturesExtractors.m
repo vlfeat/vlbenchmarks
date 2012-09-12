@@ -1,4 +1,4 @@
-% Check local features extractors
+% Check all local features extractors
 
 import localFeatures.*;
 
@@ -30,6 +30,7 @@ randomDet = randomFeaturesGenerator();
 for detector = detectors
   % Test frames detection
   detector = detector{:};
+  detector.disableCaching();
   if ~isempty(detector.detectorName)
     frames = detector.extractFeatures(imgPath);
     fprintf('%s - extracted %d frames.\n',detector.name, size(frames,2));

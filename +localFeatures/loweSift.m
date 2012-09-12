@@ -18,7 +18,6 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
 
     function obj = loweSift(varargin)
       import localFeatures.*;
-      
       obj.name = 'Lowe SIFT';
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
