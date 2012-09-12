@@ -14,6 +14,11 @@ unGzipCommand = 'gunzip %s';
 deleteArchive = true;
 
 [address filename ext] = fileparts(url);
+arch = computer;
+useCliUtils = true;
+if strcmp(arch,'PCWIN64') || strcmp(arch,'PCWIN')
+  useCliUtils = false;
+end
 
 switch ext
   case '.gz'
@@ -23,12 +28,12 @@ switch ext
       command = unGzipCommand;
       deleteArchive = false;
     else
-      untar(url,distDir);
-      return
+      if ~useCliUtils, untar(url,distDir); return; end
+      command = unTarGzipCommand;
     end
   case {'.tar','.tgz'}
-    untar(url,distDir);
-    return;
+    if ~useCliUtils, untar(url,distDir); return; end
+    command = unTarGzipCommand;
   case '.zip'
     unzip(url,distDir);
     return;
@@ -37,6 +42,10 @@ switch ext
   otherwise
     error(['Unknown archive extension ' ext]);
 end 
+
+if ~useCliUtils
+  error('Unpacking on your archticture is not supported.');
+end
 
 % Download the file
 archivePath = helpers.downloadFile(url, distDir);
