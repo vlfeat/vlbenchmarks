@@ -60,7 +60,8 @@ classdef cvFast < localFeatures.genericLocalFeatureExtractor & ...
   
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.Installer() helpers.VlFeatInstaller() helpers.OpenCVInstaller()};
+      deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15') ...
+        helpers.OpenCVInstaller()};
     end
     
     function [srclist flags] = getMexSources()

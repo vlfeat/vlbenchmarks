@@ -7,7 +7,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 %    which depend and link to the VLFeat library.
     
   properties (Constant)
-    installVersion = '0.9.14';
+    installVersion = '0.9.15';
     installDir = fullfile('data','software','vlfeat');
     name = ['vlfeat-' helpers.VlFeatInstaller.installVersion];
     dir = fullfile(pwd,helpers.VlFeatInstaller.installDir,...
@@ -21,6 +21,20 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     MEXFLAGS = sprintf('LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
       helpers.VlFeatInstaller.mexDir,helpers.VlFeatInstaller.mexDir,...
       helpers.VlFeatInstaller.dir);
+  end
+  
+  methods
+    function obj = VlFeatInstaller(minVersion)
+      % VLFEATINSTALLER VLFeat library installer
+      % VLFEATINSTALLER(MIN_VERSION) Construct VLFeat installer and check
+      % whether atl least the MIN_VERSION of VlFeat is available.
+      numVersion =  str2double(char(regexp(obj.installVersion,'\.','split'))');
+      numMinVersion = str2double(char(regexp(minVersion,'\.','split'))');
+      if numVersion < numMinVersion
+        error('VlFeat version >= %s not available. Change the version in file %s.',...
+          numMinVersion,mfilename);
+      end
+    end
   end
   
   methods (Static)    

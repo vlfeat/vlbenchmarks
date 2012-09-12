@@ -72,7 +72,7 @@ classdef vlFeatMser < localFeatures.genericLocalFeatureExtractor & ...
   
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.VlFeatInstaller()};
+      deps = {helpers.VlFeatInstaller('0.9.14')};
     end
   end
 end
