@@ -11,14 +11,10 @@ import helpers.*;
 unbzipCommand = 'tar xvjf %s';
 unTarGzipCommand = 'tar xvzf %s';
 unGzipCommand = 'gunzip %s';
+unZipCommand = 'unzip %s';
 deleteArchive = true;
 
 [address filename ext] = fileparts(url);
-arch = computer;
-useCliUtils = true;
-if strcmp(arch,'PCWIN64') || strcmp(arch,'PCWIN')
-  useCliUtils = false;
-end
 
 switch ext
   case '.gz'
@@ -28,14 +24,15 @@ switch ext
       command = unGzipCommand;
       deleteArchive = false;
     else
-      if ~useCliUtils, untar(url,distDir); return; end
       command = unTarGzipCommand;
+      if ~commandExist(command), untar(url,distDir); return; end
     end
   case {'.tar','.tgz'}
-    if ~useCliUtils, untar(url,distDir); return; end
     command = unTarGzipCommand;
+    if ~commandExist(command), untar(url,distDir); return; end
   case '.zip'
-    unzip(url,distDir);
+    command = unZipCommand;
+    if ~commandExist(command), unzip(url,distDir); return; end
     return;
   case '.bz2'
     command = unbzipCommand;
@@ -43,8 +40,8 @@ switch ext
     error(['Unknown archive extension ' ext]);
 end 
 
-if ~useCliUtils
-  error('Unpacking on your archticture is not supported.');
+if ~commandExist(command)
+  error('Unpacking of the given archive not supported on your system.');
 end
 
 % Download the file
@@ -61,7 +58,7 @@ unpackC = sprintf(command,archivePath);
 curDir = pwd;
 cd(distDir)
 try
-  status = system(unpackC,'-echo');
+  [status ret] = system(unpackC,'-echo');
   cd(curDir);
 catch err
   cd(curDir)
@@ -69,12 +66,17 @@ catch err
   throw(err);
 end
 
-if status ~= 0, error('Error unpacking %s',archivePath); end
-
+if status ~= 0, error('Error unpacking %s: %s',archivePath,ret); end
 % Clean the mess
 if deleteArchive
   delete(archivePath);
 end
+
+  function res = commandExist(command)
+    [ret drop] = system(command);
+    % When command does not exist, it return error code 127
+    res = (ret ~= 127);
+  end
 
 end
 

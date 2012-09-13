@@ -103,7 +103,8 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       cmd = cell2str({OpenCVInstaller.cmakeCommand,srcDir,args},' ');
       
       cd(OpenCVInstaller.buildDir);
-      status = helpers.os_exec(cmd,'-echo');
+      % Run cmake with sys. libraries environment
+      status = helpers.osExec(cmd,'-echo');
       cd(prevDir);
       
       if status ~= 0
