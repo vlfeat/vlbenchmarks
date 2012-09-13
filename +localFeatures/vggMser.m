@@ -1,30 +1,31 @@
+classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
 % VGGMSER class to wrap around the VGG MSER implementation
-%
-%   obj = localFeatures.vggMser('Option','OptionValue',...);
-%   frames = obj.detectPoints(img)
-%
-%   This class implements the genericDetector interface and wraps around the
-%   vgg implementation of MSER detectors available at:
+%   VGGMSER('Option','OptionValue',...) Construct and object which wraps
+%   around a MSER detector [1] binary available at
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz
 %
 %   The constructor call above takes the following options (see the vgg
 %   mser binary for complete interpretation of these options):
 %
-%   ES:: [1.0]
+%   ES:: [binary default, 1.0]
 %     Scale of the ellipse
 %
-%   PER:: [0.01]
+%   PER:: [binary default, 0.01]
 %     Maximum relative area
 %
-%   MS:: [30]
+%   MS:: [binary default, 30]
 %     Minimum size of output region
 %
-%   MM:: [10]
+%   MM:: [binary default, 10]
 %     Minimum margin
 %
+%   REFERENCES
+%   [1] J. Matas, O. Chum, M. Urban and T. Pajdla. Robust wide-baseline 
+%   stereo from maximally stable extremal regions. BMVC, 384-393, 2002.
 
-classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
-    helpers.GenericInstaller
+% AUTORIGHTS
+
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the vggMser
     % binary accepts. See the binary help for explanation.

@@ -1,16 +1,18 @@
-% cmpBinHessian class to wrap around the CMP Hessian Affine detector implementation
-%
-%   obj = localFeatures.cmpBinHessian('Option','OptionValue',...);
-%   frames = obj.detectPoints(img)
-%
-%   This class implements the genericDetector interface and wraps around the
-%   cmp implementation of Hessian Affine detectors available at:
+% CMPBINHESSIAN wrapper around the CMP Hessian Affine detector implementation
+%   CMPBINHESSIAN('Option','OptionValue',...) Constructs an object which
+%   wraps Hessian Affine detector [1] binary available at:
 %   http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz
 %
 %   The constructor call above takes the following options (see the cmp hessian
 %   binary for complete interpretation of these options):
 %
 %   (No options available currently)
+%
+%   REFERENCES
+%   [1] M. Perdoch, O. Chum and J. Matas: Efficient Representation of Local
+%   Geometry for Large Scale Object Retrieval. CVPR, 9-16, 2009
+
+% AUTORIGHTS
 
 classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
     helpers.GenericInstaller

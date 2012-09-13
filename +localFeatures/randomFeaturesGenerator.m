@@ -1,11 +1,48 @@
-% RANDOMFEATURESGENERATOR Generates random features and descriptors
-%   Generator of random discs and oriented discs.
-
 classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
+% RANDOMFEATURESGENERATOR Generates random features and descriptors
+%   RANDOMFEATURESGENERATOR('OptionName','OptionValue',...) Constructs and
+%   object of random features generator.
+%   This class generated bot frames and descriptors based on the given
+%   options. Frames locations are generated with uniform distribution over
+%   the input image with density defined by 'FeaturesDensity' parameter.
+%   The supported frames types are Discs and Oriented Discs. Scale of the
+%   generated frames is generated with uniform distribution limited by
+%   'MaxScale' and 'MinScale' parameter. Frame orientations are uniformly
+%   distributed in interval [0, 2*pi].
+%
+%   Descriptors generation can be affected by parameters 'DescMinValue' and
+%   'DescMaxValue' and 'DescInteger' for integer descriptors generation.
+%
+%   In constructor you can define the following parameters:
+%
+%   FeaturesDensity:: 2e-1
+%     Number of features per image pixel.
+%
+%   FrameType:: randomFeaturesGenerator.DISC
+%     Type of the generated frames. Supported are:
+%     randomFeaturesGenerator.DISC and randomFeaturesGenerator.ORIENTED_DISC
+%
+%   MaxScale:: 30
+%     Maximum scale of generated frames.
+%
+%   MinScale:: 1
+%     Minimum scale of generated frames.
+%
+%   DescSize:: 128
+%     Number of elements in generated descriptors.
+%
+%   DescMaxValues:: 255
+%     Maximal value in a descriptor vector.
+%
+%   DescMinValue:: 0
+%     Minimal value in a descriptor vector.
+
+% AUTORIGHTS
+
   properties (SetAccess=private, GetAccess=public)
     opts = struct(...
       'featuresDensity', 2e-3,... % Number of features  per pixel
-      'frameType', 3,... % Disc
+      'frameType', localFeatures.randomFeaturesGenerator.DISC,...
       'maxScale', 30,...
       'minScale', 1,...
       'descSize', 128,...
@@ -90,11 +127,5 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
     function signature = getSignature(obj)
       signature = helpers.struct2str(obj.opts);
     end
-
   end
-
-  methods (Static)
-
-  end % ---- end of static methods ----
-
 end % ----- end of class definition ----

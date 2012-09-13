@@ -1,7 +1,21 @@
-% EBR Edge based detector
-
 classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
+% EBR Edge-based detector
+%   EBR('OptionName',optionValue,...) Constructs wrapper around edge-based
+%   detector binary [1] [2] used is downlaoded from:
+%
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ebr.ln.gz
+%
+%   (No options available currently)
+%
+%   REFERENCES
+%   [1] T. Tuytelaars, L. Van Gool. et al. Matching of affinely invariant
+%   regions for visual servoing. ICRA, 1999.
+%
+%   [2] T. Tuytelaars, L. Van Gool. Matching Widely Seprated Views based on
+%   Affine Invariant Regions. IJCV 59(1):61-85, 2004.
+
+% AUTORIGHTS
   
   properties (Constant)
     rootInstallDir = fullfile('data','software','ebr','');

@@ -1,7 +1,31 @@
-% IBR Intensity extrema based detector
-
 classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
     helpers.GenericInstaller
+% IBR Intensity extrema-based region detector
+%   IBR('OptionName',OptionValue,...) Constructs wrapper around intensity
+%   extrema-based detector binary [1] [2] used is downlaoded from:
+%
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ibr.ln.gz
+%
+%   This detector supports the following options:
+%
+%   ScaleFactor:: [binary default]
+%
+%   NumberOfRegions:: [binary default]
+%     Number of detected regions.
+%
+%   StabilityThreshold:: [binary default]
+%
+%   OverlapThreshold:: [binary default]
+%
+%   REFERENCES
+%   [1] T. Tuytelaars, L. Van Gool. Wide baseline stereo matching based on
+%   local, affinely invariant regions. BMVC, 412-425, 2000.
+%
+%   [2] T. Tuytelaars, L. Van Gool. Matching Widely Seprated Views based on
+%   Affine Invariant Regions. IJCV 59(1):61-85, 2004.
+
+% AUTORIGHTS
+
   properties (SetAccess=private, GetAccess=public)
     opts = struct(...
       'scalefactor', -1,...
@@ -59,7 +83,6 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
           args = strcat(args,' -',field,' ', num2str(val));
         end
       end
-      
       
       args = sprintf('%s "%s" "%s"',...
                      args, imagePath, framesFile);

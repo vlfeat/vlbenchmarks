@@ -1,4 +1,18 @@
-% DESCRIPTORADAPTER
+% DESCRIPTORADAPTER Join feature frame detector to a descriptor extractor
+%   DESCRIPTORADAPTER(FRAME_DET, DESC_EXTRACT, ...) Constructs an object
+%   of DESCRIPTORADAPTER which combines frame detection capabilities of
+%   FRAME_DET object and descriptor extraction of DESC_EXTRACT object.
+%   Both FRAME_DET and DESC_EXTRACT must be subclasses of
+%   genericLocalFeatureExtractor.
+%   The name of the created loc. feat. extractor is:
+%
+%     OBJ.name = [FRAME_DET.detectorName '+' DESC_EXTRACT.descriptorName]
+%
+%   This class is mainly an convinience wrapper which handles the
+%   genericLocalFeatureExtractor methods and solves the issues of correct
+%   caching of the results.
+
+% AUTORIGHTS
 
 classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
 
@@ -9,7 +23,6 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
   
   methods
     function obj = descriptorAdapter(frameDetector, descExtractor, varargin)
-      
       if ~ismember('localFeatures.genericLocalFeatureExtractor',...
           superclasses(frameDetector))
         error('FrameDetector not a genericLocalFeatureExtractor.');
@@ -84,7 +97,5 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
       obj.frameDetector.enableCaching();
       obj.descExtractor.enableCaching();
     end
-
   end % ------- end of methods --------
-
 end % -------- end of class ---------
