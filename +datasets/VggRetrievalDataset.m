@@ -1,3 +1,5 @@
+classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
+    & helpers.GenericInstaller
 % VGGRETRIEVALDATASET Wrapper of VGG image retrieval datasets.
 %   This class handles VGG image retrieval datasets [1] of images which are
 %   accompanied with groundtruth queries. In these datasets each query q
@@ -51,8 +53,7 @@
 %       Object retrieval with large vocabularies and fast spatial matching
 %       CVPR, 2007
 
-classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
-    & helpers.GenericInstaller
+% AUTORIGHTS
   properties (SetAccess=protected, GetAccess=public)
     opts = struct(...
       'category','oxbuild',...
@@ -74,7 +75,7 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
   end
 
   methods
-    function obj = vggRetrievalDataset(varargin)
+    function obj = VggRetrievalDataset(varargin)
       % OBJ = VGGRETRIEVALDATASET('OptionName',OptionValue)
       %   Constructs the object of the retrieval dataset with the given
       %   option. For details see the class documentation.
@@ -88,7 +89,7 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
       assert(ismember(obj.opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
              obj.opts.category));
-      obj.datasetName = ['vggRetrievalDataset-' obj.opts.category];
+      obj.datasetName = ['VggRetrievalDataset-' obj.opts.category];
       if obj.opts.lite
         obj.datasetName = [obj.datasetName '-lite'];
       end
@@ -237,17 +238,17 @@ classdef vggRetrievalDataset < datasets.genericDataset & helpers.Logger ...
   methods (Static)
     function [urls dstPaths] = getTarballsList()
       import datasets.*;
-      numCategories = numel(vggRetrievalDataset.allCategories);
+      numCategories = numel(VggRetrievalDataset.allCategories);
       urls = cell(1,numCategories*2);
       dstPaths = cell(1,numCategories*2);
-      installDir = vggRetrievalDataset.rootInstallDir;
+      installDir = VggRetrievalDataset.rootInstallDir;
       for i = 1:numCategories
-        curCategory = vggRetrievalDataset.allCategories{i};
+        curCategory = VggRetrievalDataset.allCategories{i};
         % Images
-        urls{2*(i-1)+1} = vggRetrievalDataset.imagesUrls{i};
+        urls{2*(i-1)+1} = VggRetrievalDataset.imagesUrls{i};
         dstPaths{2*(i-1)+1} = fullfile(installDir,curCategory);
         % Ground truth data
-        urls{2*(i-1)+2} = vggRetrievalDataset.gtDataUrls{i};
+        urls{2*(i-1)+2} = VggRetrievalDataset.gtDataUrls{i};
         dstPaths{2*(i-1)+2} = fullfile(installDir,[curCategory '_gt']);
       end
     end

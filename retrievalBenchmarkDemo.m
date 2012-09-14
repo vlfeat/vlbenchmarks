@@ -15,7 +15,7 @@ detNames = {'VGG MSER + VGG SIFT','VGG Harris Affine',...
   'VGG Hessian Affine','CMP Hessian Affine'};
 
 %% Define dataset
-dataset = vggRetrievalDataset('Category','oxbuild','Lite',true);
+dataset = VggRetrievalDataset('Category','oxbuild','Lite',true);
 
 %% Run the benchmark
 retBenchmark = RetrievalBenchmark();

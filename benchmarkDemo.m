@@ -20,7 +20,7 @@ detectors{1} = vggMser('ms',30); % Custom options
 
 import datasets.*;
 
-dataset = vggAffineDataset('category','graf');
+dataset = VggAffineDataset('category','graf');
 
 %% Define benchmarks
 

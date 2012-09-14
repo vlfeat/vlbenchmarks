@@ -1,6 +1,9 @@
+classdef GenericDataset < handle
 % GENERICDATASET Abstract class for a generic dataset
+%   This class defines only one abstract method getImagePath(imgNo) which
+%   must be implemented by all its subclasses.
 
-classdef genericDataset < handle
+% AUTORIGHTS
   properties (SetAccess=protected, GetAccess=public)
     datasetName = ''; % Name of the dataset
     numImages = 0 % Number of images in the dataset
@@ -12,7 +15,7 @@ classdef genericDataset < handle
     %   IMG_PATH = getImagePath(IMG_NO) Returns path IMG_PATH of an
     %   image with number IMG_NO \in [1:numImages]
   end
-  
+
   methods
     function signature = getImagesSignature(obj)
     % GETIMAGESSIGNATURE Get signature of all images in the dataset
@@ -26,7 +29,6 @@ classdef genericDataset < handle
         sign = fileSignature(imgPath);
         imgSignatures = strcat(imgSignatures, sign);
       end
-      
       signature = ['dataset_' obj.datasetName CalcMD5.CalcMD5(imgSignatures)];
     end
   end

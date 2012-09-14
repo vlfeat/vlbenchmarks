@@ -60,7 +60,7 @@ detColorMap = hsv(numDetectors);
 %% Repeatability vs. overlap error
 fprintf('\n######## REPEATABILITY VS. OVERLAP ERR (Fig. 21a) #######\n');
 
-dataset = vggAffineDataset('category','graf');
+dataset = VggAffineDataset('category','graf');
 overlapErrValues = 0.1:0.1:0.6;
 imageBIdx = 4;
 
@@ -138,7 +138,7 @@ regSizeBenchm = RepeatabilityBenchmark(...
 
 numBins = 10;
 imageBIdx = 4;
-dataset = vggAffineDataset('category','graf');
+dataset = VggAffineDataset('category','graf');
 
 rsScores = zeros(numDetectors,numBins);
 binAvgs = zeros(numDetectors,numBins); % Centres of frame scales bins
@@ -197,7 +197,7 @@ print(fig,fullfile(resultsDir, 'fig_rep_graf.eps'),'-depsc');
 %% Matching vs. magnification factor
 fprintf('\n######## MATCHING SCORE VS. REGION MAGNIF. (Fig. 22c) #######\n');
 
-dataset = vggAffineDataset('category','graf');
+dataset = VggAffineDataset('category','graf');
 imageBIdx = 4;
 magFactors = 1:5;
 
@@ -228,7 +228,7 @@ print(fig,fullfile(resultsDir, 'fig_matching_graf.eps'),'-depsc');
 %% Regions sizes histograms
 fprintf('\n######## REGION SIZE HISTOGRAMS (Fig. 10) #######\n');
 if (0)
-dataset = vggAffineDataset('category','graf');
+dataset = VggAffineDataset('category','graf');
 refImgPath = dataset.getImagePath(1);
 
 numFrames = zeros(numDetectors,1);
@@ -270,10 +270,10 @@ end
 fprintf('\n######## REPEATABILITY AND MATCHING SCORES (Fig. 13-20) #######\n');
 
 datasetNum = 1;
-categories = vggAffineDataset.allCategories;
+categories = VggAffineDataset.allCategories;
 for category=categories
   fprintf('\n######## TESTING DATASET %s #######\n',category{:});
-  dataset = vggAffineDataset('category',category{:});
+  dataset = VggAffineDataset('category',category{:});
 
   %% Run the new benchmarks in parallel
   numImages = dataset.numImages;

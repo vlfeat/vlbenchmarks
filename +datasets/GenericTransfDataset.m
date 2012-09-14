@@ -1,12 +1,15 @@
+classdef GenericTransfDataset < datasets.GenericDataset
 % GENERICTRANSFDATASET Abstract class for a generic dataset with images of 
-% known linear geometric transformation (for evaluating affine detectors).
+%   known linear geometric transformation (for evaluating affine 
+%   detectors). This class defines abstract method getTransformation(imgNo)
+%   which must be implemented by all its subclasses.
 
-classdef genericTransfDataset < datasets.genericDataset
+% AUTORIGHTS
   properties (SetAccess=protected, GetAccess=public)
     % Setting these properties is not mandatory however are usefull in 
     % functions for plotting results.
-    imageNames % Labels of images, express degree of transformation
-    imageNamesLabel % Definition of the type of transformations
+    imageNames % Labels of images, e.g. degree of transformation
+    imageNamesLabel % Label of image names, e.g. type of transformation
   end
 
   methods(Abstract)

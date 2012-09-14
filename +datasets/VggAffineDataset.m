@@ -1,8 +1,11 @@
+classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
+    & helpers.GenericInstaller
 % VGGAFFINEDATASET class to wrap around the vgg affine datasets
+%   VGGAFFINEDATASET('Option','OptionValue',...) Constructs an object which
+%   implements access to VGG Affine dataset used for affine invariant
+%   detectors evaluation.
 %
 %   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
-%
-%   obj = vggAffineDataset('Option','OptionValue')
 %
 %   This class perform automatic installation when the dataset data are
 %   not available.
@@ -13,10 +16,9 @@
 %     The category within the vgg dataset, has to be one of 'bikes','trees',
 %     'graf','wall','bark','boat','leuven','ubc'
 
-classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
-    & helpers.GenericInstaller
+% AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    category
+    category = 'graf';
     dataDir
     imgExt
   end
@@ -46,24 +48,22 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
       [2 3 4 5 6]...% leuven
       };
     rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
-    defCategory = 'graf';
   end
 
-  
   methods
-    function obj = vggAffineDataset(varargin)
+    function obj = VggAffineDataset(varargin)
       import datasets.*;
       import helpers.*;
       if ~obj.isInstalled(),
         obj.warn('Vgg Affine dataset is not installed');
         obj.install();
       end
-      opts.category= obj.defCategory;
+      opts.category = obj.category;
       opts = vl_argparse(opts,varargin);
       [valid loc] = ismember(opts.category,obj.allCategories);
       assert(valid,...
         sprintf('Invalid category for vgg dataset: %s\n',opts.category));
-      obj.datasetName = ['vggAffineDataset-' opts.category];
+      obj.datasetName = ['VggAffineDataset-' opts.category];
       obj.category= opts.category;
       obj.dataDir = fullfile(obj.rootInstallDir,opts.category,'');
       obj.numImages = 6;
@@ -93,24 +93,21 @@ classdef vggAffineDataset < datasets.genericTransfDataset & helpers.Logger...
          textread(fullfile(obj.dataDir,sprintf('H1to%dp',imgIdx)),...
          '%f %f %f%*[^\n]');
     end
-
   end
 
   methods (Static)
-    
     function [urls dstPaths] = getTarballsList()
       import datasets.*;
-      numCategories = numel(vggAffineDataset.allCategories);
+      numCategories = numel(VggAffineDataset.allCategories);
       urls = cell(1,numCategories);
       dstPaths = cell(1,numCategories);
-      installDir = vggAffineDataset.rootInstallDir;
+      installDir = VggAffineDataset.rootInstallDir;
       for i = 1:numCategories
-        curCategory = vggAffineDataset.allCategories{i};
+        curCategory = VggAffineDataset.allCategories{i};
         dstPaths{i} = fullfile(installDir,curCategory);
-        urls{i} = [vggAffineDataset.rootUrl curCategory '.tar.gz'];
+        urls{i} = [VggAffineDataset.rootUrl curCategory '.tar.gz'];
       end
     end
-
   end % --- end of static methods ---
 
 end % -------- end of class ---------
