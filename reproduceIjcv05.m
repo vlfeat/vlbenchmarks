@@ -1,23 +1,35 @@
-function reproduceKm()
-% REPRODUCEKM Reproduce results from the IJCV05 article
-%   REPRODUCEKM computes results presented in [1] and stores them as
-%   graphs and data files (*.mat + *.csv).
+function reproduceIjcv05(varargin)
+% REPRODUCEIJCV05 Reproduce results from the IJCV05 article
+%   REPRODUCEIJCV05('OptionName',OptionValue) computes results presented 
+%   in [1] and stores them as graphs and data files (*.mat + *.csv).
 %
 %   This function does not reproduce figures which require tuning of
 %   detector parameters (21c, 22a and 22b) as some of the available
 %   binaries does not allow to affect a number of detected frames.
 %
+%   Supported Options:
+%
+%   ResultsDir:: 'ijcv05_res'
+%     Path where to store computed data.
+%
+%   UseIjcvOriginalBenchmark:: true
+%     Compute the results with the original IJCV05 code. When true, the
+%     test takes several minutes.
+%
 %   REFERENCES
 %   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
 %       J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
 %       comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
-%
+
+% AUTORIGHTS
 
 import datasets.*;
 import localFeatures.*;
 import benchmarks.*;
 
-resultsDir = 'ijcv05_res'; % Directory to store generated files
+opts.resultsDir = 'ijcv05_res'; % Directory to store generated files
+opts.useIjcvOriginalBenchmark = true; % Set false if you want to skip KM benchm.
+opts = helpers.vl_argparse(opts, varargin);
 
 %% Define Local features extractors
 % Create local features extractor such that each of them uses the same
@@ -85,7 +97,7 @@ for oei = 1:numel(overlapErrValues)
   end
 end
 
-saveResults(oeScores, fullfile(resultsDir,'rep_vs_overlap'));
+saveResults(oeScores, fullfile(opts.resultsDir,'rep_vs_overlap'));
 subplot(2,2,1); 
 plot(overlapErrValues.*100,oeScores.*100,'+-'); grid on;
 xlabel('Overlap error %'); ylabel('Repeatability %');
@@ -116,7 +128,7 @@ for nrsi = 1:numel(normRegSizes)
       rBenchm.testDetector(detector, H, imageAPath,imageBPath);
   end
 end
-saveResults(oeScores, fullfile(resultsDir,'rep_vs_norm_reg_size'));
+saveResults(oeScores, fullfile(opts.resultsDir,'rep_vs_norm_reg_size'));
 subplot(2,2,2); 
 plot(normRegSizes,nrsScores.*100,'+-'); grid on;
 xlabel('Normalised region size'); ylabel('Repeatability %');
@@ -179,7 +191,7 @@ for di = 1:numDetectors
     'Color',detColorMap(di,:));
 end
 
-saveResults(rsScores, fullfile(resultsDir,'rep_vs_reg_size'));
+saveResults(rsScores, fullfile(opts.resultsDir,'rep_vs_reg_size'));
 grid on;
 xlabel('Region size'); ylabel('Repeatability %');
 axis([0 max(binAvgs(:)) 0 100]);
@@ -192,7 +204,7 @@ set(gca,'XTick',1:numDetectors)
 set(gca,'XTickLabel',detNames);
 ylabel('Number of frames per region size bin');
 
-print(fig,fullfile(resultsDir, 'fig_rep_graf.eps'),'-depsc');
+print(fig,fullfile(opts.resultsDir, 'fig_rep_graf.eps'),'-depsc');
 
 %% Matching vs. magnification factor
 fprintf('\n######## MATCHING SCORE VS. REGION MAGNIF. (Fig. 22c) #######\n');
@@ -216,14 +228,14 @@ for mf = 1:numel(magFactors)
       matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
   end
 end
-saveResults(magnifScores, fullfile(resultsDir,'matching_vs_mag'));
+saveResults(magnifScores, fullfile(opts.resultsDir,'matching_vs_mag'));
 subplot(2,2,4); 
 plot(magFactors,magnifScores'.*100,'+-'); grid on;
 xlabel('Magnification factor'); ylabel('Matching %');
 axis([0.5 5.5 0 100]);
 legend(detNames,'Location','NorthEast');
 
-print(fig,fullfile(resultsDir, 'fig_matching_graf.eps'),'-depsc');
+print(fig,fullfile(opts.resultsDir, 'fig_matching_graf.eps'),'-depsc');
 
 %% Regions sizes histograms
 fprintf('\n######## REGION SIZE HISTOGRAMS (Fig. 10) #######\n');
@@ -261,10 +273,10 @@ for di = 1:numDetectors
   ylabel('Number of detected regions');
 end
 
-saveResults(runTime, fullfile(resultsDir,'det_run_time_graf_img1ppm'));
-saveResults(numFrames, fullfile(resultsDir,'det_num_frames_graf_img1ppm'));
+saveResults(runTime, fullfile(opts.resultsDir,'det_run_time_graf_img1ppm'));
+saveResults(numFrames, fullfile(opts.resultsDir,'det_num_frames_graf_img1ppm'));
 
-print(fig,fullfile(resultsDir, 'fig_hist_graf.eps'),'-depsc');
+print(fig,fullfile(opts.resultsDir, 'fig_hist_graf.eps'),'-depsc');
 end
 %% Repeatability and Matching scores
 fprintf('\n######## REPEATABILITY AND MATCHING SCORES (Fig. 13-20) #######\n');
@@ -298,96 +310,90 @@ for category=categories
     end
   end
 
-
-
   %% Show scores
-
   confFig(fig);
   titleText = ['Detectors Repeatability [%%] (',category{:},')'];
   printScores(repeatability.*100, detNames, titleText,...
-    fullfile(resultsDir,[category{:} '_rep']));
+    fullfile(opts.resultsDir,[category{:} '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset,...
     titleText);
 
   printScores(repeatability.*100, detNames, titleText,...
-    fullfile(resultsDir,[category{:} '_rep']));
+    fullfile(opts.resultsDir,[category{:} '_rep']));
   subplot(2,2,1); plotScores(repeatability.*100, detNames,...
     dataset, titleText);
 
   titleText = ['Detectors Num. Correspondences (',category{:},')'];
   printScores(numCorresp, detNames, titleText,...
-    fullfile(resultsDir,[category{:} '_ncorresp']));
+    fullfile(opts.resultsDir,[category{:} '_ncorresp']));
   subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
 
   titleText = ['Detectors Matching Score [%%] (',category{:},')'];
   printScores(matchingScore.*100, detNames, titleText,...
-    fullfile(resultsDir,[category{:} '_matching']));
+    fullfile(opts.resultsDir,[category{:} '_matching']));
   subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset,...
     titleText);
 
   titleText = ['Detectors Num. Matches (',category{:},')'];
   printScores(numMatches, detNames, titleText,...
-    fullfile(resultsDir,[category{:} '_nmatches']));
+    fullfile(opts.resultsDir,[category{:} '_nmatches']));
   subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
 
-  print(fig,fullfile(resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
+  print(fig,fullfile(opts.resultsDir, ['fig' num2str(datasetNum) '_rm_' ...
     dataset.category '.eps']),'-depsc');
 
-  %% For comparison, run KM Benchmark
-
-  % Test all detectors
-  for di = 1:numDetectors
-    detector = detectors{di};
-    imageAPath = dataset.getImagePath(1);
-    parfor imageIdx = 2:numImages
-      imageBPath = dataset.getImagePath(imageIdx);
-      H = dataset.getTransformation(imageIdx);
-      % Repeatability must be computed separately in order to be able to
-      % compare it with the previous results as the number of frames when
-      % computed with and without descriptors differs.
-      [repeatability(di,imageIdx) numCorresp(di,imageIdx)] = ...
-        kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
-      [tmp tmp2 matchingScore(di,imageIdx) numMatches(di,imageIdx)] = ...
-        kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+  %% For comparison, run IJCV05 original Benchmark
+  if opts.useIjcvOriginalBenchmark
+    % Test all detectors
+    for di = 1:numDetectors
+      detector = detectors{di};
+      imageAPath = dataset.getImagePath(1);
+      parfor imageIdx = 2:numImages
+        imageBPath = dataset.getImagePath(imageIdx);
+        H = dataset.getTransformation(imageIdx);
+        % Repeatability must be computed separately in order to be able to
+        % compare it with the previous results as the number of frames when
+        % computed with and without descriptors differs.
+        [repeatability(di,imageIdx) numCorresp(di,imageIdx)] = ...
+          kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+        [tmp tmp2 matchingScore(di,imageIdx) numMatches(di,imageIdx)] = ...
+          kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+      end
     end
+
+    confFig(fig);
+
+    titleText = 'Detectors Repeatability [%%]';
+    printScores(repeatability.*100, detNames, titleText,...
+      fullfile(opts.resultsDir,['km_' category{:} '_rep']));
+    subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset,...
+      titleText);
+
+    titleText = ['KM Detectors Num. Correspondences (',category{:},')'];
+    printScores(numCorresp, detNames, titleText,...
+      fullfile(opts.resultsDir,['km_' category{:} '_ncorresp']));
+    subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
+
+    titleText = ['KM Detectors Matching Score [%%] (',category{:},')'];
+    printScores(matchingScore.*100, detNames, titleText,...
+      fullfile(opts.resultsDir,['km_' category{:} '_matching']));
+    subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, ...
+      titleText);
+
+    titleText = ['KM Detectors Num. Matches (',category{:},')'];
+    printScores(numMatches, detNames, titleText,...
+      fullfile(opts.resultsDir,['km_' category{:} '_nmatches']));
+    subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
+
+    print(fig,fullfile(opts.resultsDir, ['km_fig' num2str(datasetNum) '_rm_' ...
+      dataset.category '.eps']),'-depsc');
   end
-
-  %%
-
-  confFig(fig);
-
-  titleText = 'Detectors Repeatability [%%]';
-  printScores(repeatability.*100, detNames, titleText,...
-    fullfile(resultsDir,['km_' category{:} '_rep']));
-  subplot(2,2,1); plotScores(repeatability.*100, detNames, dataset,...
-    titleText);
-
-  titleText = ['KM Detectors Num. Correspondences (',category{:},')'];
-  printScores(numCorresp, detNames, titleText,...
-    fullfile(resultsDir,['km_' category{:} '_ncorresp']));
-  subplot(2,2,2); plotScores(numCorresp, detNames, dataset, titleText);
-
-  titleText = ['KM Detectors Matching Score [%%] (',category{:},')'];
-  printScores(matchingScore.*100, detNames, titleText,...
-    fullfile(resultsDir,['km_' category{:} '_matching']));
-  subplot(2,2,3); plotScores(matchingScore.*100, detNames, dataset, ...
-    titleText);
-
-  titleText = ['KM Detectors Num. Matches (',category{:},')'];
-  printScores(numMatches, detNames, titleText,...
-    fullfile(resultsDir,['km_' category{:} '_nmatches']));
-  subplot(2,2,4); plotScores(numMatches, detNames, dataset, titleText);
-
-  print(fig,fullfile(resultsDir, ['km_fig' num2str(datasetNum) '_rm_' ...
-    dataset.category '.eps']),'-depsc');
 
   datasetNum = datasetNum + 1;
 end
 
 %% Helper functions
-
 function printScores(scores, scoreLineNames, name, fileName)
-  % PRINTSCORES
   numScores = size(scores,1);
 
   maxNameLen = 0;
