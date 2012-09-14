@@ -1,10 +1,13 @@
-classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
+classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 % IBR Intensity extrema-based region detector
 %   IBR('OptionName',OptionValue,...) Constructs wrapper around intensity
 %   extrema-based detector binary [1] [2] used is downlaoded from:
 %
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ibr.ln.gz
+%
+%   Only supported architectures are GLNX86 and GLNXA64 as for these the
+%   binary is avaialable.
 %
 %   This detector supports the following options:
 %
@@ -25,7 +28,6 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
 %   Affine Invariant Regions. IJCV 59(1):61-85, 2004.
 
 % AUTORIGHTS
-
   properties (SetAccess=private, GetAccess=public)
     opts = struct(...
       'scalefactor', -1,...
@@ -33,15 +35,15 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
       'stabilitythreshold', -1,...
       'overlapthreshold', -1);
   end
-  
+
   properties (Constant)
     rootInstallDir = fullfile('data','software','ibr','');
-    binPath = fullfile(localFeatures.ibr.rootInstallDir,'ibr.ln');
+    binPath = fullfile(localFeatures.Ibr.rootInstallDir,'ibr.ln');
     softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ibr.ln.gz';
   end
 
   methods
-    function obj = ibr(varargin)
+    function obj = Ibr(varargin)
       import localFeatures.*;
       import helpers.*;
       obj.name = 'IBR';
@@ -53,7 +55,6 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
         obj.warn('IBR not found installed');
         obj.install();
       end
-      
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
@@ -64,16 +65,13 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
     function [frames] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
-      
       startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
 
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
-
       fields = fieldnames(obj.opts);
       args = '';
       for i = numel(fields)
@@ -83,52 +81,38 @@ classdef ibr < localFeatures.genericLocalFeatureExtractor & ...
           args = strcat(args,' -',field,' ', num2str(val));
         end
       end
-      
       args = sprintf('%s "%s" "%s"',...
                      args, imagePath, framesFile);
       cmd = [obj.binPath ' ' args];
-
       [status,msg] = system(cmd,'-echo');
       if status ~= 1
         error('%d: %s: %s', status, cmd, msg) ;
       end
-      
       frames = localFeatures.helpers.readFramesFile(framesFile);
-      
       delete(framesFile);
-
       timeElapsed = toc(startTime);
       obj.debug('%d frames from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, []);
-    end
-    
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
     end
 
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath) ';'... 
               helpers.struct2str(obj.opts)];
     end
-    
   end
 
   methods (Static)
-    
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {ibr.softwareUrl};
-      dstPaths = {ibr.rootInstallDir};
+      urls = {Ibr.softwareUrl};
+      dstPaths = {Ibr.rootInstallDir};
     end
     
     function compile()
       import localFeatures.*;
       % When unpacked, ibr is not executable
-      helpers.setFileExecutable(ibr.binPath);
+      helpers.setFileExecutable(Ibr.binPath);
     end
-
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----

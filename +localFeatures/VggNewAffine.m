@@ -1,11 +1,10 @@
+classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
 % VGGNEWAFFINE class to wrap around the VGG new affine co-variant detectors.
+%   VGGNEWAFFINE('Option','OptionValue',...) Creates object which wraps 
+%   around Philbin's modified VGG Affine detector.
 %
-%   obj = affineDetectors.vggNewAffine('Option','OptionValue',...);
-%   frames = obj.detectPoints(img)
-%
-%   obj class implements the genericDetector interface and wraps around the
-%   vgg implementation of harris and hessian affine detectors (Philbin
-%   version).
+%   Only supported architectures are GLNX86 and GLNXA64 as for these the
+%   binaries are avaialable.
 %
 %   The constructor call above takes the following options:
 %
@@ -22,9 +21,8 @@
 %   Magnification:: [3]
 %     Magnification of the measurement region for the descriptor
 %     calculation.
-%
 
-classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
+% AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
     detBinPath;
     descrBinPath;
@@ -36,7 +34,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       'descType', 'sift'...
       );
   end
-  
+
   properties (Constant)
     rootInstallDir = fullfile('data','software','vggNewAffine','');
     detBinName = 'detect_points_2.ln';
@@ -45,12 +43,12 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
 
   methods
     % The constructor is used to set the options for vggNewAffine
-    function obj = vggNewAffine(varargin)
+    function obj = VggNewAffine(varargin)
       import localFeatures.*;
       import helpers.*;
-      if ~vggNewAffine.isInstalled(),
+      if ~VggNewAffine.isInstalled(),
         obj.isOk = false;
-        obj.errMsg = 'vggNewAffine not found installed';
+        obj.errMsg = 'VggNewAffine not found installed';
         return;
       end
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
@@ -66,7 +64,6 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       obj.detectorName = obj.name;
       obj.descriptorName = 'newVGG SIFT';
       obj.extractsDescriptors = true;
-  
       % Check platform dependence
       machineType = computer();
       obj.detBinPath = '';
@@ -78,7 +75,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
             obj.descBinName);
         otherwise
           obj.isOk = false;
-          obj.errMsg = sprintf('Arch: %s not supported by vggNewAffine',...
+          obj.errMsg = sprintf('Arch: %s not supported by VggNewAffine',...
                                 machineType);
       end
       obj.configureLogger(obj.name,varargin);
@@ -90,7 +87,6 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
 
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
@@ -98,10 +94,8 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
       end
-      
       tmpName = tempname;
       framesFile = [tmpName '.' obj.opts.detectorType];
-      
       detArgs = '';
       if obj.opts.threshold >= 0
         detArgs = sprintf('-thres %f ',obj.opts.threshold);
@@ -109,26 +103,20 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       detArgs = sprintf('%s-%s -i "%s" -o "%s" %s',...
                      detArgs, obj.opts.detectorType,...
                      imagePath,framesFile);
-
       detCmd = [obj.detBinPath ' ' detArgs];
-
       [status,msg] = system(detCmd);
       if status
         error('%d: %s: %s', status, detCmd, msg) ;
       end
-      
       if nargout ==2
         [frames descriptors] = obj.extractDescriptors(imagePath,framesFile);
       else
         frames = helpers.readFramesFile(framesFile);
       end
-      
       delete(framesFile);
-      
       timeElapsed = toc(startTime);
       obj.debug('Image %s processed in %gs',...
         getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, descriptors);
     end
   
@@ -138,30 +126,24 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       %
       %  frames can be both array of frames or path to a frames file.
       import localFeatures.*;
-
       tmpName = tempname;
       outDescFile = [tmpName '.descs'];
-
       if size(frames,1) == 1 && exist(frames,'file')
         framesFile = frames;
       elseif exist('frames','var')
         framesFile = [tmpName '.frames'];
         helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
       end
-
       % Prepare the options
       descrArgs = sprintf('-%s -i "%s" -p1 "%s" -o1 "%s"', ...
         obj.opts.descType, imagePath, framesFile, outDescFile);
-
       if obj.opts.magnification > 0
         descrArgs = [descrArgs,' -scale-mult ', ...
           num2str(obj.opts.magnification)];
       end
-
       if obj.opts.noAngle
         descrArgs = strcat(descrArgs,' -noangle');
       end             
-
       descrCmd = [obj.descrBinPath ' ' descrArgs];
 
       startTime = tic;
@@ -179,7 +161,7 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
       factor = obj.opts.magnification^2;
       frames(3:5,:) = frames(3:5,:) ./ factor;
     end
-    
+
     function sign = getSignature(obj)
       signList = {helpers.fileSignature(obj.detBinPath) ... 
         helpers.fileSignature(obj.descrBinPath) ...
@@ -189,14 +171,11 @@ classdef vggNewAffine < localFeatures.genericLocalFeatureExtractor
   end
 
   methods (Static)
-
     function response = isInstalled()
       import localFeatures.*;
-      installDir = vggNewAffine.rootInstallDir;
+      installDir = VggNewAffine.rootInstallDir;
       if(exist(installDir,'dir')),  response = true;
       else response = false; end
     end
-
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----

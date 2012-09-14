@@ -1,3 +1,4 @@
+classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
 % DESCRIPTORADAPTER Join feature frame detector to a descriptor extractor
 %   DESCRIPTORADAPTER(FRAME_DET, DESC_EXTRACT, ...) Constructs an object
 %   of DESCRIPTORADAPTER which combines frame detection capabilities of
@@ -13,30 +14,25 @@
 %   caching of the results.
 
 % AUTORIGHTS
-
-classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
-
   properties (SetAccess = protected)
     frameDetector;
     descExtractor;
   end
-  
+
   methods
-    function obj = descriptorAdapter(frameDetector, descExtractor, varargin)
-      if ~ismember('localFeatures.genericLocalFeatureExtractor',...
+    function obj = DescriptorAdapter(frameDetector, descExtractor, varargin)
+      if ~ismember('localFeatures.GenericLocalFeatureExtractor',...
           superclasses(frameDetector))
-        error('FrameDetector not a genericLocalFeatureExtractor.');
+        error('FrameDetector not a GenericLocalFeatureExtractor.');
       end
-      if ~ismember('localFeatures.genericLocalFeatureExtractor',...
+      if ~ismember('localFeatures.GenericLocalFeatureExtractor',...
           superclasses(descExtractor))
-        error('FrameDetector not a genericLocalFeatureExtractor.');
+        error('FrameDetector not a GenericLocalFeatureExtractor.');
       end
-      
       if ~descExtractor.extractsDescriptors
         error('Class % does not support descriptor extraction of provided frames',...
           descExtractor.name);
       end
-      
       obj.frameDetector = frameDetector;
       obj.descExtractor = descExtractor;
       obj.detectorName = frameDetector.detectorName;
@@ -48,12 +44,10 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       % Check also whether caching is not blocked in the det. or descr.
       if numel(frames) > 0 && obj.frameDetector.useCache ...
           && obj.descExtractor.useCache; return; end;
-      
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
@@ -66,18 +60,16 @@ classdef descriptorAdapter < localFeatures.genericLocalFeatureExtractor
           obj.descExtractor.extractDescriptors(imagePath, frames);
       end
       timeElapsed = toc(startTime);
-      
       obj.debug('Features of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, descriptors);
     end
-    
+
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
       [frames descriptors] = ...
           obj.descExtractor.extractDescriptors(imagePath, frames);
     end
-      
+
     function sign = getSignature(obj)
       sign = [obj.frameDetector.getSignature() '+'...
         obj.descExtractor.getSignature()];

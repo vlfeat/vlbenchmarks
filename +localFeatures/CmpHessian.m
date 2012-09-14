@@ -1,23 +1,21 @@
+classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
+    helpers.GenericInstaller
 % CMPHESSIAN class to wrap around the CMP Hessian Affine detector implementation
-%
-%   obj = localFeatures.cmpHessian('Option','OptionValue',...);
-%   frames = obj.detectPoints(img)
-%
-%   This class implements the genericDetector interface and wraps around the
-%   cmp implementation of Hessian Affine detectors available at:
+%   CMPHESSIAN() constructs new wrapper object of a binary created by 
+%   compilation of a source code available at:
 %   http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz
 %
-%   The constructor call above takes the following options (see the cmp hessian
-%   binary for complete interpretation of these options):
+%   This detector depends on OpenCV library.
 %
 %   (No options available currently)
+%
+%   See also: helpers.OpenCVInstaller
 
-classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
-    helpers.GenericInstaller
+% AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
     binPath
   end
-  
+
   properties (Constant)
     rootInstallDir = fullfile('data','software','cmpHessian','');
     softwareUrl = 'http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz';
@@ -26,24 +24,23 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
   methods
     % The constructor is used to set the options for the cmp
     % hessian binary.
-    function obj = cmpHessian(varargin)
+    function obj = CmpHessian(varargin)
       import localFeatures.*;
       obj.name = 'CMP Hessian Affine';
       obj.detectorName = obj.name;
       obj.descriptorName = 'CMP SIFT';
       if ~obj.isInstalled(),
-        obj.warn('cmpHessian not found installed');
+        obj.warn('CmpHessian not found installed');
         obj.install();
       end
-
       % Check platform dependence
       machineType = computer();
       switch(machineType)
         case  {'GLNX86','GLNXA64'}
-          obj.binPath = fullfile(cmpHessian.rootInstallDir,'hesaff');
+          obj.binPath = fullfile(CmpHessian.rootInstallDir,'hesaff');
         otherwise
           obj.isOk = false;
-          obj.errMsg = sprintf('Arch: %s not supported by cmpHessian',...
+          obj.errMsg = sprintf('Arch: %s not supported by CmpHessian',...
                                 machineType);
       end
       obj.configureLogger(obj.name,varargin);
@@ -87,32 +84,24 @@ classdef cmpHessian < localFeatures.genericLocalFeatureExtractor  & ...
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
-    end
-    
     function sign = getSignature(obj)
       sign = helpers.fileSignature(obj.binPath);
     end
-    
   end
 
   methods (Static)
-    
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {cmpHessian.softwareUrl};
-      dstPaths = {cmpHessian.rootInstallDir};
+      urls = {CmpHessian.softwareUrl};
+      dstPaths = {CmpHessian.rootInstallDir};
     end
-    
+
     function deps = getDependencies()
       deps = {helpers.Installer() helpers.OpenCVInstaller()};
     end
-    
+
     function compile()
       error('Not implemented.');
     end
-
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----

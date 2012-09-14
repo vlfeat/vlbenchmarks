@@ -1,74 +1,65 @@
-% cvStar feature extractor wrapper of OpenCV FAST detector
+classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
+% CVFAST feature extractor wrapper of OpenCV FAST detector
 %
 % Feature Extractor wrapper around the OpenCV ORB detector. This class
-% constructor accepts the same options as <a href="matlab: help localFeatures.mex.cvStar">localFeatures.mex.cvStar</a>
+% constructor accepts the same options as localFeatures.mex.cvFast.
 %
+% This detector depends on OpenCV library.
+%
+% See also: localFeatures.mex.cvFast helpers.OpenCVInstaller
 
-
-classdef cvStar < localFeatures.genericLocalFeatureExtractor & ...
-    helpers.GenericInstaller
+% AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    cvStar_arguments
+    cvFast_arguments
     binPath
   end
 
   methods
-
-    function obj = cvStar(varargin)
-      obj.name = 'OpenCV STAR';
+    function obj = CvFast(varargin)
+      obj.name = 'OpenCV FAST';
       obj.detectorName = obj.name;
-      obj.cvStar_arguments = obj.configureLogger(obj.name,varargin);
+      obj.cvFast_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.install();
       end
-      
-      obj.binPath = {which('localFeatures.mex.cvStar')};
+      obj.binPath = {which('localFeatures.mex.cvFast')};
     end
 
     function frames = extractFeatures(obj, imagePath)
       import helpers.*;
-      import localFeatures.*;
-      
+
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
-      
       startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
-      
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img); % If not already in uint8, then convert
-      
-      [frames] = localFeatures.mex.cvStar(img,obj.cvStar_arguments{:});
-      
+      [frames] = localFeatures.mex.cvFast(img,obj.cvFast_arguments{:});
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
-      
+        getFileName(imagePath),timeElapsed);      
       obj.storeFeatures(imagePath, frames, []);
     end
-    
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
-    end
-    
+
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvStar_arguments)];
+              helpers.cell2str(obj.cvFast_arguments)];
     end
   end
-  
+
   methods (Static)
     function deps = getDependencies()
       deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15') ...
         helpers.OpenCVInstaller()};
     end
-    
+
     function [srclist flags] = getMexSources()
       import helpers.*;
       path = fullfile(pwd,'+localFeatures','+mex','');
-      srclist = {fullfile(path,'cvStar.cpp')};
+      srclist = {fullfile(path,'cvFast.cpp')};
       flags = {[OpenCVInstaller.MEXFLAGS ' ' VlFeatInstaller.MEXFLAGS ]};
     end
   end

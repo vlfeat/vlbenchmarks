@@ -1,10 +1,12 @@
+classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
+    helpers.GenericInstaller
 % CMPBINHESSIAN wrapper around the CMP Hessian Affine detector implementation
-%   CMPBINHESSIAN('Option','OptionValue',...) Constructs an object which
-%   wraps Hessian Affine detector [1] binary available at:
-%   http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz
+%   CMPBINHESSIAN() Constructs an object which wraps around Hessian Affine 
+%   detector [1] binary available at:
+%   http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09
 %
-%   The constructor call above takes the following options (see the cmp hessian
-%   binary for complete interpretation of these options):
+%   Only supported architectures are GLNX86 and GLNXA64 as for these the
+%   binaries are avaialable.
 %
 %   (No options available currently)
 %
@@ -13,13 +15,10 @@
 %   Geometry for Large Scale Object Retrieval. CVPR, 9-16, 2009
 
 % AUTORIGHTS
-
-classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
-    helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     binPath
   end
-  
+
   properties (Constant)
     rootInstallDir = fullfile('data','software','cmpBinHessian','');
     url = 'http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09';
@@ -30,16 +29,15 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
   methods
     % The constructor is used to set the options for the cmp
     % hessian binary.
-    function obj = cmpBinHessian(varargin)
+    function obj = CmpBinHessian(varargin)
       import localFeatures.*;
       obj.name = 'CMP Hessian Affine (bin)';
       obj.detectorName = obj.name;
       obj.descriptorName = 'CMP SIFT (bin)';
       if ~obj.isInstalled(),
-        obj.warn('cmpBinHessian not found installed');
+        obj.warn('CmpBinHessian not found installed');
         obj.install();
       end
-
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -47,7 +45,7 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
           obj.binPath = fullfile(obj.rootInstallDir,obj.binName);
         otherwise
           obj.isOk = false;
-          obj.errMsg = sprintf('Arch: %s not supported by cmpBinHessian',...
+          obj.errMsg = sprintf('Arch: %s not supported by CmpBinHessian',...
                                 machineType);
       end
       obj.configureLogger(obj.name,varargin);
@@ -56,10 +54,9 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
     function [frames descriptors] = extractFeatures(obj, origImagePath)
       import helpers.*;
       import localFeatures.*;
-      
+
       [frames descriptors] = obj.loadFeatures(origImagePath,true);
       if numel(frames) > 0; return; end;
-      
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(origImagePath));
@@ -67,69 +64,53 @@ classdef cmpBinHessian < localFeatures.genericLocalFeatureExtractor  & ...
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(origImagePath));
       end
-
       % Write image in correct format
       [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
         obj.supportedImageFormats);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
-
       featFile = [imagePath '.hesaff.sift'];
-      
       args = sprintf(' "%s" ',imagePath);
       cmd = [obj.binPath ' ' args];
-
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;
       end
-      
       [frames descriptors] = vl_ubcread(featFile,'format','oxford');
       delete(featFile);
       if imIsTmp, delete(imagePath); end;
-      
       timeElapsed = toc(startTime);
       obj.debug(sprintf('Frames of image %s computed in %gs',...
         getFileName(origImagePath),timeElapsed));
-      
       obj.storeFeatures(origImagePath, frames, descriptors);
     end
 
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
-    end
-    
     function sign = getSignature(obj)
       sign = helpers.fileSignature(obj.binPath);
     end
-    
   end
 
   methods (Static)
-    
     function deps = getDependencies()
       deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15')};
     end
-    
+
     function compile()
       import localFeatures.*;
       import helpers.*;
-      filePath = helpers.downloadFile(cmpBinHessian.url,...
-        cmpBinHessian.rootInstallDir);
+      filePath = helpers.downloadFile(CmpBinHessian.url,...
+        CmpBinHessian.rootInstallDir);
       if isempty(filePath)
-        error('Unable to download %s',cmpBinHessian.url)
+        error('Unable to download %s',CmpBinHessian.url)
       end
-      
       % Set executable flags
       helpers.setFileExecutable(filePath);
     end
-    
+
     function res = isCompiled()
       import localFeatures.*;
-      bin = fullfile(cmpBinHessian.rootInstallDir,...
-        cmpBinHessian.binName);
+      bin = fullfile(CmpBinHessian.rootInstallDir,...
+        CmpBinHessian.binName);
       res = exist(bin,'file');
     end
-
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----

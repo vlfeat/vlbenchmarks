@@ -1,11 +1,15 @@
-classdef genericLocalFeatureExtractor < handle & helpers.Logger
-% GENERICLOCALFEATUREEXTRACTOR Base class of a local feature extractor wrapper
+classdef GenericLocalFeatureExtractor < handle & helpers.Logger
+% GENERICLOCALFEATUREEXTRACTOR Base class of a local feature extractors
 %   GENERICLOCALFEATUREEXTRACTOR defines the interface of a wrapper of
 %   a local feature. This class inherits from HANDLE, so it is copied
 %   by reference, not by value.
 %
 %   Derive this class to add your own feature extractor. See
 %   EXAMPLELOCALFEATUREEXTRACTOR() for instructions.
+%
+%   This class implements methods for storing detected features in a cache
+%   which supports enabling/disabling caching using methods 
+%   disableCaching() and enableCaching().
 
 % Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
 
@@ -105,6 +109,14 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
 
   methods (Access = protected)
     function [frames descriptors] = loadFeatures(obj,imagePath,loadDescriptors)
+      % [FRAMES DESCS] = LOADFEATURES(IMG_PATH, LOAD_DESCS) Load features
+      %   extracted from image IMG_PATH from cache. If LOAD_DESCS is false,
+      %   only FRAMES are loaded from cache. Please note that most of the
+      %   descriptor extractors throw away several frames, therefore
+      %   loading FRAMES or FRAMES and DESCRIPTORS may return different set
+      %   of frames.
+      %   If no cache entry has been found or useCache=false, empty array
+      %   is returned.
       import helpers.*;
       frames = [];
       descriptors = [];
@@ -125,6 +137,15 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     end
 
     function storeFeatures(obj, imagePath, frames, descriptors)
+      % STOREFEATURES(IMG_PATH, FRAMES) Store FRAMES detected in in image 
+      %   IMG_PATH to a cache.
+      % STOREFEATURES(IMG_PATH, FRAMES, DESCRIPTORS) Store features FRAMES
+      %   and DESCRIPTORS extracted from an image IMG_PATH to a cache.
+      % 
+      % Please note that calling with FRAMES or with FRAMES and DESCRIPTORS
+      % will create different records in the cache.
+      %
+      % If useCache=false, nothing is done.
       if ~obj.useCache, return; end
       hasDescriptors = true;
       if nargin < 4 || isempty(descriptors)
@@ -137,13 +158,17 @@ classdef genericLocalFeatureExtractor < handle & helpers.Logger
     end
 
     function key = getFeaturesKey(obj, imagePath, hasDescriptors)
+      % KEY = GETFEATURESKEY(IMG_PATH, HAS_DESCS) Get key KEY to features
+      %   which are extracted from image IMG_PATH. When HAS_DESCS is true,
+      %   returns key for a record in the cache which contains both frames
+      %   and descriptors (or only frames when HAS_DESCS=false).
       import localFeatures.*;
       import helpers.*;
       imageSignature = helpers.fileSignature(imagePath);
       detSignature = obj.getSignature();
-      prefix = genericLocalFeatureExtractor.framesKeyPrefix;
+      prefix = GenericLocalFeatureExtractor.framesKeyPrefix;
       if hasDescriptors
-        prefix = strcat(prefix,genericLocalFeatureExtractor.descsKeyPrefix);
+        prefix = strcat(prefix,GenericLocalFeatureExtractor.descsKeyPrefix);
       end
       key = cell2str({prefix,detSignature,imageSignature});
     end

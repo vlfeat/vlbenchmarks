@@ -7,14 +7,14 @@ function benchmarkDemo()
 
 import localFeatures.*;
 
-detectors{1} = vggMser('ms',30); % Custom options
-%detectors{2} = vlFeatMser(); % Default options
+detectors{1} = VggMser('ms',30); % Custom options
+%detectors{2} = VlFeatMser(); % Default options
 %detectors{2}.name = 'VLFeat MSER'; % used in the plot legend by modifying the above field
-%detectors{1} = cmpHessian();
-%detectors{2} = cmpBinHessian();
-%detectors{4} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
-%detectors{5} = vggAffine('Detector', 'hessian');
-%detectors{6} = vggNewAffine('Detector', 'hessian');
+%detectors{1} = CmpHessian();
+%detectors{2} = CmpBinHessian();
+%detectors{4} = VlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
+%detectors{5} = VggAffine('Detector', 'hessian');
+%detectors{6} = VggNewAffine('Detector', 'hessian');
 
 %% Define dataset
 

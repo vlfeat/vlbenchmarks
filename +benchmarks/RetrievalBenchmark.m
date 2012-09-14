@@ -1,12 +1,14 @@
 classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
-  %RETREIVALBENCHMARK
-  %
-  % REFERENCES
-  % [1] H. Jegou, M. Douze and C. Schmid,
-  %     Exploiting descriptor distances for precise image search,
-  %     Research report, INRIA 2011
-  %     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
+%RETREIVALBENCHMARK
+%
+% REFERENCES
+% [1] H. Jegou, M. Douze and C. Schmid,
+%     Exploiting descriptor distances for precise image search,
+%     Research report, INRIA 2011
+%     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
+
+% AUTORIGHTS
 
   properties
     opts = struct(...

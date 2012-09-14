@@ -1,10 +1,13 @@
-classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
+classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 % EBR Edge-based detector
 %   EBR('OptionName',optionValue,...) Constructs wrapper around edge-based
 %   detector binary [1] [2] used is downlaoded from:
 %
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ebr.ln.gz
+%
+%   Only supported architectures are GLNX86 and GLNXA64 as for these the
+%   binary is avaialable.
 %
 %   (No options available currently)
 %
@@ -16,27 +19,23 @@ classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
 %   Affine Invariant Regions. IJCV 59(1):61-85, 2004.
 
 % AUTORIGHTS
-  
   properties (Constant)
     rootInstallDir = fullfile('data','software','ebr','');
-    binPath = fullfile(localFeatures.ebr.rootInstallDir,'ebr.ln');
+    binPath = fullfile(localFeatures.Ebr.rootInstallDir,'ebr.ln');
     softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ebr.ln.gz';
   end
 
   methods
-    function obj = ebr(varargin)
+    function obj = Ebr(varargin)
       import localFeatures.*;
       import helpers.*;
       obj.name = 'EBR';
       obj.detectorName = obj.name;
-      
       obj.configureLogger(obj.name,varargin);
-      
       if ~obj.isInstalled(),
-        obj.warn('ebr not found installed');
+        obj.warn('Ebr not found installed');
         obj.install();
       end
-      
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
@@ -49,14 +48,11 @@ classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
       import localFeatures.*;
 
       frames = obj.loadFeatures(imagePath,false);
-      if numel(frames) > 0; return; end;
-      
+      if numel(frames) > 0; return; end;      
       startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
-
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
-      
       args = sprintf('"%s" "%s"',imagePath, framesFile);
       cmd = [obj.binPath ' ' args];
 
@@ -64,42 +60,30 @@ classdef ebr < localFeatures.genericLocalFeatureExtractor & ...
       if status ~= 0
         error('%d: %s: %s', status, cmd, msg) ;
       end
-      
       frames = localFeatures.helpers.readFramesFile(framesFile);
-      
       delete(framesFile);
-
       timeElapsed = toc(startTime);
       obj.debug('%d frames from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, []);
     end
 
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
-    end
-    
     function sign = getSignature(obj)
       sign = helpers.fileSignature(obj.binPath);
     end
-    
   end
 
   methods (Static)
-    
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {ebr.softwareUrl};
-      dstPaths = {ebr.rootInstallDir};
+      urls = {Ebr.softwareUrl};
+      dstPaths = {Ebr.rootInstallDir};
     end
-    
+
     function compile()
       import localFeatures.*;
       % When unpacked, ebr is not executable
-      helpers.setFileExecutable(ebr.binPath);
+      helpers.setFileExecutable(Ebr.binPath);
     end
-
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----

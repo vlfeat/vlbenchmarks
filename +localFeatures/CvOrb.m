@@ -1,58 +1,63 @@
-% CVSIFT feature extractor wrapper of OpenCV SIFT detector
-%
-% Feature Extractor wrapper around the OpenCV SIFT detector. This class
-% constructor accepts the same options as <a href="matlab: help localFeatures.mex.cvSift">localFeatures.mex.cvSift</a>
-%
-
-
-classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
+classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
+% CVORB feature extractor wrapper of OpenCV ORB detector
+%
+% Feature Extractor wrapper around the OpenCV ORB detector. This class
+% constructor accepts the same options as localFeatures.mex.cvOrb.
+%
+% Matching the produced BRIEF descritpors, special hamming distance has to
+% be used (because of their binary nature). Descriptors are exported as
+% uint8 array.
+%
+% This detector depends on OpenCV library.
+%
+% See also: localFeatures.mex.cvOrb helpers.OpenCVInstaller
+
+% AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    cvsift_arguments
+    cvorb_arguments
+    opts
     binPath
   end
 
   methods
-
-    function obj = cvSift(varargin)
-      obj.name = 'OpenCV SIFT';
-      obj.detectorName = obj.name;
+    function obj = CvOrb(varargin)
+      obj.opts.scoreType = 'FAST';
+      [obj.opts, drop] = vl_argparse(obj.opts, varargin);
+      obj.name = 'OpenCV ORB';
+      obj.detectorName = [obj.name,' ',obj.opts.scoreType];
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
-      obj.cvsift_arguments = obj.configureLogger(obj.name,varargin);
+      obj.cvorb_arguments = obj.configureLogger(obj.name,varargin);
+      obj.cvorb_arguments = varargin;
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.install();
       end
-      
-      obj.binPath = {which('localFeatures.mex.cvSift')};
+      obj.binPath = {which('localFeatures.mex.cvOrb')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      
+
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-      
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img);
-      
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = localFeatures.mex.cvSift(img,obj.cvsift_arguments{:});
+        [frames] = localFeatures.mex.cvOrb(img,obj.cvorb_arguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        [frames descriptors] = mex.cvSift(img,obj.cvsift_arguments{:});
+        [frames descriptors] = mex.cvOrb(img,obj.cvorb_arguments{:});
       end
       timeElapsed = toc(startTime);
-      
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, descriptors);
     end
     
@@ -61,19 +66,17 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img);
-      
       startTime = tic;
-      [frames descriptors] = mex.cvSift(img,'Frames', ...
-        frames,obj.cvsift_arguments{:});
+      [frames descriptors] = mex.cvOrb(img,'Frames',...
+        frames,obj.cvorb_arguments{:});
       timeElapsed = toc(startTime);
-      
       obj.debug('Descriptors of %d frames computed in %gs',...
         size(frames,2),timeElapsed);
     end
-    
+
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvsift_arguments)];
+              helpers.cell2str(obj.cvorb_arguments)];
     end
   end
   
@@ -82,11 +85,11 @@ classdef cvSift < localFeatures.genericLocalFeatureExtractor & ...
       deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15') ...
         helpers.OpenCVInstaller()};
     end
-    
+
     function [srclist flags] = getMexSources()
       import helpers.*;
       path = fullfile(pwd,'+localFeatures','+mex','');
-      srclist = {fullfile(path,'cvSift.cpp')};
+      srclist = {fullfile(path,'cvOrb.cpp')};
       flags = {[OpenCVInstaller.MEXFLAGS ' ' VlFeatInstaller.MEXFLAGS ]};
     end
   end

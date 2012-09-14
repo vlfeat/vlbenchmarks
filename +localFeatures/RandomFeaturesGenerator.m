@@ -1,4 +1,4 @@
-classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
+classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
 % RANDOMFEATURESGENERATOR Generates random features and descriptors
 %   RANDOMFEATURESGENERATOR('OptionName','OptionValue',...) Constructs and
 %   object of random features generator.
@@ -18,9 +18,9 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
 %   FeaturesDensity:: 2e-1
 %     Number of features per image pixel.
 %
-%   FrameType:: randomFeaturesGenerator.DISC
+%   FrameType:: RandomFeaturesGenerator.DISC
 %     Type of the generated frames. Supported are:
-%     randomFeaturesGenerator.DISC and randomFeaturesGenerator.ORIENTED_DISC
+%     RandomFeaturesGenerator.DISC and RandomFeaturesGenerator.ORIENTED_DISC
 %
 %   MaxScale:: 30
 %     Maximum scale of generated frames.
@@ -38,11 +38,10 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
 %     Minimal value in a descriptor vector.
 
 % AUTORIGHTS
-
   properties (SetAccess=private, GetAccess=public)
     opts = struct(...
       'featuresDensity', 2e-3,... % Number of features  per pixel
-      'frameType', localFeatures.randomFeaturesGenerator.DISC,...
+      'frameType', localFeatures.RandomFeaturesGenerator.DISC,...
       'maxScale', 30,...
       'minScale', 1,...
       'descSize', 128,...
@@ -58,7 +57,7 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
   end
 
   methods
-    function obj = randomFeaturesGenerator(varargin)
+    function obj = RandomFeaturesGenerator(varargin)
       import localFeatures.*;
       import helpers.*;
       obj.name = 'Random features';
@@ -104,7 +103,6 @@ classdef randomFeaturesGenerator < localFeatures.genericLocalFeatureExtractor
       if nargout > 1
         [frames descriptors] = obj.extractDescriptors(imagePath,frames);
       end
-
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 

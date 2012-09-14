@@ -1,58 +1,54 @@
-% CVSURF feature extractor wrapper of OpenCV SURF detector
-%
-% Feature Extractor wrapper around the OpenCV SURF detector. This class
-% constructor accepts the same options as <a href="matlab: help localFeatures.mex.cvSurf">localFeatures.mex.cvSurf</a>
-%
-
-
-classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
+classdef CvSift < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
+% CVSIFT feature extractor wrapper of OpenCV SIFT detector
+%
+% Feature Extractor wrapper around the OpenCV SIFT detector. This class
+% constructor accepts the same options as localFeatures.mex.cvSift
+%
+% This detector depends on OpenCV library.
+%
+% See also: localFeatures.mex.cvSift helpers.OpenCVInstaller
+
+% AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    cvsurf_arguments
+    cvsift_arguments
     binPath
   end
 
   methods
-
-    function obj = cvSurf(varargin)
-      obj.name = 'OpenCV SURF';
+    function obj = CvSift(varargin)
+      obj.name = 'OpenCV SIFT';
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
-      obj.cvsurf_arguments = obj.configureLogger(obj.name,varargin);
+      obj.cvsift_arguments = obj.configureLogger(obj.name,varargin);
       if ~obj.isInstalled()
         obj.warn('Not installed.')
         obj.install();
       end
-      
-      obj.binPath = {which('localFeatures.mex.cvSurf')};
+      obj.binPath = {which('localFeatures.mex.cvSift')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-      
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img);
-      
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = localFeatures.mex.cvSurf(img,obj.cvsurf_arguments{:});
+        [frames] = localFeatures.mex.cvSift(img,obj.cvsift_arguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        [frames descriptors] = mex.cvSurf(img,obj.cvsurf_arguments{:});
+        [frames descriptors] = mex.cvSift(img,obj.cvsift_arguments{:});
       end
       timeElapsed = toc(startTime);
-      
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, descriptors);
     end
     
@@ -61,32 +57,30 @@ classdef cvSurf < localFeatures.genericLocalFeatureExtractor & ...
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img);
-      
       startTime = tic;
-      [frames descriptors] = mex.cvSurf(img,'Frames', ...
-        frames,obj.cvsurf_arguments{:});
+      [frames descriptors] = mex.cvSift(img,'Frames', ...
+        frames,obj.cvsift_arguments{:});
       timeElapsed = toc(startTime);
-      
       obj.debug('Descriptors of %d frames computed in %gs',...
         size(frames,2),timeElapsed);
     end
-    
+
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvsurf_arguments)];
+              helpers.cell2str(obj.cvsift_arguments)];
     end
   end
-  
+
   methods (Static)
     function deps = getDependencies()
-      deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15')...
+      deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15') ...
         helpers.OpenCVInstaller()};
     end
-    
+
     function [srclist flags] = getMexSources()
       import helpers.*;
       path = fullfile(pwd,'+localFeatures','+mex','');
-      srclist = {fullfile(path,'cvSurf.cpp')};
+      srclist = {fullfile(path,'cvSift.cpp')};
       flags = {[OpenCVInstaller.MEXFLAGS ' ' VlFeatInstaller.MEXFLAGS ]};
     end
   end

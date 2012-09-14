@@ -5,11 +5,11 @@ import datasets.*;
 import benchmarks.*;
 
 %% Define Local features detectors
-detectors{1} = vggAffine('Detector','haraff');
-detectors{2} = vggAffine('Detector','hesaff');
-detectors{3} = cmpBinHessian();
+detectors{1} = VggAffine('Detector','haraff');
+detectors{2} = VggAffine('Detector','hesaff');
+detectors{3} = CmpBinHessian();
 % For MSERs use VGG SIFT as descriptors
-detectors{4} = descriptorAdapter(vggMser(),vggAffine());
+detectors{4} = DescriptorAdapter(VggMser(),VggAffine());
 
 detNames = {'VGG MSER + VGG SIFT','VGG Harris Affine',...
   'VGG Hessian Affine','CMP Hessian Affine'};

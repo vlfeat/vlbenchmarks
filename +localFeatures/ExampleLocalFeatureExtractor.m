@@ -1,4 +1,4 @@
-classdef exampleLocalFeatureExtractor < localFeatures.genericLocalFeatureExtractor
+classdef ExampleLocalFeatureExtractor < localFeatures.GenericLocalFeatureExtractor
 % EXAMPLELOCALFEATUREEXTRACTOR  An example wrapper for a local feature
 %   To use your own feature extractor (detector and/or descriptor)
 %   modify this class in the following manner.
@@ -13,17 +13,32 @@ classdef exampleLocalFeatureExtractor < localFeatures.genericLocalFeatureExtract
 % AUTORIGHTS
 
   properties (SetAccess=private, GetAccess=public)
-    opts
+    opts = struct(...
+      'featuresDensity', 2e-3,... % Number of features  per pixel
+      'frameType', 3,... % Disc
+      'maxScale', 30,...
+      'minScale', 1,...
+      'descSize', 128,...
+      'descMaxValue', 255,...
+      'descMinValue', 0,...
+      'descInteger', false... 
+      );
   end
 
   methods
-    function obj = exampleLocalFeatureExtractor(varargin)
-    % Implement a constructor to parse any option passed to the
-    % feature extractor and store them in the obj.opts structure.
+    function obj = ExampleLocalFeatureExtractor(varargin)
+      % Implement a constructor to parse any option passed to the
+      % feature extractor and store them in the obj.opts structure.
 
+      % Name of the features extractor
       obj.name = 'Example Local Feature';
-
+      % Name of the feature frames detector
+      obj.detectorName = obj.name;
+      % Name of descriptor extractor
+      obj.descriptorName = obj.name;
+      % Parse the options
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+      % Configure the logger which is inherited
       obj.configureLogger(obj.name,varargin);
     end
 

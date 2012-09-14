@@ -22,14 +22,14 @@ resultsDir = 'ijcv05_res'; % Directory to store generated files
 %% Define Local features extractors
 % Create local features extractor such that each of them uses the same
 % algorithm and parameters for computing SIFT descriptors.
-descDet = vggAffine('CropFrames',true,'Magnification',3); % Descriptor calc.
-detectors{1} = descriptorAdapter(...
-  vggAffine('Detector','haraff','Threshold',1000), descDet);
-detectors{2} = descriptorAdapter(...
-  vggAffine('Detector','hesaff','Threshold',500), descDet);
-detectors{3} = descriptorAdapter(vggMser('es',1),descDet);
-detectors{4} = descriptorAdapter(ibr('ScaleFactor',1),descDet);
-detectors{5} = descriptorAdapter(ebr(),descDet);
+descDet = VggAffine('CropFrames',true,'Magnification',3); % Descriptor calc.
+detectors{1} = DescriptorAdapter(...
+  VggAffine('Detector','haraff','Threshold',1000), descDet);
+detectors{2} = DescriptorAdapter(...
+  VggAffine('Detector','hesaff','Threshold',500), descDet);
+detectors{3} = DescriptorAdapter(VggMser('es',1),descDet);
+detectors{4} = DescriptorAdapter(Ibr('ScaleFactor',1),descDet);
+detectors{5} = DescriptorAdapter(Ebr(),descDet);
 
 detNames = {'Harris-Affine','Hessian-Affine','MSER','IBR','EBR'};
 numDetectors = numel(detectors);
@@ -210,8 +210,8 @@ for mf = 1:numel(magFactors)
   imageBPath = dataset.getImagePath(imageBIdx);
   H = dataset.getTransformation(imageBIdx);
   parfor detectorIdx = 1:numDetectors
-    descrExtr = vggAffine('Magnification',magFactor);
-    detector = descriptorAdapter(detectors{detectorIdx},descrExtr);
+    descrExtr = VggAffine('Magnification',magFactor);
+    detector = DescriptorAdapter(detectors{detectorIdx},descrExtr);
     magnifScores(detectorIdx,mf) = ...
       matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
   end

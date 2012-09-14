@@ -1,40 +1,41 @@
+classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
+    & helpers.GenericInstaller
 % VGGAFFINE class to wrap around the VGG affine co-variant detectors.
-%
-%   obj = affineDetectors.vggAffine('Option','OptionValue',...);
-%   frames = obj.detectPoints(img)
-%
-%   obj class implements the genericDetector interface and wraps around the
-%   vgg implementation of Harris and Hessian affine detectors.
+%   VGGAFFINE('Option','OptionValue',...) Constructs the object of the
+%   wrapper. 
 %
 %   This version of VGG descriptor calculation internaly compute with 
 %   magnification factor equal 3 and cannot be adjusted in the binary
-%   parameters.
+%   parameters. Therefore these parameters are 'simulated' in this wrapper.
+%
+%   Only supported architectures are GLNX86 and GLNXA64 as for these the
+%   binaries are avaialable.
 %
 %   The constructor call above takes the following options:
 %
-%   Detector:: ['hesaff']
-%     One of {'hesaff', 'haraff', 'heslap', 'harlap','har'}
+%   Detector:: 'hesaff'
+%     One of {'hesaff', 'haraff', 'heslap', 'harlap','har'} which are
+%     supported by the binary:
+%     ./data/software/vggAffine/extract_features.ln
 %
-%   Descriptor:: ['sift']
+%   Descriptor:: 'sift'
 %     One of {'sift','jla','gloh','mom','koen','kf','sc','spin','pca','cc'}.
 %     See help string of the binary in
 %     ./data/software/vggAffine/compute_descriptors.ln
 %
-%   threshold:: [-1]
+%   Threshold:: -1
 %     Cornerness threshold.
 %
-%   noAngle:: [false]
+%   NoAngle:: false
 %     Compute rotation variant descriptors if true (no rotation esimation)
 %
-%   Magnification:: [3]
+%   Magnification:: 3
 %     Magnification of the measurement region for the descriptor
 %     calculation.
 %
 %   CropFrames :: true
 %   Crop frames which after magnification overlap the image borders.
 
-classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
-    & helpers.GenericInstaller
   properties (SetAccess=private, GetAccess=public)
     opts = struct(...
       'detector', 'hesaff',...
@@ -48,8 +49,8 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
   
   properties (Constant)
     binDir = fullfile('data','software','vggAffine','');
-    detBinPath = fullfile(localFeatures.vggAffine.binDir,'h_affine.ln');
-    descrBinPath = fullfile(localFeatures.vggAffine.binDir,'compute_descriptors.ln');
+    detBinPath = fullfile(localFeatures.VggAffine.binDir,'h_affine.ln');
+    descrBinPath = fullfile(localFeatures.VggAffine.binDir,'compute_descriptors.ln');
     detUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/h_affine.ln.gz';
     descUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/compute_descriptors.ln.gz'
     validDetectors = {'hesaff', 'haraff', 'heslap', 'harlap','har'};
@@ -60,8 +61,8 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
   end
 
   methods
-    % The constructor is used to set the options for vggAffine
-    function obj = vggAffine(varargin)
+    % The constructor is used to set the options for VggAffine
+    function obj = VggAffine(varargin)
       import localFeatures.*;
       import helpers.*;
 
@@ -69,9 +70,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         obj.warn('Not found installed');
         obj.install();
       end
-
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-
       if ~ismember(obj.opts.detector, obj.validDetectors)
         obj.error('Invalid detector');
       end
@@ -82,7 +81,6 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       obj.detectorName = ['VGG ' obj.opts.detector];
       obj.descriptorName = ['VGG ' obj.opts.descriptor];
       obj.extractsDescriptors = true;
-  
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
@@ -103,7 +101,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(origImagePath));
       end
-
+      % Check whether image is of supported format
       [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
         obj.supportedImageFormats);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
@@ -142,7 +140,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         getFileName(origImagePath),timeElapsed);
       obj.storeFeatures(origImagePath, frames, descriptors);
     end
-  
+
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
       % EXTRACTDESCRIPTORS Compute SIFT descriptors using 
       %   compute_descriptors.ln binary.
@@ -151,7 +149,6 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       import localFeatures.*;
       magFactor = 1;
       tmpName = tempname;
-      
       if size(frames,1) ~= 5
         frames = helpers.frameToEllipse(frames);
       end
@@ -180,8 +177,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
         frames(3:5,:) = frames(3:5,:) ./ magFactor;
       end
     end
-    
-    
+
     function [frames descriptors] = computeDescriptors(obj, origImagePath, ...
         framesFile)
       % COMPUTEDESCRIPTORS Compute descriptors from frames stored in a file
@@ -212,7 +208,7 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
       delete(outDescFile);
       if imIsTmp, delete(imagePath); end;
     end
-    
+
     function sign = getSignature(obj)
       signList = {helpers.fileSignature(obj.detBinPath) ... 
         helpers.fileSignature(obj.descrBinPath) ...
@@ -224,20 +220,19 @@ classdef vggAffine < localFeatures.genericLocalFeatureExtractor ...
   methods (Static)
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {vggAffine.detUrl vggAffine.descUrl};
-      dstPaths = {vggAffine.binDir vggAffine.binDir};
+      urls = {VggAffine.detUrl VggAffine.descUrl};
+      dstPaths = {VggAffine.binDir VggAffine.binDir};
     end
 
     function compile()
       import localFeatures.*;
       % When unpacked, binaries are not executable
-      chmodCmds = {sprintf('chmod +x %s',vggAffine.detBinPath) ...
-        sprintf('chmod +x %s',vggAffine.descrBinPath)}; 
+      chmodCmds = {sprintf('chmod +x %s',VggAffine.detBinPath) ...
+        sprintf('chmod +x %s',VggAffine.descrBinPath)}; 
       for cmd = chmodCmds
         [status msg] = system(cmd{:});
         if status ~= 0, error(msg); end
       end
     end
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----

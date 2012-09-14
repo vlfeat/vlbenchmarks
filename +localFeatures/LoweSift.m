@@ -1,9 +1,8 @@
+classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
+    helpers.GenericInstaller
 % LOWESIFT 
 %
-
-
-classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
-    helpers.GenericInstaller
+% AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
     binPath
   end
@@ -11,12 +10,11 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
   properties (Constant)
     url = 'http://www.cs.ubc.ca/~lowe/keypoints/siftDemoV4.zip';
     installDir = fullfile('data','software','loweSift','');
-    dir = fullfile(localFeatures.loweSift.installDir,'siftDemoV4')
+    dir = fullfile(localFeatures.LoweSift.installDir,'siftDemoV4')
   end
-  
-  methods
 
-    function obj = loweSift(varargin)
+  methods
+    function obj = LoweSift(varargin)
       import localFeatures.*;
       obj.name = 'Lowe SIFT';
       obj.detectorName = obj.name;
@@ -26,8 +24,7 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
         obj.warn('Not installed.')
         obj.install();
       end
-      
-      execDir = loweSift.dir;
+      execDir = LoweSift.dir;
       obj.binPath = {fullfile(execDir, 'sift.m') ...
         fullfile(execDir, 'sift')};
     end
@@ -35,13 +32,11 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
       import localFeatures.*;
-      
+
       [frames descriptors] = obj.loadFeatures(imagePath, true);
       if numel(frames) > 0; return; end;
-      
       startTime = tic;
-      curDir = pwd;
-      
+      curDir = pwd;      
       % In case image is not in grayscale convert it and save it
       img = imread(imagePath);
       if ndims(img) == 3
@@ -52,55 +47,46 @@ classdef loweSift < localFeatures.genericLocalFeatureExtractor & ...
         detImagePath = imagePath;
       end
       clear img;
-      
       % Check whether it is absolute path
       if detImagePath(1) ~= filesep
         detImagePath = fullfile(pwd,imagePath);
       end
-      
       obj.info('Computing frames and descriptors of image %s.',...
         getFileName(imagePath));
-      
+
       try
-        cd(loweSift.dir);
+        cd(LoweSift.dir);
         [img descriptors frames] = sift(detImagePath);
         cd(curDir);
       catch err
         cd(curDir);
         throw(err);
       end      
-
       % Convert the frames to Matlab coordinate system
       descriptors = descriptors';
       frames = frames';
       frames(1:2,:) = frames([2 1],:) + 1;
       frames(4,:) = pi/2 - frames(4,:);
-      
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, descriptors);
     end
-    
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
-    end
-    
+
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath{:})];
+      sign = helpers.fileSignature(obj.binPath{:});
     end
   end
-  
+
   methods (Static)
     function deps = getDependencies()
       deps = {helpers.Installer()};
     end
-    
+
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {loweSift.url};
-      dstPaths = {loweSift.installDir};
+      urls = {LoweSift.url};
+      dstPaths = {LoweSift.installDir};
     end
   end
 end

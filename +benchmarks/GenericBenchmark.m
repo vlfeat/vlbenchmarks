@@ -5,6 +5,8 @@ classdef GenericBenchmark< handle
 %    cache which is blockable using methods enableCahe() and
 %    disableCache().
 
+% AUTORIGHTS
+
   properties
     benchmarkName % Name of the benchmark
   end

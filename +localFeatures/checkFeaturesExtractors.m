@@ -5,27 +5,27 @@ import localFeatures.*;
 detectors = {};
 cvInst = helpers.OpenCVInstaller();
 if cvInst.isInstalled();
-  detectors = [detectors {cmpHessian()}];
-  detectors = [detectors {cvFast()}];
-  detectors = [detectors {cvOrb()}];
-  detectors = [detectors {cvSift()}];
-  detectors = [detectors {cvStar()}];
-  detectors = [detectors {cvSurf()}];
+  detectors = [detectors {CmpHessian()}];
+  detectors = [detectors {CvFast()}];
+  detectors = [detectors {CvOrb()}];
+  detectors = [detectors {CvSift()}];
+  detectors = [detectors {CvStar()}];
+  detectors = [detectors {CvSurf()}];
 end
 
-detectors = [detectors {ebr()}];
-detectors = [detectors {ibr()}];
-detectors = [detectors {loweSift()}];
-detectors = [detectors {sfop()}];
-detectors = [detectors {vggAffine()}];
-detectors = [detectors {vggMser()}];
-detectors = [detectors {vlFeatCovdet('Method','DoG')}];
-detectors = [detectors {vlFeatCovdet('Method','Hessian')}];
-detectors = [detectors {vlFeatMser()}];
+detectors = [detectors {Ebr()}];
+detectors = [detectors {Ibr()}];
+detectors = [detectors {LoweSift()}];
+detectors = [detectors {Sfop()}];
+detectors = [detectors {VggAffine()}];
+detectors = [detectors {VggMser()}];
+detectors = [detectors {VlFeatCovdet('Method','DoG')}];
+detectors = [detectors {VlFeatCovdet('Method','Hessian')}];
+detectors = [detectors {VlFeatMser()}];
 
-dataset = datasets.vggAffineDataset('Category','graf');
+dataset = datasets.VggAffineDataset('Category','graf');
 imgPath = dataset.getImagePath(1);
-randomDet = randomFeaturesGenerator();
+randomDet = RandomFeaturesGenerator();
 
 for detector = detectors
   % Test frames detection

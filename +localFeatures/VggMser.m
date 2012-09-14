@@ -1,9 +1,12 @@
-classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
+classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 % VGGMSER class to wrap around the VGG MSER implementation
 %   VGGMSER('Option','OptionValue',...) Construct and object which wraps
 %   around a MSER detector [1] binary available at
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz
+%
+%   Only supported architectures are GLNX86 and GLNXA64 as for these the
+%   binary is avaialable.
 %
 %   The constructor call above takes the following options (see the vgg
 %   mser binary for complete interpretation of these options):
@@ -25,9 +28,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
 %   stereo from maximally stable extremal regions. BMVC, 384-393, 2002.
 
 % AUTORIGHTS
-
   properties (SetAccess=private, GetAccess=public)
-    % The properties below correspond to parameters for the vggMser
+    % The properties below correspond to parameters for the VggMser
     % binary accepts. See the binary help for explanation.
     binPath
     opts = struct(...
@@ -36,8 +38,8 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       'ms', -1,...
       'mm', -1);
   end
-  
-    properties (Constant)
+
+  properties (Constant)
     rootInstallDir = fullfile('data','software','vggMSER','');
     softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz';
   end
@@ -45,31 +47,27 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
   methods
     % The constructor is used to set the options for the vgg
     % mser binary.
-    function obj = vggMser(varargin)
+    function obj = VggMser(varargin)
       import localFeatures.*;
       import helpers.*;
       obj.name = 'VGG MSER';
       obj.detectorName = obj.name;
-
       % Parse the passed options
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      
       obj.configureLogger(obj.name,varargin);
-      
       if ~obj.isInstalled(),
-        obj.warn('vggMser not found installed');
+        obj.warn('VggMser not found installed');
         obj.install();
       end
-      
       % Check platform dependence
       machineType = computer();
       switch(machineType)
         case  {'GLNX86','GLNXA64'}
-          obj.binPath = fullfile(vggMser.rootInstallDir,'mser.ln');
+          obj.binPath = fullfile(VggMser.rootInstallDir,'mser.ln');
         case  {'PCWIN','PCWIN64'}
-          obj.binPath = fullfile(vggMser.rootInstallDir,'mser.exe');
+          obj.binPath = fullfile(VggMser.rootInstallDir,'mser.exe');
         otherwise
-          error('Arch: %s not supported by vggMser',machineType);
+          error('Arch: %s not supported by VggMser',machineType);
       end
     end
 
@@ -78,16 +76,12 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       import localFeatures.*;
 
       frames = obj.loadFeatures(imagePath,false);
-      if numel(frames) > 0; return; end;
-      
+      if numel(frames) > 0; return; end;      
       startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
-
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
-
-      args = ' -t 2';
-
+      args = ' -t 2'; % Define the output type
       fields = fieldnames(obj.opts);
       for i = 1:numel(fields)
         val = obj.opts.(fields{i});
@@ -95,7 +89,6 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
           args = [args,' -',fields{i},' ', num2str(val)];
         end
       end
-      
       args = sprintf('%s -i "%s" -o "%s"',...
                      args, imagePath, framesFile);
       cmd = [obj.binPath ' ' args];
@@ -104,37 +97,26 @@ classdef vggMser < localFeatures.genericLocalFeatureExtractor & ...
       if status
         error('%d: %s: %s', status, cmd, msg) ;
       end
-      
-      frames = localFeatures.helpers.readFramesFile(framesFile);
-      
-      delete(framesFile);
 
+      frames = localFeatures.helpers.readFramesFile(framesFile);
+      delete(framesFile);
       timeElapsed = toc(startTime);
       obj.debug('%d frames from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed);
-      
       obj.storeFeatures(imagePath, frames, []);
     end
 
-    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      obj.error('Descriptor calculation of provided frames not supported');
-    end
-    
     function sign = getSignature(obj)
       sign = [helpers.fileSignature(obj.binPath) ';'... 
               helpers.struct2str(obj.opts)];
     end
-    
   end
 
   methods (Static)
-    
     function [urls dstPaths] = getTarballsList()
       import localFeatures.*;
-      urls = {vggMser.softwareUrl};
-      dstPaths = {vggMser.rootInstallDir};
+      urls = {VggMser.softwareUrl};
+      dstPaths = {VggMser.rootInstallDir};
     end
-
   end % ---- end of static methods ----
-
 end % ----- end of class definition ----
