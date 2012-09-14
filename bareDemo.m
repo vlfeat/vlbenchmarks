@@ -5,23 +5,32 @@ function bareDemo()
 
 import localFeatures.*;
 
-detector = randomFeaturesGenerator();
+detector = RandomFeaturesGenerator();
 
 %% Define dataset
 
 import datasets.*;
 
-dataset = vggAffineDataset('category','graf');
+dataset = VggAffineDataset('category','graf');
 
 %% Define benchmarks
 
 import benchmarks.*;
-
-repeatabilityTest = repeatabilityBenchmark('CropFrames',true,...
-  'NormaliseFrames',true,'OverlapError',0.4);
-matchingTest = matchingBenchmark('CropFrames',true,...
-  'NormaliseFrames',true,'OverlapError',0.4);
-ijcvTest = kristianEvalBenchmark('CommonPart',1,'OverlapError',0.4);
+repeatabilityTest = RepeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',false,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4);
+matchingTest = RepeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',true,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4);
+ijcvTest = IjcvOriginalBenchmark('CommonPart',1,'OverlapError',0.4);
 
 %% Run the benchmarks
 
@@ -56,7 +65,7 @@ end
 
 %% Show scores
 
-scoreLineNames = {'VLFeat','IJCV'};
+scoreLineNames = {'Random Frames'};
 
 printScores(repeatability, scoreLineNames ,'Repeatability');
 printScores(numCorresp, scoreLineNames, 'Number of correspondences');
@@ -65,26 +74,20 @@ printScores(numMatches, scoreLineNames, 'Num of matches');
 
 
 %% Helper functions
-
 function printScores(scores, scoreLineNames, name)
-  % PRINTSCORES
   numScores = numel(scoreLineNames);
-
   maxNameLen = 0;
   for k = 1:numScores
     maxNameLen = max(maxNameLen,length(scoreLineNames{k}));
   end
-
   maxNameLen = max(length('Method name'),maxNameLen);
   fprintf(strcat('\nPriting ', name,':\n'));
   formatString = ['%' sprintf('%d',maxNameLen) 's:'];
-
   fprintf(formatString,'Method name');
   for k = 1:size(scores,2)
     fprintf('\tImg#%02d',k);
   end
   fprintf('\n');
-
   for k = 1:numScores
     fprintf(formatString,scoreLineNames{k});
     for l = 2:size(scores,2)
