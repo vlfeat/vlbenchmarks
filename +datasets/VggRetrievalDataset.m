@@ -147,17 +147,18 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       import helpers.*;
       querySignatures = '';
       for queryIdx = 1:obj.numQueries
-        query = obj.getQuery(queryIdx);
-        querySignatures = strcat(querySignatures, obj.getQuerySignature(query));
+        querySignatures = strcat(querySignatures, ...
+          obj.getQuerySignature(queryIdx));
       end
       signature = ['queries_' obj.datasetName CalcMD5.CalcMD5(querySignatures)];
     end
 
-    function querySignature = getQuerySignature(obj, query)
+    function querySignature = getQuerySignature(obj, queryIdx)
       % GETQUERYSIGNATURE Get a signature of a query
-      %  QUERY_SIGNATURE = GETQUERYSIGNATURE(QUERY) Get an unique string
-      %  signatures QUERY_SIGNATURE of a query struct. QUERY.
+      %  QUERY_SIGNATURE = GETQUERYSIGNATURE(QUERY_IDX) Get an unique 
+      %  string signatures QUERY_SIGNATURE of a query QUERY_IDX.
       import helpers.*;
+      query = obj.getQuery(queryIdx);
       imagePath = obj.getImagePath(query.imageId);
       imageSign = fileSignature(imagePath);
       querySignature = strcat(imageSign,mat2str(query.good),...

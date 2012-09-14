@@ -19,6 +19,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
   properties (Constant)
     resultsKeyPrefix = 'retreivalResults';
+    queryResKeyPrefix = 'retreivalQueryResults';
     datasetFeaturesKeyPrefix = 'datasetFeatures';
   end
 
@@ -54,16 +55,38 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
         return;
       end
 
+      % Try to load already computed queries
+      numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
+      queriesAp = zeros(numQueries,1);
+      cachedQueries = [];
+      queryResKeys = cell(1,numQueries);
+      cacheResults = detector.useCache && obj.useCache;
+      if cacheResults
+        for q = 1:numQueries
+          querySignature = dataset.getQuerySignature(q);
+          queryResKeys{q} = strcat(obj.queryResKeyPrefix, testSignature,...
+            detSignature, imagesSignature, querySignature);
+          qResults = DataCache.getData(queryResKeys{q});
+          if ~isempty(qResults);
+            cachedQueries = [cachedQueries q];
+            queriesAp(q) = qResults;
+            obj.debug('Query AP %d loaded from cache.',q);
+          end
+        end
+      end
+      nonComputedQueries = setdiff(1:numQueries,cachedQueries);
+
       % Retreive features of all images
       [frames descriptors] = obj.getAllDatasetFeatures(dataset, detector);
 
       % Compute average precisions
-      numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
-      queriesAp = zeros(numQueries,1);
-      parfor q = 1:numQueries
+      parfor q = nonComputedQueries
         obj.info('Computing query %d/%d.',q,numQueries);
         query = dataset.getQuery(q);
         queriesAp(q) = obj.evalQuery(frames, descriptors, query);
+        if cacheResults
+          DataCache.storeData(queriesAp(q), queryResKeys{q});
+        end
       end
 
       mAP = mean(queriesAp);
@@ -135,19 +158,25 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       imagesSignature = dataset.getImagesSignature();
       featKeyPrefix = obj.datasetFeaturesKeyPrefix;
       featuresKey = strcat(featKeyPrefix, detSignature,imagesSignature);
-      features = DataCache.getData(featuresKey);
+      features = [];
+      if detector.useCache
+        features = DataCache.getData(featuresKey);
+      end;
       if isempty(features)
         % Compute the features
         frames = cell(numImages,1);
         descriptors = cell(numImages,1);
         featStartTime = tic;
         parfor imgNo = 1:numImages
+          obj.info('Computing features of image %d/%d.',imgNo,numImages);
           imagePath = dataset.getImagePath(imgNo);
           [frames{imgNo} descriptors{imgNo}] = ...
             detector.extractFeatures(imagePath);
         end
         obj.debug('Features computed in %fs.',toc(featStartTime));
-        DataCache.storeData({frames, descriptors},featuresKey);
+        if detector.useCache
+          DataCache.storeData({frames, descriptors},featuresKey);
+        end
       else 
         [frames descriptors] = features{:};
         obj.debug('Features loaded from cache.');

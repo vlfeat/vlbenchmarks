@@ -197,7 +197,8 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         detector.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
 
-      if isempty(cachedResults)
+      % When detector does not cache results, do not use the cached data
+      if isempty(cachedResults) || ~detector.useCache
         if obj.opts.matchFramesDescriptors
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
@@ -210,8 +211,10 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
           [score numMatches bestMatches reprojFrames] = ...
             obj.testFeatures(tf,imageASize, imageBSize,framesA, framesB);
         end
-        results = {score numMatches bestMatches reprojFrames};
-        obj.storeResults(results, resultsKey);
+        if detector.useCache
+          results = {score numMatches bestMatches reprojFrames};
+          obj.storeResults(results, resultsKey);
+        end
       else
         [score numMatches bestMatches reprojFrames] = cachedResults{:};
         obj.debug('Results loaded from cache');

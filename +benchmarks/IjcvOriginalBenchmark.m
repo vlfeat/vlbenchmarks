@@ -88,7 +88,8 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
         detector.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
       
-      if isempty(cachedResults)
+      % When detector does not cache results, do not use the cached data
+      if isempty(cachedResults) || ~detector.useCache
         if nargout == 4
           obj.info('Comparing frames and descriptors from det. %s and images %s and %s.',...
             detector.detectorName,getFileName(imageAPath),getFileName(imageBPath));
@@ -107,12 +108,12 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
           matchScore = -1;
           numMatches = -1;
         end
-        
-        results = {repScore numCorresp matchScore numMatches};
-        obj.storeResults(results, resultsKey);
+        if detector.useCache
+          results = {repScore numCorresp matchScore numMatches};
+          obj.storeResults(results, resultsKey);
+        end
       else
         obj.debug('Results loaded from cache');
-        
         [repScore numCorresp matchScore numMatches] = cachedResults{:};
       end
       
