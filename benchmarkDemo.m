@@ -8,12 +8,13 @@ function benchmarkDemo()
 import localFeatures.*;
 
 detectors{1} = vggMser('ms',30); % Custom options
-detectors{2} = vlFeatMser(); % Default options
-detectors{2}.name = 'VLFeat MSER'; % used in the plot legend by modifying the above field
-detectors{3} = cmpHessian();
-detectors{4} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
-detectors{5} = vggAffine('Detector', 'hessian');
-detectors{6} = vggNewAffine('Detector', 'hessian');
+%detectors{2} = vlFeatMser(); % Default options
+%detectors{2}.name = 'VLFeat MSER'; % used in the plot legend by modifying the above field
+%detectors{1} = cmpHessian();
+%detectors{2} = cmpBinHessian();
+%detectors{4} = vlFeatCovdet('AffineAdaptation',true,'Orientation',false,'Method','hessian');
+%detectors{5} = vggAffine('Detector', 'hessian');
+%detectors{6} = vggNewAffine('Detector', 'hessian');
 
 %% Define dataset
 
@@ -25,9 +26,21 @@ dataset = vggAffineDataset('category','graf');
 
 import benchmarks.*;
 
-repBenchmark = repeatabilityBenchmark();
-kmBenchmark = kristianEvalBenchmark();
-
+repBenchmark = RepeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',false,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4);
+matchBenchmark = RepeatabilityBenchmark(...
+  'MatchFramesGeometry',true,...
+  'MatchFramesDescriptors',true,...
+  'WarpMethod','km',...
+  'CropFrames',true,...
+  'NormaliseFrames',true,...
+  'OverlapError',0.4);
+matchBenchmark.disableCaching();
 %% Run the benchmarks in parallel
 
 numDetectors = numel(detectors);
@@ -45,14 +58,16 @@ for detectorIdx = 1:numDetectors
   detector = detectors{detectorIdx};
   imageAPath = dataset.getImagePath(1);
   
-  parfor imageIdx = 2:numImages
+  for imageIdx = 2:numImages
     imageBPath = dataset.getImagePath(imageIdx);
     tf = dataset.getTransformation(imageIdx);
     [repeatability(detectorIdx,imageIdx) numCorresp(detectorIdx,imageIdx)] = ...
       repBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+    [matchScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+      matchBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
     
-    [a b matchScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
-      kmBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+    %[a b matchScore(detectorIdx,imageIdx) numMatches(detectorIdx,imageIdx)] = ...
+    %  kmBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
   end
 end
 

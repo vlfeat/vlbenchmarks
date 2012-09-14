@@ -1,4 +1,4 @@
-function [mAP quertAPs] = retreivalBenchmarkDemo()
+function [mAP quertAPs] = retrievalBenchmarkDemo()
 % RETRIEVALBENCHMARKDEMO Demo of retrieval benchmark usage
 import localFeatures.*;
 import datasets.*;
@@ -18,7 +18,7 @@ detNames = {'VGG MSER + VGG SIFT','VGG Harris Affine',...
 dataset = vggRetrievalDataset('Category','oxbuild','Lite',true);
 
 %% Run the benchmark
-retBenchmark = retrievalBenchmark();
+retBenchmark = RetrievalBenchmark();
 
 mAP = zeros(numel(detectors),1);
 quertAPs = cell(numel(detectors),1);

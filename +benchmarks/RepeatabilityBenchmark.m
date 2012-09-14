@@ -1,7 +1,7 @@
-classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
+classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
 % REPEATABILITYBENCHMARK evaluates the repeatability and matching scores of features
-%   REPEATABILITYBENCHMARK(resultsStorage,'OptionName',optionValue,...)
+%   REPEATABILITYBENCHMARK('OptionName',optionValue,...)
 %   constructs an object to compute the detector repeatabiliy and the
 %   descriptor matching scores as given in [1].
 %
@@ -66,7 +66,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 %        repeatability = -------------------------.
 %                        min(|framesA|, |framesB|)
 %
-%   REPEATABILITYBENCHMARK can compute the descriptor matching score
+%   RepeatabilityBenchmark can compute the descriptor matching score
 %   too (see the 'MatchFramesGeometry' and 'MatchFramesDescriptors'
 %   options). To define this, a second set of matches M_d is obtained
 %   similarly to the previous method, except that the descriptors
@@ -146,7 +146,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
   end
 
   methods
-    function obj = repeatabilityBenchmark(varargin)
+    function obj = RepeatabilityBenchmark(varargin)
       import benchmarks.*;
       import helpers.*;
       obj.benchmarkName = 'repeatability';
@@ -181,7 +181,7 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       %   recompute the repeatability score unless the cache is manually
       %   cleared.
       %
-      %   See also: REPEATABILITYBENCHMARK().
+      %   See also: RepeatabilityBenchmark().
       import benchmarks.*;
       import helpers.*;
 
@@ -191,6 +191,8 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
 
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
+      imageASize = helpers.imageSize(imageAPath);
+      imageBSize = helpers.imageSize(imageBPath);
       resultsKey = cell2str({obj.keyPrefix, obj.getSignature(), ...
         detector.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
@@ -200,13 +202,13 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
           [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
-            tf, imageAPath, imageBPath, framesA, framesB,...
+            tf, imageASize, imageBSize, framesA, framesB,...
             descriptorsA, descriptorsB);
         else
           [framesA] = detector.extractFeatures(imageAPath);
           [framesB] = detector.extractFeatures(imageBPath);
           [score numMatches bestMatches reprojFrames] = ...
-            obj.testFeatures(tf,imageAPath, imageBPath,framesA, framesB);
+            obj.testFeatures(tf,imageASize, imageBSize,framesA, framesB);
         end
         results = {score numMatches bestMatches reprojFrames};
         obj.storeResults(results, resultsKey);
@@ -218,16 +220,17 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
     end
 
     function [score numMatches matches reprojFrames] = ...
-                testFeatures(obj, tf, imageAPath, imageBPath, ...
+                testFeatures(obj, tf, imageASize, imageBSize, ...
                 framesA, framesB, descriptorsA, descriptorsB)
       % TESTFEATURES Compute matching score of a given frames and descriptors.
-      %   [SCORE NUM_MATCHES] = TESTFEATURES(TF, IMAGE_A_PATH, IMAGE_B_PATH,
+      %   [SCORE NUM_MATCHES] = TESTFEATURES(TF, IMAGE_A_SIZE, IMAGE_B_SIZE,
       %   FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute matching score
       %   SCORE between frames FRAMES_A and FRAMES_B and their
       %   descriptors DESCS_A and DESCS_B which were extracted from
-      %   images defined by their path IMAGEA_PATH and IMAGEB_PATH
+      %   pair of images with sizes IMAGE_A_SIZE and IMAGE_B_SIZE
       %   which geometry is related by homography TF. NUM_MATHCES is
-      %   number of matches.
+      %   number of matches which is calcuated according to object
+      %   settings.
       import benchmarks.helpers.*;
       import helpers.*;
 
@@ -262,13 +265,6 @@ classdef repeatabilityBenchmark < benchmarks.genericBenchmark ...
       % optionally remove frames that are not fully contained in
       % both images
       if obj.opts.cropFrames
-        imageA = imread(imageAPath);
-        imageB = imread(imageBPath);
-        imageASize = size(imageA);
-        imageBSize = size(imageB);
-        clear imageA;
-        clear imageB;
-
         % find frames fully visible in both images
         bboxA = [1 1 imageASize(2)+1 imageASize(1)+1] ;
         bboxB = [1 1 imageBSize(2)+1 imageBSize(1)+1] ;

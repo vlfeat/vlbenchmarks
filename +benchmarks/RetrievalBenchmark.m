@@ -1,4 +1,4 @@
-classdef retrievalBenchmark < benchmarks.genericBenchmark ...
+classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
   %RETREIVALBENCHMARK
   %
@@ -21,7 +21,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
   end
 
   methods
-    function obj = retrievalBenchmark(varargin)
+    function obj = RetrievalBenchmark(varargin)
       obj.benchmarkName = 'RetrBenchmark';
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       obj.configureLogger(obj.benchmarkName,varargin);
@@ -113,10 +113,7 @@ classdef retrievalBenchmark < benchmarks.genericBenchmark ...
       votes = votes./sqrt(numDescriptors);
       [temp, rankedList]= sort(votes, 'descend'); 
 
-      %[precision recall inf]  = retrievalBenchmark.calcPR(query, votes);
-      %ap = inf.ap;
-      %pr = {precision recall inf};
-      ap = retrievalBenchmark.philbinComputeAp(query, rankedList);
+      ap = RetrievalBenchmark.philbinComputeAp(query, rankedList);
       pr = {[] [] []};
 
       obj.debug('AP calculated in %fs.',toc(startTime));

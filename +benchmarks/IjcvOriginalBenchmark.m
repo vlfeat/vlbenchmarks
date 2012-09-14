@@ -1,19 +1,30 @@
-classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
+classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
-  %KRISTIANEVALBENCHMARK Kristians Mikolajczyk's affine detectors test
-  %   Implements test interface for Kristian's testing script of affine
-  %   covarinat image regions (frames).
-  %
-  %   Options:
-  %
-  %   OverlapError :: [0.4]
-  %     Overlap error of the ellipses for which the repScore is
-  %     calculated. Can be only in {0.1, 0.2, ... ,0.9}.
-  %
-  %   CommonPart :: [1]
-  %     flag should be set to 1 for repeatability and 0 for descriptor 
-  %     performance
-  %
+% IjcvOriginalBenchmark Kristians Mikolajczyk's affine detectors test
+%   IjcvOriginalBenchmark('OptionName',OptionValue,...) Constructs an
+%   object which wraps around Kristian's testing script of affine
+%   covariant image regions (frames). Calls directly 'repeatability.m'
+%   script.
+%
+%   Script used is available on:
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz
+%
+%   Options:
+%
+%   OverlapError :: [0.4]
+%     Overlap error of the ellipses for which the repScore is
+%     calculated. Can be only in {0.1, 0.2, ... ,0.9}.
+%
+%   CommonPart :: [1]
+%     flag should be set to 1 for repeatability and 0 for descriptor 
+%     performance
+%
+%   REFERENCES
+%   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
+%       J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
+%       comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
+
+% AUTORIGHTS
   
   properties
     opts = struct(...
@@ -29,26 +40,26 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
   end
   
   methods
-    function obj = kristianEvalBenchmark(varargin)
+    function obj = IjcvOriginalBenchmark(varargin)
       import benchmarks.*;
       import helpers.*;
       
-      obj.benchmarkName = 'kristian_eval'; 
+      obj.benchmarkName = 'IjcvOriginalBenchmark'; 
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       
       % Index of a value from the test results corresponding to idx*10 overlap
-      % error. Kristian eval. computes only overlap errors in step of 0.1
+      % error. Original benchmark computes only overlap errors in step of 0.1
       overlapErr = obj.opts.overlapError;
       overlapErrIdx = round(overlapErr*10);
       if (overlapErr*10 - overlapErrIdx) ~= 0
-          obj.warn(['KM benchmark supports only limited set of overlap errors. ',...
+          obj.warn(['IJCV affine benchmark supports only limited set of overlap errors. ',...
              'Your overlap error was rounded.']);
       end
        
       obj.configureLogger(obj.benchmarkName,varargin);
       
       if(~obj.isInstalled())
-        obj.warn('Kristian''s benchmark not found, installing dependencies...');
+        obj.warn('IJCV affine benchmark not found, installing dependencies...');
         obj.install();
       end   
     end
@@ -124,7 +135,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
       import benchmarks.*;
       import helpers.*;
       
-      obj.info('Computing kristian eval benchmark between %d/%d frames.',...
+      obj.info('Computing kri benchmark between %d/%d frames.',...
           size(framesA,2),size(framesB,2));
       
       startTime = tic;
@@ -138,7 +149,7 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
         descriptorsB = [];
       end
      
-      krisDir = kristianEvalBenchmark.installDir;
+      krisDir = IjcvOriginalBenchmark.installDir;
       tmpFile = tempname;
       ellBFile = [tmpFile 'ellB.txt'];
       tmpHFile = [tmpFile 'H.txt'];
@@ -189,15 +200,15 @@ classdef kristianEvalBenchmark < benchmarks.genericBenchmark ...
     
     function [srclist flags] = getMexSources()
       import benchmarks.*;
-      path = kristianEvalBenchmark.installDir;
+      path = IjcvOriginalBenchmark.installDir;
       srclist = {fullfile(path,'c_eoverlap.cxx')};
       flags = {''};
     end
     
     function [urls dstPaths] = getTarballsList()
       import benchmarks.*;
-      urls = {kristianEvalBenchmark.url};
-      dstPaths = {kristianEvalBenchmark.installDir};
+      urls = {IjcvOriginalBenchmark.url};
+      dstPaths = {IjcvOriginalBenchmark.installDir};
     end
     
    end

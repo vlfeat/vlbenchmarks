@@ -1,5 +1,9 @@
-classdef genericBenchmark < handle
+classdef GenericBenchmark< handle
 %  GENERICBENCHMARK The base class of a benchmark
+%    Defines getSignature abstract method.
+%    This base class implements only several helper methods as access to
+%    cache which is blockable using methods enableCahe() and
+%    disableCache().
 
   properties
     benchmarkName % Name of the benchmark
@@ -28,6 +32,9 @@ classdef genericBenchmark < handle
 
   methods (Access=protected)
     function cachedResults = loadResults(obj,resultsKey)
+      % RES = LOADRESULTS(RESULTS_KEY) Load result RES defined by 
+      %   RESULTS_KEY from the cache. When no result found or 
+      %   useCache=false, returned empty array.
       import helpers.*;
       if obj.useCache
         cachedResults = DataCache.getData(resultsKey);
@@ -37,6 +44,8 @@ classdef genericBenchmark < handle
     end
 
     function storeResults(obj, results, resultsKey)
+      % STORERESULTS(RES, RESULTS_KEY) Store results to a cache. If
+      % useCache=false, nothing is done.
       import helpers.*;
       if ~obj.useCache, return; end;
       helpers.DataCache.storeData(results, resultsKey);
