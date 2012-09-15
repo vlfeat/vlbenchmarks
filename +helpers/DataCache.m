@@ -30,6 +30,7 @@ classdef DataCache
   %     removeData(key) - Remove data from the cache.
   %     clearCache() - Check the overall size of the cached data and delete
   %       last recently used data if exceedes.
+  %     deleteAllCachedData() - Delete all cached data.
   
   properties (Constant)
     maxDataSize = 5000*1024^2; % Max. size of data in cache in Bytes
@@ -131,6 +132,12 @@ classdef DataCache
       DataCache.unlock();
     end
 
+    function deleteAllCachedData()
+      % DELETEALLCACHEDDATA() Delete all cached data
+      import helpers.*;
+      fprintf('Deleting all cached data...\n');
+      delete(fullfile(DataCache.dataPath,'*.mat'));
+    end
   end
   
   methods (Static, Access=protected)
