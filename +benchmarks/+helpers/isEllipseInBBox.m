@@ -5,6 +5,12 @@ function sel = isEllipseInBBox(bbox, f)
 %   
 %        [xmin ymin xmax ymax]
 %
+  if numel(bbox) ~= 4
+    error('Invalid bounding box');
+  end
+  if size(f,1) ~= 5
+    error('Invalid ellipse frames.');
+  end
 
   if isempty(f)
     sel = false;
