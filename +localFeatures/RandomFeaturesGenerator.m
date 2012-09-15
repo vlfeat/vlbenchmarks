@@ -36,6 +36,9 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
 %
 %   DescMinValue:: 0
 %     Minimal value in a descriptor vector.
+%
+%   DescInteger:: false
+%     Generate descriptors as integers.
 
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)

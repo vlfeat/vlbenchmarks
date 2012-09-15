@@ -30,7 +30,7 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
         error('FrameDetector not a GenericLocalFeatureExtractor.');
       end
       if ~descExtractor.extractsDescriptors
-        error('Class % does not support descriptor extraction of provided frames',...
+        error('Class %s does not support descriptor extraction of provided frames',...
           descExtractor.name);
       end
       obj.frameDetector = frameDetector;

@@ -5,11 +5,43 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 %   by reference, not by value.
 %
 %   Derive this class to add your own feature extractor. See
-%   EXAMPLELOCALFEATUREEXTRACTOR() for instructions.
+%   ExampleLocalFeatureExtractor() for instructions.
+%
+%   Because some detector cannot split feature frame detection from the
+%   descriptor extraction, there are three ways how to extract features
+%   from an image using GENERICLOCALFEATUREEXTRACTOR object LFE:
+%
+%   1. Detect feature frames
+%     Feature frames only are extracted when calling method:
+%
+%       FRAMES = LFE.extractFeatures(IMAGE_PATH)
+%
+%   2. Detect feature frames and their descriptors
+%     Feature frames and their descriptors are detected by calling method:
+%
+%       [FRAMES_WITH_DESCS DESCRIPTORS] = LFE.extractFeatures(IMAGE_PATH)
+%
+%     Where size(FRAMES_WITH_DESCS,2) == size(DESCRIPTORS,2). However
+%     usually holds that size(FRAMES_WITH_DESCS,2) ~= size(FRAMES) (usually
+%     because descriptors are calculated over bigger measurement region,
+%     therefore some frames on the image border are cropped).
+%
+%   3. Detect descriptors of given frames:
+%     Descriptors of given frames can be computed by calling method:
+%
+%       [FRAMES_WITH_DESCS DESCRIPTORS] = 
+%             LFE.extractDescriptors(IMAGE_PATH, FRAMES)
+%
+%     When detector supports this method, usually it should hold that 
+%     using frames from extractFeatures with one output variable in
+%     extractDescriptors should give the same results as calling 
+%     extractFeatures with two output arguments.
 %
 %   This class implements methods for storing detected features in a cache
 %   which supports enabling/disabling caching using methods 
 %   disableCaching() and enableCaching().
+%
+%   See also: extractFeatures, extractDescriptors
 
 % Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
 
@@ -71,9 +103,10 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     %   When called only with one output argument, only frames are
     %   calculated. When invoked with two output arguments,
     %   descriptors of the frames are calculated. Note that the
-    %   frames computed in the two cases may differ as in certain
-    %   cases the descriptors cannot be computed for some frames
-    %   (e.g. if too close to the image boundary).
+    %   number of frames with descriptors may differ to number of frames
+    %   which are extracted without descriptors.
+    %
+    %   See also: GenericLocalFeatureExtractor
       error('Not supported') ;
     end
 
