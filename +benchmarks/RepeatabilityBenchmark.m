@@ -177,6 +177,20 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       %   [REPEATABILITY, NUMMATCHES] = TESTDETECTOR(...) returns also the
       %   total number of feature matches found.
       %
+      %   [REP, NUMMATCHES, REPR_FRAMES, MATCHES] = TESTDETECTOR(...)
+      %   returns cell array REPR_FRAMES which contains reprojected and
+      %   eventually cropped frames in format:
+      %
+      %    REPR_FRAMES = {CFRAMES_A,CFRAMES_B,REP_CFRAMES_A,REP_CFRAMES_B}
+      %
+      %   where CFRAMES_A are (cropped) frames detected in the IMAGEAPATH
+      %   image REP_CFRAMES_A are CFRAMES_A reprojected to the IMAGEBPATH
+      %   image using homography TF. Same hold for frames from the secons
+      %   image CFRAMES_B and REP_CFRAMES_B.
+      %   MATCHES is an array of size [size(CFRAMES_A),1]. Two frames are
+      %   CFRAMES_A(k) and CFRAMES_B(l) are matched when MATCHES(k) = l.
+      %   When frame CFRAMES_A(k) is not matched, MATCHES(k) = 0.
+      %
       %   This method caches its results, so that calling it again will not
       %   recompute the repeatability score unless the cache is manually
       %   cleared.
@@ -234,6 +248,20 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       %   which geometry is related by homography TF. NUM_MATHCES is
       %   number of matches which is calcuated according to object
       %   settings.
+      %
+      %   [SCORE, NUM_MATCHES, REPR_FRAMES, MATCHES] = TESTFEATURES(...)
+      %   returns cell array REPR_FRAMES which contains reprojected and
+      %   eventually cropped frames in format:
+      %
+      %    REPR_FRAMES = {CFRAMES_A,CFRAMES_B,REP_CFRAMES_A,REP_CFRAMES_B}
+      %
+      %   where CFRAMES_A are (cropped) frames detected in the IMAGEAPATH
+      %   image REP_CFRAMES_A are CFRAMES_A reprojected to the IMAGEBPATH
+      %   image using homography TF. Same hold for frames from the secons
+      %   image CFRAMES_B and REP_CFRAMES_B.
+      %   MATCHES is an array of size [size(CFRAMES_A),1]. Two frames are
+      %   CFRAMES_A(k) and CFRAMES_B(l) are matched when MATCHES(k) = l.
+      %   When frame CFRAMES_A(k) is not matched, MATCHES(k) = 0.
       import benchmarks.helpers.*;
       import helpers.*;
 
