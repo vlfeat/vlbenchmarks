@@ -176,7 +176,7 @@ subplot(2,2,4); hold on;
 % Process the results
 for di = 1:numDetectors
   % Divide the frames based on scales into equaly distributed ones
-  scalesA = getFrameScale(framesA{di});
+  scalesA = localFeatures.helpers.getFrameScale(framesA{di});
   binA = ceil(numBins * tiedrank(scalesA) / length(scalesA));
   for nrsi = 1:numBins
     sFramesA = framesA{di}(:,binA == nrsi);
@@ -448,11 +448,6 @@ function plotScores(scores, detNames, dataset, titleText)
   legend(detNames,'Location','NorthEast');
   grid on ;
   axis([min(xVals)*0.9 max(xVals)*1.05 0 maxScore]);
-end
-
-function scale = getFrameScale(frames)
-  det = prod(frames([3 5],:)) - frames(4,:).^2;
-  scale = sqrt(sqrt(det));
 end
 
 function confFig(fig)
