@@ -26,6 +26,7 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       obj.descriptorName = 'VLFeat SIFT';
       obj.vl_sift_arguments = obj.configureLogger(obj.name,varargin);
       obj.binPath = {which('vl_sift') which('libvl.so')};
+      obj.extractsDescriptors = true;
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -48,6 +49,38 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, descriptors);
+    end
+
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+      % EXTRACTDESCRIPTORS Extract SIFT descriptors of disc frames FRAMES
+      %   EXTRACTDESCRIPTORS(IMG_PATH, FRAMES) Extracts SIFT descriptors of 
+      %     disc frames FRAMES from image defined by IMG_PATH. For the
+      %     descriptor extraction, scale-space is used.
+      %     Ellipses are converted to discs using their scale. The
+      %     orientation of an oriented ellipse is dropped.
+      import localFeatures.helpers.*;
+      obj.info('Computing descriptors.');
+      startTime = tic;
+      % Get the input image
+      img = imread(imagePath);
+      imgSize = size(img);
+      if imgSize(3) > 1
+        img = rgb2gray(img);
+      end
+      img = single(img);
+      if size(frames,1) > 4
+        % Convert frames to disks
+        frames = [frames(1,:); frames(2,:); getFrameScale(frames)];
+      end
+      if size(frames,1) < 4
+        % When no orientation, compute upright SIFT descriptors
+        frames = [frames; zeros(1,size(frames,2))];
+      end
+      % Compute the descriptors (using scale space).
+      [frames, descriptors] = vl_sift(img,'Frames',frames,...
+        obj.vl_sift_arguments{:});
+      elapsedTime = toc(startTime);
+      obj.debug('Descriptors computed in %gs',elapsedTime);
     end
 
     function sign = getSignature(obj)
