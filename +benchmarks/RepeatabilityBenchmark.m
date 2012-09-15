@@ -335,7 +335,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh,...
         'NormalisedScale',obj.opts.normalisedScale);
 
-      matches = zeros(0, numFramesA) ;
+      matches = [];
 
       if obj.opts.matchFramesGeometry
         % Create an edge between each feature in A and in B
@@ -402,7 +402,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       % Combine collected matches, i.e. select only equal matches
       validMatches = ...
         prod(single(matches == repmat(matches(1,:),size(matches,1),1)),1);
-      matches = matches(1,validMatches~=0);
+      matches = matches(1,:) .* validMatches;
 
       % Compute the score
       numBestMatches = sum(matches ~= 0);
