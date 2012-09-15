@@ -186,8 +186,8 @@ detectorNames = {'SIFT','MSER + Sim. inv. SIFT desc.',...
   'SIFT frames + Mean/Var/Med desc.'};
 figure(4); clf;
 subplot(1,2,1);
-printScores(detectorNames, matchScore, 'Match Score');
-plotScores(detectorNames, dataset, matchScore,'Matching Score');
+printScores(detectorNames, matchScore*100, 'Match Score');
+plotScores(detectorNames, dataset, matchScore*100,'Matching Score');
 subplot(1,2,2);
 printScores(detectorNames, numMatches, 'Number of matches');
 plotScores(detectorNames, dataset, numMatches,'Number of matches');
@@ -222,18 +222,20 @@ title(sprintf('Matches using mean-variance-median descriptor with %d image (%s d
 %% Helper functions
 function printScores(detectorNames, scores, name)
   numDetectors = numel(detectorNames);
-  maxNameLen = 0;
-  maxNameLen = max(length('Method name'),maxNameLen);
-  fprintf(strcat('\nPriting ', name,':\n'));
+  maxNameLen = length('Method name');
+  for k = 1:numDetectors
+    maxNameLen = max(maxNameLen,length(detectorNames{k}));
+  end
+  fprintf(['\n', name,':\n']);
   formatString = ['%' sprintf('%d',maxNameLen) 's:'];
   fprintf(formatString,'Method name');
-  for k = 1:size(scores,2)
+  for k = 2:size(scores,2)
     fprintf('\tImg#%02d',k);
   end
   fprintf('\n');
   for k = 1:numDetectors
     fprintf(formatString,detectorNames{k});
-    for l = 1:size(scores,2)
+    for l = 2:size(scores,2)
       fprintf('\t%6s',sprintf('%.2f',scores(k,l)));
     end
     fprintf('\n');
