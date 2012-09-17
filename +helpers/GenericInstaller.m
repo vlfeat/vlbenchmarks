@@ -41,6 +41,17 @@ classdef GenericInstaller < handle
       end
     end
 
+    function varargin = checkInstall(obj, varargin)
+      % CHECKINSTALL Check whether object is installed.
+      %   CHECKINSTALL('AutoInstall', false) Do not install if not
+      %   installed.
+      opts.autoInstall = true;
+      [opts varargin] = vl_argparse(opts, varargin{:});
+      if opts.autoInstall && ~obj.isInstalled()
+        obj.install();
+      end
+    end
+
     function res = isInstalled(obj)
     % ISINSTALLED Test whether all the specified data are installed
       res = obj.dependenciesInstalled() ...
@@ -79,9 +90,7 @@ classdef GenericInstaller < handle
     % MEXFILESCOMPILED Test whether all mex files are compiled
       mexSources = obj.getMexSources();
       for source=mexSources
-        [srcPath srcFilename] = fileparts(source{:});
-        mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
-        if ~exist(mexFile,'file')
+        if ~obj.mexFileCompiled(source{:});
           res = false;
           return
         end
@@ -93,10 +102,10 @@ classdef GenericInstaller < handle
     % TARBALLSINSTALLED Test whether all tarballs are downloaded.
     %   Tests whether in all dest. directories exist a dummy file 
     %   <dst_dir>/.<archive_name>.unpacked
+      import helpers.*;
       [urls dstPaths] = obj.getTarballsList();
       for i = 1:numel(dstPaths)
-        unpackTagFile = obj.getUnapckedTagFile(urls{i}, dstPaths{i});
-        if ~exist(unpackTagFile,'file')
+        if ~obj.tarballInstalled(urls{i}, dstPaths{i});
           res = false;
           return
         end
@@ -108,14 +117,13 @@ classdef GenericInstaller < handle
     % COMPILEMEXFILES Compile specified mex file
     %   List of mex files is specified by getMexSources method
     %   implementation.
-      if obj.mexFilesCompiled()
-        return;
-      end
       [sources flags] = obj.getMexSources();
       numSources = numel(sources);
       if ~exist('flags','var'), flags = cell(1,numSources); end;
       for i = 1:numSources
-        obj.installMex(sources{i},flags{i});
+        if ~obj.mexFileCompiled(sources{i})
+          obj.compileMex(sources{i},flags{i});
+        end
       end
     end
 
@@ -127,10 +135,11 @@ classdef GenericInstaller < handle
       if obj.tarballsInstalled()
         return;
       end
-
       [urls dstPaths] = obj.getTarballsList();
       for i = 1:min(numel(urls),numel(dstPaths))
-        obj.installTarball(urls{i},dstPaths{i});
+        if ~obj.tarballInstalled(urls{i}, dstPaths{i});
+          obj.installTarball(urls{i},dstPaths{i});
+        end
       end
     end
 
@@ -138,17 +147,39 @@ classdef GenericInstaller < handle
     % INSTALLDEPENDENCIES Install all dependencies.
     %   List of classes which this class depends on is defined by
     %   return values of method getDependencies().
-      if obj.dependenciesInstalled()
-        return;
-      end
-
       deps = obj.getDependencies();
       res = true;
       for dep = deps
-        dep{:}.install();
+        if ~dep{:}.isInstalled()
+          dep{:}.install();
+        end
       end
     end
 
+    function clean(obj)
+      % CLEAN() Clean all allocated resources. Deletes compiled mex files,
+      % cleans compiled files (calling cleanCompiled()) and deletes
+      % downloaded tarballs.
+      if ~obj.isInstalled(), return; end;
+      srclist = obj.getMexSources();
+      % Clean the compiled mex files
+      for mexSrc = srclist
+        [srcPath srcFilename] = fileparts(mexSrc{:});
+        mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
+        if exist(mexFile,'file')
+          delete(mexFile);
+        end
+      end
+      % Clean compiled resources
+      obj.cleanCompiled();
+      % Clean downloaded archives
+      [urls dstPaths] = obj.getTarballsList();
+      for path = dstPaths
+        if exist(path{:},'dir')
+          rmdir(path{:},'s')
+        end
+      end
+    end
   end
 
   methods (Static)
@@ -190,12 +221,25 @@ classdef GenericInstaller < handle
     %   or perform another actions during installation process.
     end
 
+    function cleanCompiled()
+    % CLEANCOMPILED() Reimplement this function if your compile function
+    % creates some files/resources out of the tarball destination 
+    % directories which are deleted automatically during the clean() call.
+    end
+
     function setup()
      % SETUP() Reimplement this method if your class need to adjust Matlab
      %   environment before it can be used.
     end
 
-    function installMex(mexFile, flags)
+    function res = mexFileCompiled(mexFile)
+      % MEXFILECOMPILED Test whether a mex file is compiled
+      [srcPath srcFilename] = fileparts(mexFile);
+      mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
+      res = exist(mexFile,'file');
+    end
+
+    function compileMex(mexFile, flags)
       if ~exist('flags','var'), flags = ''; end;
       curDir = pwd;
       [mexDir mexFile mexExt] = fileparts(mexFile);
@@ -211,15 +255,16 @@ classdef GenericInstaller < handle
       cd(curDir);
     end
 
-    function installTarball(url,distDir)
+    function res = tarballInstalled(url, distDir)
       import helpers.*;
       unpackTagFile = GenericInstaller.getUnapckedTagFile(url, distDir);
-      % Check whether the file is not already downloaded
-      if exist(unpackTagFile,'file')
-        fprintf('Archive %s already unpacked.\n',url);
-        return;
-      end
+      res = exist(unpackTagFile,'file');
+    end
+
+    function installTarball(url,distDir)
+      import helpers.*;
       fprintf('Downloading and unpacking %s.\n',url);
+      unpackTagFile = GenericInstaller.getUnapckedTagFile(url, distDir);
       try
         helpers.unpack(url, distDir);
       catch err
@@ -230,7 +275,6 @@ classdef GenericInstaller < handle
         fprintf('Which tags that the archive has been succesfully unpacked.\n');
         throw(err);
       end
-      
       % Create dummy file to tag that archive has been unpacked
       f = fopen(unpackTagFile,'w');
       fclose(f);

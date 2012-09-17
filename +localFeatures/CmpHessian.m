@@ -29,10 +29,6 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       obj.name = 'CMP Hessian Affine';
       obj.detectorName = obj.name;
       obj.descriptorName = 'CMP SIFT';
-      if ~obj.isInstalled(),
-        obj.warn('CmpHessian not found installed');
-        obj.install();
-      end
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -43,6 +39,7 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
           obj.errMsg = sprintf('Arch: %s not supported by CmpHessian',...
                                 machineType);
       end
+      varargin = obj.checkInstall(varargin);
       obj.configureLogger(obj.name,varargin);
     end
 
@@ -102,6 +99,10 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
 
     function compile()
       error('Not implemented.');
+    end
+    
+    function res = isCompiled()
+      res = true;
     end
   end % ---- end of static methods ----
 end % ----- end of class definition ----

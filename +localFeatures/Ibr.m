@@ -46,20 +46,17 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = Ibr(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.name = 'IBR';
-      obj.detectorName = obj.name;
-      % Parse the passed options
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled(),
-        obj.warn('IBR not found installed');
-        obj.install();
-      end
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
           error('Arch: %s not supported by EBR',machineType);
       end
+      obj.name = 'IBR';
+      obj.detectorName = obj.name;
+      varargin = obj.checkInstall(varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
+      % Parse the passed options
+      obj.opts = vl_argparse(obj.opts,varargin);
     end
 
     function [frames] = extractFeatures(obj, imagePath)

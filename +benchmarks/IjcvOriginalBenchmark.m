@@ -56,12 +56,8 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
              'Your overlap error was rounded.']);
       end
        
-      obj.configureLogger(obj.benchmarkName,varargin);
-      
-      if(~obj.isInstalled())
-        obj.warn('IJCV affine benchmark not found, installing dependencies...');
-        obj.install();
-      end   
+      varargin = obj.configureLogger(obj.benchmarkName,varargin);
+      obj.checkInstall(varargin);
     end
     
     function [repScore, numCorresp, matchScore, numMatches] = ...

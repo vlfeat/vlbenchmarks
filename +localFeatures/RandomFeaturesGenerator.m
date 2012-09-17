@@ -67,8 +67,8 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      obj.configureLogger(obj.name,varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
+      obj.opts = vl_argparse(obj.opts,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)

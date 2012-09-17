@@ -27,11 +27,8 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     function obj = RetrievalBenchmark(varargin)
       obj.benchmarkName = 'RetrBenchmark';
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      obj.configureLogger(obj.benchmarkName,varargin);
-      if ~obj.isInstalled()
-        obj.warn('Not installed.');
-        obj.install();
-      end
+      varargin = obj.configureLogger(obj.benchmarkName,varargin);
+      obj.checkInstall(varargin);
     end
 
     function [mAP queriesAp ] = evalDetector(obj, detector, dataset)

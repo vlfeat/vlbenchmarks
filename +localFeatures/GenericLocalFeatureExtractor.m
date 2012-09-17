@@ -51,13 +51,13 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     name % General name of the feature extractor
     detectorName = '' % Particular name of the frames detector
     descriptorName = '' % Name of descriptor extr. algorithm
-    % If detector support desc. extraction of descriptors from provided
-    % frames, set to true.
-    extractsDescriptors = false;
   end
 
   properties (SetAccess=protected, GetAccess = public)
     useCache = true; % Do cache results
+    % If detector support desc. extraction of descriptors from provided
+    % frames, set to true.
+    extractsDescriptors = false;
   end
 
   properties (Constant)

@@ -28,12 +28,9 @@ classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
       obj.detectorName = [obj.name,' ',obj.opts.scoreType];
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
-      obj.cvorb_arguments = obj.configureLogger(obj.name,varargin);
+      varargin = obj.checkInstall(varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
       obj.cvorb_arguments = varargin;
-      if ~obj.isInstalled()
-        obj.warn('Not installed.')
-        obj.install();
-      end
       obj.binPath = {which('localFeatures.mex.cvOrb')};
     end
 

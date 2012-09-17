@@ -19,11 +19,9 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = CvFast(varargin)
       obj.name = 'OpenCV FAST';
       obj.detectorName = obj.name;
+      varargin = obj.checkInstall(varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
       obj.cvFast_arguments = obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled()
-        obj.warn('Not installed.')
-        obj.install();
-      end
       obj.binPath = {which('localFeatures.mex.cvFast')};
     end
 

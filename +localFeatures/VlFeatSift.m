@@ -24,7 +24,8 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       obj.name = 'VLFeat SIFT';
       obj.detectorName = 'VLFeat DoG';
       obj.descriptorName = 'VLFeat SIFT';
-      obj.vl_sift_arguments = obj.configureLogger(obj.name,varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
+      obj.vl_sift_arguments = obj.checkInstall(varargin);
       obj.binPath = {which('vl_sift') which('libvl.so')};
       obj.extractsDescriptors = true;
     end

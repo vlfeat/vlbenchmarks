@@ -50,15 +50,6 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = VggMser(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.name = 'VGG MSER';
-      obj.detectorName = obj.name;
-      % Parse the passed options
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled(),
-        obj.warn('VggMser not found installed');
-        obj.install();
-      end
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -69,6 +60,12 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
         otherwise
           error('Arch: %s not supported by VggMser',machineType);
       end
+      obj.name = 'VGG MSER';
+      obj.detectorName = obj.name;
+      varargin = obj.checkInstall(varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
+      % Parse the passed options
+      obj.opts = vl_argparse(obj.opts,varargin);
     end
 
     function [frames] = extractFeatures(obj, imagePath)

@@ -29,18 +29,15 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = Ebr(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.name = 'EBR';
-      obj.detectorName = obj.name;
-      obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled(),
-        obj.warn('Ebr not found installed');
-        obj.install();
-      end
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
           error('Arch: %s not supported by EBR',machineType);
       end
+      obj.name = 'EBR';
+      obj.detectorName = obj.name;
+      varargin = obj.checkInstall(varargin);
+      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames] = extractFeatures(obj, imagePath)

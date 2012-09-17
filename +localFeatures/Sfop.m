@@ -34,11 +34,8 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
       import localFeatures.*;
       obj.name = 'SFOP';
       obj.detectorName = obj.name;
+      varargin = obj.checkInstall(varargin);
       obj.sfop_varargin = obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled(),
-        obj.warn('Not installed');
-        obj.install();
-      end
     end
 
     function frames = extractFeatures(obj, imagePath)

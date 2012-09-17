@@ -23,6 +23,7 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = VlFeatMser(varargin)
       obj.name = 'VLFeat MSER';
       obj.detectorName = obj.name;
+      varargin = obj.checkInstall(varargin);
       obj.vl_mser_arguments = obj.configureLogger(obj.name,varargin);
       obj.binPath = which('vl_mser');
     end

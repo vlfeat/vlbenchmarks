@@ -153,13 +153,8 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       if numel(varargin) > 0
         [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       end
-      obj.configureLogger(obj.benchmarkName,varargin);
-
-      if ~obj.isInstalled()
-        obj.warn('Benchmark not installed.');
-        obj.install();
-      end
-
+      varargin = obj.configureLogger(obj.benchmarkName,varargin);
+      obj.checkInstall(varargin);
       if ~obj.opts.matchFramesGeometry && ~obj.opts.matchFramesDescriptors
         obj.error('Invalid options - no way how to match frames.');
       end

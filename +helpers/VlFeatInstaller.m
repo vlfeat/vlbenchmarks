@@ -28,6 +28,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       % VLFEATINSTALLER VLFeat library installer
       % VLFEATINSTALLER(MIN_VERSION) Construct VLFeat installer and check
       % whether atl least the MIN_VERSION of VlFeat is available.
+      if ~exist('minVersion','var'), return; end;
       numVersion =  str2double(char(regexp(obj.installVersion,'\.','split'))');
       numMinVersion = str2double(char(regexp(minVersion,'\.','split'))');
       if numVersion < numMinVersion

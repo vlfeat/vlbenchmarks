@@ -19,11 +19,8 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
       obj.name = 'Lowe SIFT';
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
+      varargin = obj.checkInstall(varargin);
       obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled()
-        obj.warn('Not installed.')
-        obj.install();
-      end
       execDir = LoweSift.dir;
       obj.binPath = {fullfile(execDir, 'sift.m') ...
         fullfile(execDir, 'sift')};

@@ -1,20 +1,30 @@
-function clean()
-% Function to clean all third party dependencies
+function clean(varargin)
+% CLEAN Clean installed resources.
+%   CLEAN() Clean all installed files by install script.
+%   CLEAN('All',true) Clean all installed modules.
+import helpers.*;
 
-localFeatures.cleanDeps();
-cleanVlFeat();
+opts.all = false;
+opts = vl_argparse(opts,varargin);
+noInstArgs = {'AutoInstall',false};
+installers = {...
+  VlFeatInstaller(),...
+  Installer(), ...
+  benchmarks.RepeatabilityBenchmark(noInstArgs{:}), ...
+  benchmarks.IjcvOriginalBenchmark(noInstArgs{:})
+  };
+if opts.all
+  installers = [installers,...
+    OpenCVInstaller(),...
+    YaelInstaller(),...
+    datasets.VggAffineDataset(noInstArgs{:}),...
+    datasets.VggRetrievalDataset(noInstArgs{:}),...
+    benchmarks.RetrievalBenchmark(noInstArgs{:})];
+end
+for installer=installers
+  installer{:}.clean();
+end
 
-function cleanVlFeat()
+DataCache.deleteAllCachedData();
 
-  fprintf('\n----- Deleting vlfeat -----\n');
-
-  installVersion = '0.9.14';
-  installDir = fullfile('data','software','');
-  vlFeatDir = fullfile(installDir,['vlfeat-' installVersion]);
-
-  if(exist(vlFeatDir,'dir'))
-    rmdir(vlFeatDir,'s');
-    fprintf('VLFeat deleted.\n');
-  else
-    fprintf('VLFeat not installed, nothing to delete\n');
-  end
+end

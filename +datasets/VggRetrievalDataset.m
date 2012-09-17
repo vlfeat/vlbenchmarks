@@ -81,10 +81,6 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       %   option. For details see the class documentation.
       import datasets.*;
       import helpers.*;
-      if ~obj.isInstalled(),
-        obj.warn('Vgg retreival dataset is not installed');
-        obj.install();
-      end
       [obj.opts varargin] = helpers.vl_argparse(obj.opts,varargin);
       assert(ismember(obj.opts.category,obj.allCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
@@ -93,7 +89,8 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       if obj.opts.lite
         obj.datasetName = [obj.datasetName '-lite'];
       end
-      obj.configureLogger(obj.datasetName, varargin);
+      varargin = obj.configureLogger(obj.datasetName, varargin);
+      obj.checkInstall(varargin);
       obj.imagesDir = fullfile(obj.rootInstallDir,obj.opts.category,'');
       obj.gtDir = fullfile(obj.rootInstallDir,...
         [obj.opts.category '_gt'],'');

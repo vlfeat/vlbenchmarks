@@ -31,6 +31,8 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       obj.extractsDescriptors = true;
       obj.opts.forceOrientation = false; % Force orientation for SIFT desc.
       [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+      varargin = obj.checkInstall(varargin);
+      % Rest of the arguments use as vl_covdet arguments
       obj.vl_covdet_arguments = obj.configureLogger(obj.name,varargin);
       obj.binPath = {which('vl_covdet') which('libvl.so')};
     end

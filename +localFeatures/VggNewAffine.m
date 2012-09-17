@@ -46,12 +46,20 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
     function obj = VggNewAffine(varargin)
       import localFeatures.*;
       import helpers.*;
-      if ~VggNewAffine.isInstalled(),
-        obj.isOk = false;
-        obj.errMsg = 'VggNewAffine not found installed';
-        return;
+      % Check platform dependence
+      machineType = computer();
+      switch(machineType)
+        case {'GLNXA64','GLNX86'}
+          obj.detBinPath = fullfile(obj.rootInstallDir,...
+            obj.detBinName);
+          obj.descrBinPath = fullfile(obj.rootInstallDir,...
+            obj.descBinName);
+        otherwise
+          error('Arch: %s not supported by VggNewAffine',machineType);
       end
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+      varargin = obj.checkInstall(varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
+      obj.opts = vl_argparse(obj.opts,varargin);
       switch(lower(obj.opts.detector))
         case 'hessian'
           obj.opts.detectorType = 'hesaff';
@@ -64,21 +72,6 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
       obj.detectorName = obj.name;
       obj.descriptorName = 'newVGG SIFT';
       obj.extractsDescriptors = true;
-      % Check platform dependence
-      machineType = computer();
-      obj.detBinPath = '';
-      switch(machineType)
-        case {'GLNXA64','GLNX86'}
-          obj.detBinPath = fullfile(obj.rootInstallDir,...
-            obj.detBinName);
-          obj.descrBinPath = fullfile(obj.rootInstallDir,...
-            obj.descBinName);
-        otherwise
-          obj.isOk = false;
-          obj.errMsg = sprintf('Arch: %s not supported by VggNewAffine',...
-                                machineType);
-      end
-      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)

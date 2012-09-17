@@ -54,10 +54,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
     function obj = VggAffineDataset(varargin)
       import datasets.*;
       import helpers.*;
-      if ~obj.isInstalled(),
-        obj.warn('Vgg Affine dataset is not installed');
-        obj.install();
-      end
+      varargin = obj.checkInstall(varargin);
       opts.category = obj.category;
       opts = vl_argparse(opts,varargin);
       [valid loc] = ismember(opts.category,obj.allCategories);

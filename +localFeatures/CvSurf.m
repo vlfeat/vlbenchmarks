@@ -21,11 +21,9 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
       obj.detectorName = obj.name;
       obj.descriptorName = obj.name;
       obj.extractsDescriptors = true;
+      varargin = obj.checkInstall(varargin);
+      varargin = obj.configureLogger(obj.name,varargin);
       obj.cvsurf_arguments = obj.configureLogger(obj.name,varargin);
-      if ~obj.isInstalled()
-        obj.warn('Not installed.')
-        obj.install();
-      end
       obj.binPath = {which('localFeatures.mex.cvSurf')};
     end
 

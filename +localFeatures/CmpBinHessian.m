@@ -34,10 +34,6 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       obj.name = 'CMP Hessian Affine (bin)';
       obj.detectorName = obj.name;
       obj.descriptorName = 'CMP SIFT (bin)';
-      if ~obj.isInstalled(),
-        obj.warn('CmpBinHessian not found installed');
-        obj.install();
-      end
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -48,6 +44,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
           obj.errMsg = sprintf('Arch: %s not supported by CmpBinHessian',...
                                 machineType);
       end
+      varargin = obj.checkInstall(varargin);
       obj.configureLogger(obj.name,varargin);
     end
 
