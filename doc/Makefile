@@ -1,22 +1,41 @@
 html_src = $(wildcard *.html)
+demo_src := $(wildcard demo/*.eps)
 
-WEBDOC ?= webdoc/webdoc.py
-PYTHON ?= /opt/local/bin/python2.6
+WEBDOC  ?= webdoc/webdoc.py
+PYTHON  ?= python2.7
+CONVERT ?= convert
+MEX ?= mex
+MATLAB_PATH ?= $(strip $(shell test "$$(command -v '$(MEX)')" && \
+  $(MEX) -v 2>&1 | sed -n 's/.*MATLAB *= *\(.*\)/\1/gp'))
+MATLAB_EXE ?= "$(MATLAB_PATH)/bin/matlab"
+
+# 95 DPI makes a letter page 808 pixels large
+screen_dpi := 95
 
 pubs=$(wildcard assets/pubs/*.pdf)
 pub_thumbs=$(pubs:.pdf=.png)
+jpg_tgt := $(demo_src:.eps=.jpg)
+img_tgt := $(jpg_tgt)
 
-.PHONY: all, assets
+.PHONY: all, assets, deep
+
+# generate doc-dir: target
+$(eval $(call gendir, demo))
 
 all: html/index.html assets $(pub_thumbs)
 
-html/index.html: vlbenchmarks.xml vlbenchmarks.css pygmentize.css html $(html_src) $(WEBDOC)
+deep: all ../genDemoFigures.m
+	cd .. ; \
+	$(MATLAB_EXE) -$(ARCH) -nodesktop -r "clear mex;genDemoFigures;exit"
+	cd .. ;
+
+html/index.html: vlbenchmarks.xml vlbenchmarks.css pygmentize.css html $(img_tgt) $(html_src) $(WEBDOC)
 	$(PYTHON) $(WEBDOC) $(<)
 
 html:
 	mkdir html
 
-assets: html/assets html/images html/vlbenchmarks.css html/pygmentize.css
+assets: html/assets html/images html/demo html/vlbenchmarks.css html/pygmentize.css
 
 html/assets:
 	ln -s ../assets html/assets
@@ -24,11 +43,17 @@ html/assets:
 html/images:
 	ln -s ../images html/images
 
+html/demo:
+	ln -s ../demo html/demo
+
 html/vlbenchmarks.css:
 	ln -s ../vlbenchmarks.css html/vlbenchmarks.css
 
 html/pygmentize.css:
 	ln -s ../pygmentize.css html/pygmentize.css
+
+demo/%.jpg: demo/%.eps
+	$(CONVERT) -density 400 -resample $(screen_dpi)  "$<" -colorspace rgb jpg:$@
 
 .PHONY: clean
 clean:
