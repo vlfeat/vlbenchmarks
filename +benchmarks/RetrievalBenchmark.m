@@ -94,7 +94,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       DataCache.storeData(results, resultsKey);
     end
 
-    function [ap rankedList pr] = evalQuery(obj, frames, descriptors, query)
+    function [ap rankedList] = evalQuery(obj, frames, descriptors, query)
       import helpers.*;
       import benchmarks.*;
 
@@ -136,7 +136,6 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       [temp, rankedList]= sort(votes, 'descend'); 
 
       ap = RetrievalBenchmark.philbinComputeAp(query, rankedList);
-      pr = {[] [] []};
 
       obj.debug('AP calculated in %fs.',toc(startTime));
       obj.info('Computed average precision is: %f',ap);

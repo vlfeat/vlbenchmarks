@@ -38,12 +38,30 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %     Dataset category. Available are 'oxbuild'.
 %
 %   Lite :: true
-%     Use only a subset of the whole database. All images from 'good' and 
-%     'ok' sets of used queries are preserved and only a subset of 'junk'
-%     images is preserved (defined by 'LiteJunkImagesNum' parameter).
+%     Use only a subset of the whole database. The subset is generated
+%     based on 'liteGoodImagesNum', 'liteOkImagesNum', 'liteJunkImagesNum',
+%     'liteBadImagesNum' and 'samplingRngSeed' which defines the seed for
+%     random samples generator.
 %
-%   LiteJunkImagesNum :: 300
-%     Number of 'junk' images preserved in the databse.
+%   LiteGoodImagesNum :: inf
+%     Number of 'Good' images preserved in the databse. When inf, all
+%     images preserved.
+%
+%   LiteOkImagesNum :: inf
+%     Number of 'ok' images preserved in the databse. When inf, all
+%     images preserved.
+%
+%   LiteJunkImagesNum :: inf
+%     Number of 'junk' images preserved in the databse. When inf, all
+%     images preserved.
+%
+%   LiteBadImagesNum :: 100
+%     Number of 'junk' images preserved in the databse. When inf, all
+%     images preserved.
+%
+%   SamplingRngSeed :: 1
+%     Seed of the random number generator used for sampling the image
+%     dataset.
 %
 %   CacheDatabase :: true
 %     Cache parsed images and queries database.
@@ -58,7 +76,11 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     opts = struct(...
       'category','oxbuild',...
       'lite',true,...
-      'liteJunkImagesNum',300,...
+      'liteGoodImagesNum',inf,...
+      'liteOkImagesNum',inf,...
+      'liteJunkImagesNum',inf,...
+      'liteBadImagesNum',100,...
+      'samplingRngSeed',1,...
       'cacheDatabase',true);
     imagesDir;  % Directory with current category images
     gtDir;      % Directory with current category ground truth data
@@ -161,6 +183,20 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       querySignature = strcat(imageSign,mat2str(query.good),...
         mat2str(query.ok),mat2str(query.junk));
     end
+
+    function samples = sampleArray(obj, data, num)
+      % sampleArray Generate reproducible samples from an array
+      %   SAMPLES = sampleArray(DATA, NUM) Get NUM of uniformly disturbed 
+      %   samples from DATA based on the seed obj.opts.samplingRngSeed.
+      %   If isinf(NUM), SAMPLES = DATA.
+      if isinf(num)
+        samples = data;
+        return;
+      end
+      oldS = rng(obj.opts.samplingRngSeed,'v5uniform');
+      samples = sort(randsample(data, num));
+      rng(oldS);
+    end
   end
 
   methods(Access = protected)
@@ -207,14 +243,25 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       end
 
       if obj.opts.lite
-        goodImages = [queries(:).good];
-        okImages = [queries(:).ok];
-        junkImages = [queries(:).junk];
-        numJunkImages = obj.opts.liteJunkImagesNum;
+        allGoodImages = [queries(:).good];
+        allOkImages = [queries(:).ok];
+        allJunkImages = [queries(:).junk];
+        allBadImages = setdiff(images.id, ...
+          [allGoodImages allOkImages allJunkImages]);
+        allQueriesImages = [queries(:).imageId];
 
-        % This method of picking images suppose that query images are part
-        % of the good set
-        pickedImages = [goodImages, okImages, junkImages(1:numJunkImages)];
+        % Pick random samples from the images based on the class settings
+        goodImages = ...
+          obj.sampleArray(allGoodImages,obj.opts.liteGoodImagesNum);
+        okImages = ...
+          obj.sampleArray(allOkImages,obj.opts.liteOkImagesNum);
+        junkImages = ...
+          obj.sampleArray(allJunkImages,obj.opts.liteJunkImagesNum);
+        badImages = ...
+          obj.sampleArray(allBadImages,obj.opts.liteBadImagesNum);
+
+        pickedImages = [allQueriesImages, goodImages, okImages, ...
+          junkImages, badImages];
         pickedImages = unique(pickedImages);
         obj.debug('Number of Lite images: %d',numel(pickedImages));
         
