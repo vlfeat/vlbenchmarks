@@ -70,14 +70,14 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {Ebr.softwareUrl};
       dstPaths = {Ebr.rootInstallDir};
     end
 
-    function compile()
+    function compile(obj)
       import localFeatures.*;
       % When unpacked, ebr is not executable
       helpers.setFileExecutable(Ebr.binPath);

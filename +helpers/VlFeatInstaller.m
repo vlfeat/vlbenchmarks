@@ -7,7 +7,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 %    which depend and link to the VLFeat library.
     
   properties (Constant)
-    installVersion = '0.9.15';
+    installVersion = '0.9.14';
     installDir = fullfile('data','software','vlfeat');
     name = ['vlfeat-' helpers.VlFeatInstaller.installVersion];
     dir = fullfile(pwd,helpers.VlFeatInstaller.installDir,...
@@ -35,17 +35,25 @@ classdef VlFeatInstaller < helpers.GenericInstaller
         error('VlFeat version >= %s not available. Change the version in file %s.',...
           numMinVersion,mfilename);
       end
+      if(~exist('vl_demo','file')),
+        vlFeatDir = helpers.VlFeatInstaller.dir;
+        if(exist(vlFeatDir,'dir'))
+          run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
+        else
+          error('VLFeat not found, cannot setup properly.\n');
+        end
+      end
     end
   end
-  
-  methods (Static)    
-    function [urls dstPaths] = getTarballsList()
+
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import helpers.*;
       urls = {VlFeatInstaller.url};
       dstPaths = {VlFeatInstaller.installDir};
     end
     
-    function compile()
+    function compile(obj)
       import helpers.*;
       if VlFeatInstaller.isCompiled()
         return;
@@ -64,20 +72,13 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       end
     end
     
-    function res = isCompiled()
+    function res = isCompiled(obj)
       import helpers.*;
       res = exist(VlFeatInstaller.mexDir,'dir');
     end
 
-    function setup()
-      if(~exist('vl_demo','file')),
-        vlFeatDir = helpers.VlFeatInstaller.dir;
-        if(exist(vlFeatDir,'dir'))
-          run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
-        else
-          error('VLFeat not found, cannot setup properly.\n');
-        end
-      end
+    function setup(obj)
+
     end
   end
     

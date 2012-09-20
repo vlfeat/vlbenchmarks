@@ -278,24 +278,16 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         images.names = images.names(pickedImages);
       end
     end
-  end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+    function [urls dstPaths] = getTarballsList(obj)
       import datasets.*;
-      numCategories = numel(VggRetrievalDataset.allCategories);
-      urls = cell(1,numCategories*2);
-      dstPaths = cell(1,numCategories*2);
       installDir = VggRetrievalDataset.rootInstallDir;
-      for i = 1:numCategories
-        curCategory = VggRetrievalDataset.allCategories{i};
-        % Images
-        urls{2*(i-1)+1} = VggRetrievalDataset.imagesUrls{i};
-        dstPaths{2*(i-1)+1} = fullfile(installDir,curCategory);
-        % Ground truth data
-        urls{2*(i-1)+2} = VggRetrievalDataset.gtDataUrls{i};
-        dstPaths{2*(i-1)+2} = fullfile(installDir,[curCategory '_gt']);
-      end
+      curCategory = obj.opts.category;
+      cIdx = strcmp(curCategory, VggRetrievalDataset.allCategories);
+      urls = {VggRetrievalDataset.imagesUrls{cIdx} ...
+        VggRetrievalDataset.gtDataUrls{cIdx}};
+      dstPaths = {fullfile(installDir,curCategory) ...
+        fullfile(installDir,[curCategory '_gt'])};
     end
   end
 end % -------- end of class ---------

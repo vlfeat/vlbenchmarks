@@ -163,8 +163,8 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
     end
   end
 
-  methods (Static)
-    function response = isInstalled()
+  methods (Access=protected)
+    function response = isInstalled(obj)
       import localFeatures.*;
       installDir = VggNewAffine.rootInstallDir;
       if(exist(installDir,'dir')),  response = true;

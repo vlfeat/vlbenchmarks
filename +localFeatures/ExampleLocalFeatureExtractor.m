@@ -202,9 +202,5 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
     %     Returns srclist = {path_to_mex_files} and their flags which are
     %     compiled using mex command. See helpers.Installer for an example.
     %
-    %   setup()
-    %     Method called when GenericInstaller instance is constructed.
-    %     Usefull for setting system paths etc. See helpers.VlFeatInstaller
-    %     for an example. Also called after succesfull installation.
   end
 end % ----- end of class definition ----

@@ -213,14 +213,14 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods  (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {VggAffine.detUrl VggAffine.descUrl};
       dstPaths = {VggAffine.binDir VggAffine.binDir};
     end
 
-    function compile()
+    function compile(obj)
       import localFeatures.*;
       % When unpacked, binaries are not executable
       chmodCmds = {sprintf('chmod +x %s',VggAffine.detBinPath) ...

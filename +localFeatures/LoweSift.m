@@ -75,12 +75,12 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
 
-  methods (Static)
-    function deps = getDependencies()
+  methods (Access=protected)
+    function deps = getDependencies(obj)
       deps = {helpers.Installer()};
     end
 
-    function [urls dstPaths] = getTarballsList()
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {LoweSift.url};
       dstPaths = {LoweSift.installDir};

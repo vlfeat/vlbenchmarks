@@ -81,14 +81,14 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {Sfop.softwareUrl};
       dstPaths = {Sfop.rootInstallDir};
     end
 
-    function compile()
+    function compile(obj)
       import localFeatures.*;
       cxx = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;
       cc = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;

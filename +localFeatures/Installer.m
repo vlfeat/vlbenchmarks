@@ -1,7 +1,7 @@
 classdef Installer < helpers.GenericInstaller
 % 
-  methods (Static)
-    function detectors = getDependencies()
+  methods  (Access=protected)
+    function detectors = getDependencies(obj)
       import localFeatures.*;
       detectors = {};
       % Arguments to disable autoinstallation
@@ -28,16 +28,18 @@ classdef Installer < helpers.GenericInstaller
         VlFeatMser(noInstArgs{:}),...
         VlFeatSift(noInstArgs{:})}];
     end
+  end
 
+  methods (Static)
     function checkDetectors(imgPath)
       % CHECKDETECTORS Run all detectors. Before testing them all used
       % detectors must be installed calling localFeatures.install().
       import localFeatures.*;
       randomDet = RandomFeaturesGenerator();
-      detectors = Installer.getDependencies();
-      for detector = detectors
+      detectors = Installer().getDependencies();
+      for detIdx = 1:numel(detectors)
         % Test frames detection
-        detector = detector{:};
+        detector = detector{detIdx};
         detector.disableCaching();
         if ~isempty(detector.detectorName)
           frames = detector.extractFeatures(imgPath);

@@ -72,17 +72,17 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       '-DBUILD_opencv_objdetect:BOOL="0"'};
   end
   
-  methods (Static)    
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import helpers.*;
       urls = {OpenCVInstaller.url};
       dstPaths = {OpenCVInstaller.dir};
     end
     
-    function compile()
+    function compile(obj)
       % Run cmake; make and make install
       import helpers.*;
-      if OpenCVInstaller.isCompiled()
+      if obj.isCompiled()
         return;
       end
       
@@ -131,11 +131,10 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       
       cd(prevDir);
     end
-    
-    function res = isCompiled()
+
+    function res = isCompiled(obj)
       import helpers.*;
-      res = exist(OpenCVInstaller.libDir,'dir') ...
-        && exist(OpenCVInstaller.includeDir,'dir');
+      res = exist(obj.libDir,'dir') && exist(obj.includeDir,'dir');
     end
   end
     

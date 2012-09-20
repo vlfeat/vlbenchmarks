@@ -59,8 +59,8 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
   
-  methods (Static)
-    function deps = getDependencies()
+  methods (Access=protected)
+    function deps = getDependencies(obj)
       deps = {helpers.VlFeatInstaller('0.9.14')};
     end
   end

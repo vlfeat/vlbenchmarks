@@ -54,9 +54,8 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
     function obj = VggAffineDataset(varargin)
       import datasets.*;
       import helpers.*;
-      varargin = obj.checkInstall(varargin);
       opts.category = obj.category;
-      opts = vl_argparse(opts,varargin);
+      [opts varargin] = vl_argparse(opts,varargin);
       [valid loc] = ismember(opts.category,obj.allCategories);
       assert(valid,...
         sprintf('Invalid category for vgg dataset: %s\n',opts.category));
@@ -64,6 +63,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       obj.category= opts.category;
       obj.dataDir = fullfile(obj.rootInstallDir,opts.category,'');
       obj.numImages = 6;
+      obj.checkInstall(varargin);
       ppm_files = dir(fullfile(obj.dataDir,'img*.ppm'));
       pgm_files = dir(fullfile(obj.dataDir,'img*.pgm'));
       if size(ppm_files,1) == 6
@@ -92,19 +92,12 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods (Access = protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import datasets.*;
-      numCategories = numel(VggAffineDataset.allCategories);
-      urls = cell(1,numCategories);
-      dstPaths = cell(1,numCategories);
       installDir = VggAffineDataset.rootInstallDir;
-      for i = 1:numCategories
-        curCategory = VggAffineDataset.allCategories{i};
-        dstPaths{i} = fullfile(installDir,curCategory);
-        urls{i} = [VggAffineDataset.rootUrl curCategory '.tar.gz'];
-      end
+      dstPaths = {fullfile(installDir,obj.category)};
+      urls = {[VggAffineDataset.rootUrl obj.category '.tar.gz']};
     end
-  end % --- end of static methods ---
-
-end % -------- end of class ---------
+  end
+end

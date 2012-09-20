@@ -35,12 +35,6 @@ classdef GenericInstaller < handle
   end
 
   methods
-    function obj=GenericInstaller()
-      if obj.isInstalled()
-        obj.setup();
-      end
-    end
-
     function varargin = checkInstall(obj, varargin)
       % CHECKINSTALL Check whether object is installed.
       %   CHECKINSTALL('AutoInstall', false) Do not install if not
@@ -69,7 +63,6 @@ classdef GenericInstaller < handle
       obj.installTarballs();
       obj.compile();
       obj.compileMexFiles();
-      obj.setup();
     end
 
     function res = dependenciesInstalled(obj)
@@ -181,9 +174,9 @@ classdef GenericInstaller < handle
       end
     end
   end
-
-  methods (Static)
-    function [srclist flags]  = getMexSources()
+  
+  methods (Access=protected)
+    function [srclist flags]  = getMexSources(obj)
       % [SRCLIST FLAGS] = GETMEXSOURCES()
       %   Reimplement this method if mex files compilation
       %   is needed. SRCLIST and FLAGS are cell arrays of same
@@ -193,7 +186,7 @@ classdef GenericInstaller < handle
       flags = {};
     end
 
-    function [urls dstPaths] = getTarballsList()
+    function [urls dstPaths] = getTarballsList(obj)
       % [URLS DSTPATHS] = GETTARBALLSLIST()
       %   Reimplement this method if your class need to download and
       %   unpack data. URLS and DSTPATHS are cell arrays of same
@@ -203,35 +196,32 @@ classdef GenericInstaller < handle
       dstPaths = {};
     end
 
-    function deps = getDependencies()
+    function deps = getDependencies(obj)
       % DEPS = GETDEPENDENCIES()
       %   Reimplement this method if your class depends on different
       %   classes. Returns cell aray of objects.
       deps = {};
     end
 
-    function res = isCompiled()
+    function res = isCompiled(obj)
     % ISCOMPILED() Reimplement this method to specify whether
     %   compilation (or another script) is neede.
       res = true;
     end
 
-    function compile()
+    function compile(obj)
     % COMPILE() Reimplement this method if your class need to compile
     %   or perform another actions during installation process.
     end
 
-    function cleanCompiled()
+    function cleanCompiled(obj)
     % CLEANCOMPILED() Reimplement this function if your compile function
     % creates some files/resources out of the tarball destination 
     % directories which are deleted automatically during the clean() call.
     end
+  end
 
-    function setup()
-     % SETUP() Reimplement this method if your class need to adjust Matlab
-     %   environment before it can be used.
-    end
-
+  methods (Static)
     function res = mexFileCompiled(mexFile)
       % MEXFILECOMPILED Test whether a mex file is compiled
       [srcPath srcFilename] = fileparts(mexFile);

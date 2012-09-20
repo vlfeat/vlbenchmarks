@@ -416,8 +416,8 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     end
   end
 
-  methods (Static)
-    function deps = getDependencies()
+  methods (Access = protected)
+    function deps = getDependencies(obj)
       deps = {helpers.Installer(),helpers.VlFeatInstaller('0.9.14'),...
         benchmarks.helpers.Installer()};
     end

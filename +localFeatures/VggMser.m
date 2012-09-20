@@ -109,8 +109,8 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {VggMser.softwareUrl};
       dstPaths = {VggMser.rootInstallDir};

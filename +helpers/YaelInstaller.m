@@ -25,8 +25,8 @@ classdef YaelInstaller < helpers.GenericInstaller
       {1,2,3,4,5,6,12,16});
   end
 
-  methods (Static)    
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import helpers.*;
       arch = computer();
       switch arch
@@ -42,22 +42,22 @@ classdef YaelInstaller < helpers.GenericInstaller
       end
     end
 
-    function compile()
+    function compile(obj)
       import helpers.*;
-      if YaelInstaller.isCompiled()
+      if obj.isCompiled()
         return;
       end
       error('Not supported architecture.');
     end
 
-    function res = isCompiled()
+    function res = isCompiled(obj)
       import helpers.*;
-      nnBinFile = fullfile(YaelInstaller.mexDir,['yael_nn.' mexext]);
+      nnBinFile = fullfile(obj.mexDir,['yael_nn.' mexext]);
       res = exist(nnBinFile,'file');
     end
 
-    function setup()
-      addpath(fullfile(pwd,helpers.YaelInstaller.mexDir));
+    function setup(obj)
+      addpath(fullfile(pwd,obj.mexDir));
     end
   end
 end

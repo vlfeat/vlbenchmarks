@@ -99,14 +99,14 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {Ibr.softwareUrl};
       dstPaths = {Ibr.rootInstallDir};
     end
     
-    function compile()
+    function compile(obj)
       import localFeatures.*;
       % When unpacked, ibr is not executable
       helpers.setFileExecutable(Ibr.binPath);

@@ -186,28 +186,24 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       signature = helpers.struct2str(obj.opts);
     end
   end
-  
-   methods (Static)
-    function cleanDeps()
-    end
 
-    function deps = getDependencies()
+  methods (Access = protected)
+    function deps = getDependencies(obj)
       deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
-    
-    function [srclist flags] = getMexSources()
+
+    function [srclist flags] = getMexSources(obj)
       import benchmarks.*;
       path = IjcvOriginalBenchmark.installDir;
       srclist = {fullfile(path,'c_eoverlap.cxx')};
       flags = {''};
     end
-    
-    function [urls dstPaths] = getTarballsList()
+
+    function [urls dstPaths] = getTarballsList(obj)
       import benchmarks.*;
       urls = {IjcvOriginalBenchmark.url};
       dstPaths = {IjcvOriginalBenchmark.installDir};
     end
-    
-   end
+  end
 end
 

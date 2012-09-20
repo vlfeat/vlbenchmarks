@@ -86,22 +86,22 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     end
   end
 
-  methods (Static)
-    function [urls dstPaths] = getTarballsList()
+  methods (Access=protected)
+    function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
       urls = {CmpHessian.softwareUrl};
       dstPaths = {CmpHessian.rootInstallDir};
     end
 
-    function deps = getDependencies()
+    function deps = getDependencies(obj)
       deps = {helpers.Installer() helpers.OpenCVInstaller()};
     end
 
-    function compile()
+    function compile(obj)
       error('Not implemented.');
     end
     
-    function res = isCompiled()
+    function res = isCompiled(obj)
       res = true;
     end
   end % ---- end of static methods ----

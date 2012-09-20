@@ -86,12 +86,12 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     end
   end
 
-  methods (Static)
-    function deps = getDependencies()
+  methods (Access=protected)
+    function deps = getDependencies(obj)
       deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15')};
     end
 
-    function compile()
+    function compile(obj)
       import localFeatures.*;
       import helpers.*;
       filePath = helpers.downloadFile(CmpBinHessian.url,...
@@ -103,7 +103,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       helpers.setFileExecutable(filePath);
     end
 
-    function res = isCompiled()
+    function res = isCompiled(obj)
       import localFeatures.*;
       bin = fullfile(CmpBinHessian.rootInstallDir,...
         CmpBinHessian.binName);

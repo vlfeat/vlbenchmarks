@@ -70,13 +70,13 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
     end
   end
 
-  methods (Static)
-    function deps = getDependencies()
+  methods (Access=protected)
+    function deps = getDependencies(obj)
       deps = {helpers.Installer() helpers.VlFeatInstaller('0.9.15')...
         helpers.OpenCVInstaller()};
     end
 
-    function [srclist flags] = getMexSources()
+    function [srclist flags] = getMexSources(obj)
       import helpers.*;
       path = fullfile(pwd,'+localFeatures','+mex','');
       srclist = {fullfile(path,'cvSurf.cpp')};

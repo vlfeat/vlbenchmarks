@@ -180,6 +180,14 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     end
   end
 
+  methods (Access = protected)
+    function deps = getDependencies(obj)
+      import helpers.*;
+      deps = {Installer(),benchmarks.helpers.Installer(),...
+        VlFeatInstaller('0.9.14'),YaelInstaller()};
+    end
+  end
+
   methods(Static)
     function [precision recall info] = calcPR(query, scores)
       y = - ones(1, numel(scores)) ;
@@ -212,12 +220,6 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
         oldPrecision = precision;
         j = j + 1;
       end
-    end
-
-    function deps = getDependencies()
-      import helpers.*;
-      deps = {Installer(),benchmarks.helpers.Installer(),...
-        VlFeatInstaller('0.9.14'),YaelInstaller()};
     end
   end  
 end
