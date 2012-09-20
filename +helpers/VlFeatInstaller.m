@@ -83,6 +83,10 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       import helpers.*;
       res = exist(VlFeatInstaller.mexDir,'dir');
     end
+
+    function deps = getDependencies(obj)
+      deps = {helpers.Installer};
+    end
   end
 end
 

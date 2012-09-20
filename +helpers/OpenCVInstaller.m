@@ -136,6 +136,10 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       import helpers.*;
       res = exist(obj.libDir,'dir') && exist(obj.includeDir,'dir');
     end
+
+    function deps = getDependencies(obj)
+      deps = {helpers.Installer};
+    end
   end
     
 end
