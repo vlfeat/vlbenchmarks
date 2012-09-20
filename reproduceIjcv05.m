@@ -426,7 +426,7 @@ end
 
 function saveResults(scores, fileName)
   [dir name] = fileparts(fileName);
-  vl_xmkdir(dir);
+  vl_xmkdir(fullfile(pwd,dir,''));
   save(fullfile(dir,name),'scores');
   csvwrite(fullfile(dir, [name '.csv']), scores);
 end
