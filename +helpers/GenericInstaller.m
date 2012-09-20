@@ -39,6 +39,7 @@ classdef GenericInstaller < handle
       % CHECKINSTALL Check whether object is installed.
       %   CHECKINSTALL('AutoInstall', false) Do not install if not
       %   installed.
+	  import helpers.*;
       opts.autoInstall = true;
       [opts varargin] = vl_argparse(opts, varargin{:});
       if opts.autoInstall && ~obj.isInstalled()
@@ -63,6 +64,7 @@ classdef GenericInstaller < handle
       obj.installTarballs();
       obj.compile();
       obj.compileMexFiles();
+	  obj.setup();
     end
 
     function res = dependenciesInstalled(obj)
@@ -173,6 +175,10 @@ classdef GenericInstaller < handle
         end
       end
     end
+
+	function setup(obj)
+	  % SETUP Method run after succesful installation.
+	end
   end
   
   methods (Access=protected)

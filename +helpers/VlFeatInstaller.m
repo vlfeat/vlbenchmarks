@@ -35,6 +35,12 @@ classdef VlFeatInstaller < helpers.GenericInstaller
         error('VlFeat version >= %s not available. Change the version in file %s.',...
           numMinVersion,mfilename);
       end
+	  if obj.isInstalled()
+        obj.setup();
+      end
+	end
+
+    function setup(obj)
       if(~exist('vl_demo','file')),
         vlFeatDir = helpers.VlFeatInstaller.dir;
         if(exist(vlFeatDir,'dir'))
@@ -55,7 +61,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     
     function compile(obj)
       import helpers.*;
-      if VlFeatInstaller.isCompiled()
+      if obj.isCompiled()
         return;
       end
       
@@ -70,17 +76,13 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       if status ~= 0
         error('VLFeat compilation was not succesfull.\n');
       end
+	  obj.setup();
     end
     
     function res = isCompiled(obj)
       import helpers.*;
       res = exist(VlFeatInstaller.mexDir,'dir');
     end
-
-    function setup(obj)
-
-    end
   end
-    
 end
 
