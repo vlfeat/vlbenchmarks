@@ -216,6 +216,20 @@ classdef DetectorX &lt; localFeatures.GenericLocalFeatureExtractor
 end
 </precode>
 
+<p>
+Now let's compute matching score of your detector [1]. Because created detector is not able to compute descriptors we will use SIFT descriptors instead.
+</p>
+
+<precode type="matlab">
+matchBenchmark = ...
+  benchmarks.RepeatabilityBenchmark('MatchFrameDescriptors',true);
+xDet = localFeature.DetectorX();
+% User xDet for feature detection and sift for description
+xDetSiftDesc = localFeatures.DescriptorAdapter(xDet, sift);
+[matchingScore numMatches] = ...
+  matchBenchmark.testDetector(xDetSiftDesc, H, refImage, testImage)
+</precode>
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="vlbenchmarks.structure">Framework structure</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
