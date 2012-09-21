@@ -238,5 +238,9 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       helpers.setFileExecutable(VggAffine.DetBinPath);
       helpers.setFileExecutable(VggAffine.DescrBinPath);
     end
+
+    function deps = getDependencies(obj)
+      deps = {helpers.VlFeatInstaller('0.9.13')};
+    end
   end
 end
