@@ -1,101 +1,189 @@
 <!DOCTYPE group PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<page id="vlbenchmarks" name="index"  title="VLBenchmarks">
-<pagescript src="%pathto:root;assets/hidebib.js"/>
-<pagescript src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"/>
+<group>
 
-  <p><b>VLBenchmarks</b> is a MATLAB framework for testing image feature detectors. It implements repeatability and matching score benchmarks together with a simple retrieval test. Apart from that it contains interfaces to several publicly available detectors together with supporting building blocks as caching, installation and logging framework. </p>
+<img src="images/PASCAL2.png" style="height:6em;float:right;"
+alt="PASCAL2 credits"></img>
 
-  <p>Please cite this project as:</p>
+<p><b>VLBenchmarks</b> is a MATLAB framework for testing image feature
+detectors and descriptors.</p>
 
-  <div class="pub" style="padding:0 2em" id="lenc12vlbenchmarks">
-    K. Lenc, V. Gulshan, and A. Vedaldi, VLBenchmakrs,
-    <br/>
-    <span class="conf">http://www.vlfeat.org/benchmarks/</span>, 2012.
-    <span class="links"><a class="togglebib"
-                           href="javascript:togglebib('lenc12vlbenchmarks')">BibTeX</a></span>
-    <pre style="font-size:.8em;line-height:1.2em;">
-      @misc{lenc12vlbenchmarks,
-      Author = {K. Lenc and V. Gulshan and A. Vedaldi},
-      Title = {VLBenchmkars},
-      Year  = {2011},
-      Howpublished = {\url{http://www.vlfeat.org/benchmarks/}
-      }
-    </pre>
-  </div>
+<p>This project is sponsored by the <a shape="rect"
+href="http://www.pascal-network.org/?q=node/19">PASCAL Harvest</a>
+programme as part of an <a
+href="http://www.vlfeat.org/about.html">extended effort</a>.</p>
 
- <p>The code is distributed under the permissive MIT license.</p>
+<p style="clear:right;">If you use this project in your work, please
+cite it as:</p>
 
- <ul>
-   <li><a href="%pathto:vlbenchmarks.download;">Changes</a></li>
-   <li><a href="%pathto:vlbenchmarks.download;">Download and install</a></li>
-   <li><a href="%pathto:vlbenchmarks.structure;">Framework structure</a></li>
-   <li><a href="%pathto:vlbenchmarks.detobjects;">Detector objects</a></li>
-   <li><a href="%pathto:vlbenchmarks.example;">Example: benchmarking built-in detectors</a></li>
-   <li><a href="%pathto:vlbenchmarks.benchmarkowndet;">Benchmarking your own code</a></li>
-   <li><a href="%pathto:vlbenchmarks.refs;">References</a></li>
- </ul>
+<div class="pub" style="padding:1em 2em;background-color:#f5f5f5;"
+id="lenc12vlbenchmarks">
+  K. Lenc, V. Gulshan, and A. Vedaldi, VLBenchmakrs,
+  <br/>
+  <span class="conf">http://www.vlfeat.org/benchmarks/</span>, 2012.
+  <span class="links">
+    <a class="togglebib"
+       href="javascript:togglebib('lenc12vlbenchmarks')">BibTeX</a>
+  </span>
+  <pre style="font-size:.8em;line-height:1.2em;">
+    @misc{lenc12vlbenchmarks,
+    Author = {K. Lenc and V. Gulshan and A. Vedaldi},
+    Title = {VLBenchmkars},
+    Year  = {2011},
+    Howpublished = {\url{http://www.vlfeat.org/benchmarks/}xsxs}
+    }
+  </pre>
+</div>
 
- <h2 id="vlbenchmarks.changes">Changes</h2>
-
- <dl>
-   <dt>1.0-beta</dt><dd>(7/10/2012) Initial release.</dd>
- </dl>
-
- <h2 id="vlbenchmarks.download">Download and install</h2>
-
- <ul>
-   <li><a href="%pathto:root;assets/vlbenchmarks/versions/"
-          onClick="javascript:pageTracker._trackPageview('/downloads/vlbenchmarks');">MATLAB/C
-          code for Mac, Linux, and Windows.</a></li>
-   <li><a href="https://github.com/vlfeat/vlbenchmarks">Git repository</a>.</li>
- </ul>
-
- <p>The archive contains the complete implementation of the
- VLBenchmarks suite, including a copy of this documentation. Implementation of this framework extensively uses new MATLAB classes, therefore minimal supported version is <strong>R2008a (7.6)</strong>. To install simple unpack the archive, start MATLAB and run.</p>
-
- <precode type="matlab">
-   >> install
- </precode>
-
- <p>
-This script downloads and installs basic structures of the benchmark. This includes VLFeat library and compilation of mex files used in the benchmark. To successfully compile the code, you will need to be able to compile MEX files in your MATLAB environment, for detail see <a href="http://www.mathworks.com/help/matlab/matlab_external/building-mex-files.html">Matlab documentation</a>.
-</p>
-
- <precode type="matlab">
-   >> benchmarksDemo
- </precode>
-
-<p>
-This function download the VGG Affine Dataset.
-</p>
-
-<h2 id="vlbenchmarks.structure">Framework structure</h2>
-
-<p>
-Framework is organised into four MATLAB packages.
 <ul>
-<li><strong>localFeatures</strong> Image feature detectors</li>
-<li><strong>benchmarks</strong> Feature detector benchmarks</li>
-<li><strong>datasets</strong> Interfaces to datasets (image sources)</li>
-<li><strong>helpers</strong> Supporting functions and classes</li>
+  <li><a href="%pathto:vlbenchmarks.overview;">Overview</a>
+  <ul>
+    <li><a href="%pathto:vlbenchmarks.changes;">Changes</a></li>
+  </ul>
+  </li>
+  <li><a href="%pathto:vlbenchmarks.structure;">Framework structure</a></li>
+  <li><a href="%pathto:vlbenchmarks.detobjects;">Detector objects</a></li>
+  <li><a href="%pathto:vlbenchmarks.example;">Example: benchmarking built-in detectors</a></li>
+  <li><a href="%pathto:vlbenchmarks.benchmarkowndet;">Benchmarking your own code</a></li>
+  <li><a href="%pathto:vlbenchmarks.refs;">References</a></li>
 </ul>
-</p>
 
-<h3 id="vlbenchmarks.detobjects">Detector objects</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="vlbenchmarks.overview">Overview</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>The <b>VLBechmakrs</b> MATLAB framework makes it simple to
+evaluate feature detector and descriptors automatically. Evaluating
+a feature is as simple as writing a single wrapper class for your
+feature code. Then <b>VLBenchmarks</b> takes care of downloading
+the required benchmarking data automatically from the Internet and
+running the evaluation(s). The framework ships with wrappers for a
+number of publicly available features to enable comparing to them
+easily. Functions such as caching of interediate results allow to
+run benchmarks efficiently.</p>
+
+<p>The current version of <b>VLBechmakrs</b> implements:</p>
+
+<ul>
+  <li>The detector repeatability of <a
+  href="#vlbenchmarks.ref1">[1]</a>.</li>
+  <li>The descriptor matching score of <a
+  href="#vlbenchmarks.ref1">[1]</a>.</li>
+  <li>A new retrieval-based test based on the retrieval method of <a
+  href="#vlbenchmarks.ref2">[2]</a>.</li>
+</ul>
+
+<p>The code is distributed under the permissive <a
+href="%pathto:vlbenchmarks.license;">MIT</a> license.</p>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h3 id="vlbenchmarks.changes">Changes</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<dl>
+  <dt>1.0-beta</dt><dd>(7/10/2012) Initial release.</dd>
+</dl>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="vlbenchmarks.download">Download and install</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<ul>
+  <li><a href="%pathto:root;assets/vlbenchmarks/versions/"
+         onClick="javascript:pageTracker._trackPageview('/downloads/vlbenchmarks');">MATLAB/C
+  code for Mac, Linux, and Windows.</a></li>
+  <li><a href="https://github.com/vlfeat/vlbenchmarks">Git
+  repository</a>.</li>
+</ul>
+
+<p>The archive linked above contains the complete implementation of
+the VLBenchmarks suite, including a copy of this documentation. The
+minimal required version of MATLAB is <strong>R2008a (7.6)</strong> or
+later (due to extensive use of the new class type introduced in that
+release). To install simple unpack the archive, start MATLAB, change
+thea directory just created, and run:</p>
+
+<precode type="matlab">
+  >> install
+</precode>
 
 <p>
-The benchmarks distribution contain few built-in image features detectors such as VLFeat SIFT, VLFeat MSER and random features generator. Each detector is represented by a MATLAB object which unifies the feature detection. All these detectors are stored in a package <code>localFeatures</code>. For example to create a wrapper of VLFeat SIFT detector.
+This script downloads and installs a copy of <a
+href="http://www.vlfeat.org">VLFeat</a> as the only dependency, and it
+compiles a number of <em>MEX files</em>. To successfully compile the
+code, you will need to be able to compile MEX files in your MATLAB
+environment, for detail see <a
+href="http://www.mathworks.com/help/matlab/matlab_external/building-mex-files.html">MATLAB
+documentation</a>.
 </p>
 
-<precode type="matlab">sift = localFeatures.VlFeatSift();</precode>
+<p>To test the bechmark installation run</p>
 
+<precode type="matlab">
+  >> benchmarksDemo
+</precode>
 
 <p>
-Another function of the detector object is to gather the detector parameters which are defined as constructor parameters. For example we can create SIFT detector with different peak threshold parameter.
+Note that this script will download and install the <a
+href="%pathto:vlbenchmarks.ref1;">VGG Affine Dataset</a>.
 </p>
 
-<precode type="matlab">thrSift = localFeatures.VlFeatSift('PeakThresh',11);</precode>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="vlbenchmarks.structure">Framework structure</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>
+<b>VLBenchmarks</b> is is organised into four parts, corresponding to
+an equal number of MATLAB packages (namespaces):</p>
+
+<ul>
+
+<li><a href="%pathto:vlbenchmars.detobjetcs;">Image feature detectors
+and descriptors</a>
+(<strong><code>localFeatures</code></strong>). This package contains
+wrapper for features detectors and descriptors. Add your own wrapper
+here to evaluate your features.</li>
+
+<li><a href="%pathto:vlbenchmars.detobjetcs;">Datasets</a>
+(<strong><code>datasets</code></strong>) This package contains code
+that manages (downloads and reads) benchmark data. The most common use
+is to adopt one of the supported standard benchmarks, but you may want
+to add a wrapper to your own dataset here.</li>
+
+<li><a href="%pathto:vlbenchmars.detobjetcs;">Feature benchmarks.</a>
+(<strong><code>benchmarks</code></strong>). This package contains the
+benchmarking code.</li>
+
+<li>Supporting functions and classes
+(<strong><code>helpers</code></strong>). </li>
+</ul>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h3 id="vlbenchmarks.detobjects">Feature objects</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>
+The benchmarks distribution contains a few built-in image feature
+detectors such as VLFeat SIFT, VLFeat MSER and a random features
+generator. Each detector is represented by a MATLAB object which
+unifies the feature detection. All these detectors are stored in a
+package <code>localFeatures</code>. For example to create a wrapper of
+VLFeat SIFT detector.
+</p>
+
+<precode type="matlab">
+sift = localFeatures.VlFeatSift() ;
+</precode>
+
+<p>
+Another function of the detector object is to gather the detector
+parameters which are defined as constructor parameters. For example we
+can create SIFT detector with different peak threshold parameter.
+</p>
+
+<precode type="matlab">
+thrSift = localFeatures.VlFeatSift('PeakThresh',11);
+</precode>
 
 <p>
 Now generate a test image.
@@ -107,9 +195,9 @@ ellBlobsPath = fullfile('data','ellBlobs.png');
 imwrite(ellBlobs,ellBlobsPath);
 </precode>
 
-
 <p>
-Each frame detector implements method <code>frames = detObj.extractFeatures(imgPath)</code>.
+Each frame detector implements method <code>frames =
+detObj.extractFeatures(imgPath)</code>.
 </p>
 
 <precode type="matlab">
@@ -117,9 +205,9 @@ siftFrames = sift.extractFeatures(ellBlobsPath);
 bigScaleSiftFrames = bigScaleSift.extractFeatures(ellBlobsPath);
 </precode>
 
-
 <p>
-To see the detected features you can visualise their regions using <code>vl_plotframe</code> function.
+To see the detected features you can visualise their regions
+using <code>vl_plotframe</code> function.
 </p>
 
 <precode type="matlab">
@@ -139,17 +227,38 @@ legend([sfH bssfH],'SIFT','Big Scale SIFT');
 </div>
 
 <p>
-Because these wrappers cache the detected frames, when you run <code>extractFeatures(ellBlobsPath)</code>again, frames are loaded from cache. You can disable caching by calling detector method <code>disableCaching()</code>.
+Because these wrappers cache the detected frames, when you
+run <code>extractFeatures(ellBlobsPath)</code>again, frames are loaded
+from cache. You can disable caching by calling detector
+method <code>disableCaching()</code>.
 </p>
 
 <h2 id="vlbenchmarks.example">Example: benchmarking built-in detectors</h2>
 <h3 id="vlbenchmarks.repeatability">Repeatability test</h3>
+
 <p>
-The detector repeatability is calculated for two sets of feature frames FRAMESA and FRAMESB detected in a reference image IMAGEA and a second image IMAGEB. The two images are assumed to be related by a known homography H mapping pixels in the domain of IMAGEA to pixels in the domain of IMAGEB (e.g. static camera, no parallax, or moving camera looking at a flat scene). A perfect co-variant detector would detect the same features in both images regardless of a change in viewpoint (for the features that are visible in both cases). A good detector will also be robust to noise and other distortion. Repeatability is the percentage of detected features that survive a viewpoint change or some other transformation or disturbance in going from IMAGEA to IMAGEB and is calculated only based on the frames overlap. For detail about this test see [1].
+The detector repeatability is calculated for two sets of feature
+frames FRAMESA and FRAMESB detected in a reference image IMAGEA and a
+second image IMAGEB. The two images are assumed to be related by a
+known homography H mapping pixels in the domain of IMAGEA to pixels in
+the domain of IMAGEB (e.g. static camera, no parallax, or moving
+camera looking at a flat scene). A perfect co-variant detector would
+detect the same features in both images regardless of a change in
+viewpoint (for the features that are visible in both cases). A good
+detector will also be robust to noise and other
+distortion. Repeatability is the percentage of detected features that
+survive a viewpoint change or some other transformation or disturbance
+in going from IMAGEA to IMAGEB and is calculated only based on the
+frames overlap. For detail about this test see [1].
 </p>
+
 <p>
-For measuring detectors repeatability there is class <code>benchmarks.RepeatabilityBenchmarks().</code> For the repeatability test as it is defined in [1] the benchmark object needs the following configuration.
+For measuring detectors repeatability there is
+class <code>benchmarks.RepeatabilityBenchmarks().</code> For the
+repeatability test as it is defined in [1] the benchmark object needs
+the following configuration.
 </p>
+
 <precode type="matlab">
 repBenchmark = benchmarks.RepeatabilityBenchmark(...
   'MatchFramesGeometry',true,... % Do create one-to-one matches from overlaps
@@ -160,20 +269,26 @@ repBenchmark = benchmarks.RepeatabilityBenchmark(...
 </precode>
 
 <p>
-For testing a detector, it has a method <code>testDetector(detector, tf, imageAPath,imageBPath)</code>. The remaining parameters can be obtained from the VGG Affine dataset wrapper which contain sets of six images with known homographies. So lets use for example the graffiti dataset:
+For testing a detector, it has a method <code>testDetector(detector,
+tf, imageAPath,imageBPath)</code>. The remaining parameters can be
+obtained from the VGG Affine dataset wrapper which contain sets of six
+images with known homographies. So lets use for example the graffiti
+dataset:
 </p>
 
-<precode type="matlab">dataset = datasets.VggAffineDataset('Category','graf');</precode>
+<precode type="matlab">
+dataset = datasets.VggAffineDataset('Category','graf');
+</precode>
 
 <p>
-Now we can also define set of detectors which we want to test in order to get their comparison.
+Now we can also define set of detectors which we want to test in order
+to get their comparison.
 </p>
 
 <precode type="matlab">
 mser = localFeatures.VlFeatMser();
 detectors = {sift, thrSift, mser};
 </precode>
-
 
 <p>
 And now we can simply loop over the detectors and dataset images.
@@ -193,8 +308,9 @@ end
 </precode>
 
 <p>
-This loop can be easily executed in parallel using <code>parfor</code>.
-Computed results are usually plotted in a graph showing together repeatability and number of correspondences.
+This loop can be easily executed in parallel
+using <code>parfor</code>.  Computed results are usually plotted in a
+graph showing together repeatability and number of correspondences.
 </p>
 
 <precode type="matlab">
@@ -228,8 +344,13 @@ axis([2 6 0 max(numCorr(:))]); set(gca,'XTick',2:6); grid on;
 </div>
 
 <h3 id="vlbenchmarks.correspondences">Displaying the correspondences</h3>
+
 <p>
-It is sometimes useful to see the feature frame correspondences itself. Let's see what correspondences has been found for the frames detected by SIFT detector in the third image. In order to be able to get that we need the cropped and reprojected feature frames and the correspondences itself.
+It is sometimes useful to see the feature frame correspondences
+itself. Let's see what correspondences has been found for the frames
+detected by SIFT detector in the third image. In order to be able to
+get that we need the cropped and reprojected feature frames and the
+correspondences itself.
 </p>
 
 <precode type="matlab">
@@ -241,7 +362,9 @@ tf = dataset.getTransformation(imgBIdx);
 </precode>
 
 <p>
-Because the repeatability results are also stored in the cache, this data are directly loaded from cache and nothing is recalculated. Now this can be visualised.
+Because the repeatability results are also stored in the cache, this
+data are directly loaded from cache and nothing is recalculated. Now
+this can be visualised.
 </p>
 
 <precode type="matlab">
@@ -261,8 +384,16 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,siftReprojFrames,...
 </div>
 
 <h3 id="vlbenchmarks.matching">Matching score</h3>
+
 <p>
-Matching score differs to repeatability that the one-to-one correspondences are calculated not only based on the frames geometry (overlaps) but also using their distance in descriptor domain. Therefore the detectors must be able to extract frames descriptors. This is not the case of MSER detector, so it has to be 'packed' with a detector which supports descriptor calculation. Unfortunately none of the built-in descriptors is affine invariant so only similarity invariant SIFTs is used.
+Matching score differs to repeatability that the one-to-one
+correspondences are calculated not only based on the frames geometry
+(overlaps) but also using their distance in descriptor
+domain. Therefore the detectors must be able to extract frames
+descriptors. This is not the case of MSER detector, so it has to be
+'packed' with a detector which supports descriptor
+calculation. Unfortunately none of the built-in descriptors is affine
+invariant so only similarity invariant SIFTs is used.
 </p>
 
 <precode type="matlab">
@@ -343,16 +474,29 @@ As for repeatability we can also show the matched frames itself.
 </div>
 
 <h3 id="vlbenchmarks.retrieval">Retrieval benchmark</h3>
+
 <p>
-Retrieval benchmark tests feature detectors in a simple retrieval system setting. Changing the detector and measuring the performance of the system can comparatively asses feature detector performance. Implemented retrieval system is based on [2] which uses K-Nearest Neighbours in the whole descriptors database together with a simple voting criterion.
+Retrieval benchmark tests feature detectors in a simple retrieval
+system setting. Changing the detector and measuring the performance of
+the system can comparatively asses feature detector
+performance. Implemented retrieval system is based on [2] which uses
+K-Nearest Neighbours in the whole descriptors database together with a
+simple voting criterion.
 </p>
 
 <p>
-Retrieval dataset contains set of images and a set of queries, i.e. images which we want to look for in the database. Based on the query ground truth data the Average Precision (area under the precision-recall curve) is calculated and averaged over all queries to get the Mean Average Precision of the detector.
+Retrieval dataset contains set of images and a set of queries,
+i.e. images which we want to look for in the database. Based on the
+query ground truth data the Average Precision (area under the
+precision-recall curve) is calculated and averaged over all queries to
+get the Mean Average Precision of the detector.
 </p>
 
 <p>
-The interface to the retrieval benchmark is similar to the repeatability benchmark as can be seen from the example which calculates the Mean Average Precision of the retrieval system for the SIFT detector and descriptor.
+The interface to the retrieval benchmark is similar to the
+repeatability benchmark as can be seen from the example which
+calculates the Mean Average Precision of the retrieval system for the
+SIFT detector and descriptor.
 </p>
 
 <precode type="matlab">
@@ -363,12 +507,20 @@ retBenchmark = benchmarks.RetrievalBenchmark();
 </precode>
 
 <p>
-This benchmark uses parfor loop for both computing the features from the dataset images and for evaluating the queries. As the lite version of the oxbuild dataset contains 660 images it can improve the evaluation time significantly.
+This benchmark uses parfor loop for both computing the features from
+the dataset images and for evaluating the queries. As the lite version
+of the oxbuild dataset contains 660 images it can improve the
+evaluation time significantly.
 </p>
 
 <h2 id="vlbenchmarks.benchmarkowndet">Benchmarking your own detector</h2>
+
 <p>
-This framework is easily extensible with your own detectors as only two methods has to be implemented. To start you need to inherit from the <code>localFeatures.GenericLocalFeaturesExtractor</code> and implement methods <code>extractFeatures(imgPath)</code> and <code>extractDescriptors(imgPath, frames)</code>.
+This framework is easily extensible with your own detectors as only
+two methods has to be implemented. To start you need to inherit from
+the <code>localFeatures.GenericLocalFeaturesExtractor</code> and
+implement methods <code>extractFeatures(imgPath)</code>
+and <code>extractDescriptors(imgPath, frames)</code>.
 </p>
 
 <precode type="matlab">
@@ -391,18 +543,32 @@ end
 
 
 <p>
-Method <code>extractFeatures(imgPath)</code> can be called with one output argument when only feature frames need to be detected. When called with two output arguments, it extracts feature frames descriptors as well. This may seem to be dual to the <code>extractDescriptors()</code> method however some detectors does not support computation of descriptors of given frames.
+Method <code>extractFeatures(imgPath)</code> can be called with one
+output argument when only feature frames need to be detected. When
+called with two output arguments, it extracts feature frames
+descriptors as well. This may seem to be dual to
+the <code>extractDescriptors()</code> method however some detectors
+does not support computation of descriptors of given frames.
 </p>
 
 <p>
-If you want to use caching, you can use <code>loadFeatures()</code> or <code>storeFeatures()</code> methods which implements access to the cache. However with that you will need to implement method <code>getSignature()</code> which generates unique string signature of the detector properties.
+If you want to use caching, you can use <code>loadFeatures()</code>
+or <code>storeFeatures()</code> methods which implements access to the
+cache. However with that you will need to implement
+method <code>getSignature()</code> which generates unique string
+signature of the detector properties.
 </p>
  
 <p>
-To see details about the logging, class options and installation framework, see the <code>localFeatures.ExampleLocalFeatureExtractor</code> class which implements simple feature detector together with descriptor extractor.
+To see details about the logging, class options and installation
+framework, see
+the <code>localFeatures.ExampleLocalFeatureExtractor</code> class
+which implements simple feature detector together with descriptor
+extractor.
 </p>
 
  <h2 id="vlbenchmarks.refs">References</h2>
+
  <ol>
   <li id="vlbenchmarks.ref1"> K. Mikolajczyk, T. Tuytelaars,
   C. Schmid, A. Zisserman, J. Matas, F. Schaffalitzky, T. Kadir, and
@@ -413,8 +579,7 @@ To see details about the logging, class options and installation framework, see 
   search. Technical Report 7656, INRIA, 2011.
   </li>
  </ol>
-
  <script language="JavaScript">
    hideallbibs();
  </script>
-</page>
+</group>

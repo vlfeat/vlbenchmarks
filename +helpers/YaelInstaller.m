@@ -55,7 +55,9 @@ classdef YaelInstaller < helpers.GenericInstaller
       nnBinFile = fullfile(obj.mexDir,['yael_nn.' mexext]);
       res = exist(nnBinFile,'file');
     end
-
+  end
+  
+  methods 
     function setup(obj)
       addpath(fullfile(pwd,obj.mexDir));
     end

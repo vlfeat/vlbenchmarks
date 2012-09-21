@@ -1,28 +1,29 @@
 classdef VlFeatInstaller < helpers.GenericInstaller
-% VLFEATINSTALLER Downloads and installs VLFeat library
-%    See or adjust constant class arguments for details about the 
+% VLFEATINSTALLER Downloads and installs the VLFeat library
+%    See or adjust constant class arguments for details about the
 %    library version or location.
 %
 %    The MEXFLAGS constant property can be used for your mexFiles
 %    which depend and link to the VLFeat library.
-    
+
   properties (Constant)
     installVersion = '0.9.15';
     installDir = fullfile('data','software','vlfeat');
     name = ['vlfeat-' helpers.VlFeatInstaller.installVersion];
     dir = fullfile(pwd,helpers.VlFeatInstaller.installDir,...
       helpers.VlFeatInstaller.name,'');
-    url = sprintf('http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz',...
+    url = sprintf('http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz', ...
       helpers.VlFeatInstaller.installVersion);
     mexDir = fullfile(helpers.VlFeatInstaller.dir,'toolbox','mex',mexext);
     makeCmd = 'make';
-    
+
     % Flags for mex files which link to VLFeat
     MEXFLAGS = sprintf('LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
-      helpers.VlFeatInstaller.mexDir,helpers.VlFeatInstaller.mexDir,...
-      helpers.VlFeatInstaller.dir);
+                       helpers.VlFeatInstaller.mexDir, ...
+                       helpers.VlFeatInstaller.mexDir,...
+                       helpers.VlFeatInstaller.dir);
   end
-  
+
   methods
     function obj = VlFeatInstaller(minVersion)
       % VLFEATINSTALLER VLFeat library installer
@@ -36,10 +37,10 @@ classdef VlFeatInstaller < helpers.GenericInstaller
             numMinVersion,mfilename);
         end
       end
-	    if obj.isInstalled()
+      if obj.isInstalled()
         obj.setup();
       end
-	end
+    end
 
     function setup(obj)
       if(~exist('vl_demo','file')),
@@ -59,27 +60,27 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       urls = {VlFeatInstaller.url};
       dstPaths = {VlFeatInstaller.installDir};
     end
-    
+
     function compile(obj)
       import helpers.*;
       if obj.isCompiled()
         return;
       end
-      
-      fprintf('Compiling vlfeat\n');
-      
+
+      fprintf('Compiling VLFeat\n');
+
       prevDir = pwd;
       cd(VlFeatInstaller.dir);
 
       status = system(VlFeatInstaller.makeCmd);
       cd(prevDir);
-      
+
       if status ~= 0
         error('VLFeat compilation was not succesfull.\n');
       end
 	  obj.setup();
     end
-    
+
     function res = isCompiled(obj)
       import helpers.*;
       res = exist(VlFeatInstaller.mexDir,'dir');

@@ -18,10 +18,16 @@ end
 numFrames = size(frames,2);
 descrLen = size(descriptors,1);
 
+if numFrames == 0
+  fclose(g);
+  exit
+end
+
 if descrLen > 0 && size(descriptors,2) ~= numFrames
   error('Number of frames and associated descriptors must agree.');
 end
 
+% Write header
 switch opts.format
   case 'ubc'
     fprintf(g,'%d\n%d\n',numFrames,descrLen);
@@ -49,18 +55,15 @@ switch opts.format
     
     if descrLen == 0
       fprintf(g,'%g %g %g %g %g\n',frames);
-      fclose(g) ;
     else
       for i=1:size(frames,2)
         fprintf(g,'%g ', frames(:,i)');
         fprintf(g,'%g ', descriptors(:,i)');
         fprintf(g,'\n');
       end
-
-    end
-    
+    end 
 end
-
+fclose(g) ;
 end
 
 

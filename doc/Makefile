@@ -17,10 +17,7 @@ pub_thumbs=$(pubs:.pdf=.png)
 jpg_tgt := $(demo_src:.eps=.jpg)
 img_tgt := $(jpg_tgt)
 
-.PHONY: all, assets, deep
-
-# generate doc-dir: target
-$(eval $(call gendir, demo))
+.PHONY: all assets deep
 
 all: html/index.html assets $(pub_thumbs)
 
@@ -29,13 +26,16 @@ deep: all ../genDemoFigures.m
 	$(MATLAB_EXE) -$(ARCH) -nodesktop -r "clear mex;genDemoFigures;exit"
 	cd .. ;
 
-html/index.html: vlbenchmarks.xml vlbenchmarks.css pygmentize.css html $(img_tgt) $(html_src) $(WEBDOC)
+html/index.html: vlbenchmarks.xml \
+vlbenchmarks.css pygmentize.css \
+html $(img_tgt) $(html_src) $(WEBDOC)
 	$(PYTHON) $(WEBDOC) $(<)
+
+assets: html/assets html/images html/demo \
+html/vlbenchmarks.css html/pygmentize.css
 
 html:
 	mkdir html
-
-assets: html/assets html/images html/demo html/vlbenchmarks.css html/pygmentize.css
 
 html/assets:
 	ln -s ../assets html/assets
@@ -67,4 +67,4 @@ distclean:
 post: all
 	rsync --delete --exclude=.htaccess \
               --exclude='*.DS_Store' --copy-links \
-	      -rvz html/ vlfeat-admin:vlfeat.org/benchmarks/
+	      -rvz html/ vlfeat-admin:vlfeat.org/sandbox/benchmarks/
