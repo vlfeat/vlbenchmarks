@@ -71,8 +71,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
         error('Arch: %s not supported by VGG Affine.',machineType);
       end
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.opts = vl_argparse(obj.opts,varargin);
+      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
       if ~ismember(obj.opts.detector, obj.validDetectors)
         obj.error('Invalid detector');
       end
@@ -83,6 +82,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       obj.detectorName = ['VGG ' obj.opts.detector];
       obj.descriptorName = ['VGG ' obj.opts.descriptor];
       obj.extractsDescriptors = true;
+      obj.configureLogger(obj.name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, origImagePath)
