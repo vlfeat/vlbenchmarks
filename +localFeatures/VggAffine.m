@@ -115,6 +115,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
                      imagePath,framesFile);
 
       detCmd = [obj.DetBinPath ' ' detArgs];
+      obj.debug('Executing: %s',detCmd);
       startTime = tic;
       [status,msg] = system(detCmd);
       timeElapsed = toc(startTime);
@@ -199,6 +200,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       end             
       descrCmd = [obj.DescrBinPath ' ' descrArgs];
       obj.info('Computing descriptors.');
+      obj.debug('Executing: %s',descrCmd);
       startTime = tic;
       [status,msg] = system(descrCmd);
       elapsedTime = toc(startTime);
@@ -229,12 +231,8 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
     function compile(obj)
       import localFeatures.*;
       % When unpacked, binaries are not executable
-      chmodCmds = {sprintf('chmod +x %s',VggAffine.DetBinPath) ...
-        sprintf('chmod +x %s',VggAffine.DescrBinPath)}; 
-      for cmd = chmodCmds
-        [status msg] = system(cmd{:});
-        if status ~= 0, error(msg); end
-      end
+      helpers.setFileExecutable(VggAffine.DetBinPath);
+      helpers.setFileExecutable(VggAffine.DescrBinPath);
     end
   end
 end

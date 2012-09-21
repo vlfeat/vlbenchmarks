@@ -66,7 +66,6 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
       import localFeatures.*;
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
-      startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
 
       tmpName = tempname;
@@ -83,6 +82,8 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
       args = sprintf('%s "%s" "%s"',...
                      args, imagePath, framesFile);
       cmd = [obj.BinPath ' ' args];
+      obj.debug('Executing: %s',cmd);
+      startTime = tic;
       [status,msg] = system(cmd,'-echo');
       if status ~= 1
         error('%d: %s: %s', status, cmd, msg) ;

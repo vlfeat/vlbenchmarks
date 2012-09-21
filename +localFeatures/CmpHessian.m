@@ -50,7 +50,6 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       
       [frames descriptors] = obj.loadFeatures(imagePath,true);
       if numel(frames) > 0; return; end;
-      startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
       else
@@ -64,7 +63,8 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       imwrite(img,imgFile);
       args = sprintf(' "%s" ',imgFile);
       cmd = [obj.BinPath ' ' args];
-
+      obj.debug('Executing: %s',cmd);
+      startTime = tic;
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;

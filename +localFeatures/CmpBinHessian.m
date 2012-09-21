@@ -56,7 +56,6 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
 
       [frames descriptors] = obj.loadFeatures(origImagePath,true);
       if numel(frames) > 0; return; end;
-      startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(origImagePath));
       else
@@ -70,6 +69,8 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       featFile = [imagePath '.hesaff.sift'];
       args = sprintf(' "%s" ',imagePath);
       cmd = [obj.BinPath ' ' args];
+      obj.debug('Executing: %s',cmd);
+      startTime = tic;
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;

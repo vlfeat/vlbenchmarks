@@ -49,13 +49,13 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
 
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;      
-      startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
       args = sprintf('"%s" "%s"',imagePath, framesFile);
       cmd = [obj.BinPath ' ' args];
-
+      obj.debug('Executing: %s',cmd);
+      startTime = tic;
       [status,msg] = system(cmd,'-echo');
       if status ~= 0
         error('%d: %s: %s', status, cmd, msg) ;

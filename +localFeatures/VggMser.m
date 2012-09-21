@@ -74,7 +74,6 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
 
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;      
-      startTime = tic;
       obj.info('Computing frames of image %s.',getFileName(imagePath));
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
@@ -89,7 +88,8 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
       args = sprintf('%s -i "%s" -o "%s"',...
                      args, imagePath, framesFile);
       cmd = [obj.BinPath ' ' args];
-
+      obj.debug('Executing: %s',cmd);
+      startTime = tic;
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;

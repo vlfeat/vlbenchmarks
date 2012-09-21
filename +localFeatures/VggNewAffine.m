@@ -80,7 +80,6 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
 
       [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
-      startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
       else
@@ -97,6 +96,8 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
                      detArgs, obj.Opts.detectorType,...
                      imagePath,framesFile);
       detCmd = [obj.DetBinPath ' ' detArgs];
+      obj.debug('Executing: %s',detCmd);
+      startTime = tic;
       [status,msg] = system(detCmd);
       if status
         error('%d: %s: %s', status, detCmd, msg) ;
@@ -139,8 +140,9 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
       end             
       descrCmd = [obj.DescrBinPath ' ' descrArgs];
 
-      startTime = tic;
       obj.info('Computing descriptors.');
+      obj.debug('Executing: %s',descrCmd);
+      startTime = tic;
       [status,msg] = system(descrCmd);
       if status
         error('%d: %s: %s', status, descrCmd, msg) ;
