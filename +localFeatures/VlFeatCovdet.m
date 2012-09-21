@@ -23,39 +23,30 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
   methods
     function obj = VlFeatCovdet(varargin)
-      import helpers.*;
-      % default arguments
-      vlArgs.method = 'DoG';
-      vlArgs.affineAdaptation = false ;
-      [vlArgs, drop] = vl_argparse(vlArgs,varargin);
-      obj.Name = ['VLFeat ' vlArgs.method];
-      if vlArgs.affineAdaptation, obj.Name = [obj.Name '-affine']; end
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = 'VLFeat SIFT';
-      obj.ExtractsDescriptors = true;
-      obj.Opts.forceOrientation = false; % Force orientation for SIFT desc.
-      [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
-      varargin = obj.checkInstall(varargin);
-      % Rest of the arguments use as vl_covdet arguments
-      obj.VlCovdetArguments = obj.configureLogger(obj.Name,varargin);
+      obj.Name = 'VLFeat Covdet';
+      obj.DetectorName = 'VLFeat Covdet';
+      obj.DescriptorName = 'VLFeat Covdet';
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.VlCovdetArguments = obj.checkInstall(varargin);
       obj.BinPath = {which('vl_covdet') which('libvl.so')};
+      obj.ExtractsDescriptors = true;
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
       import helpers.*;
-      [frames descriptors] = obj.loadFeatures(imagePath,nargout > 1);
+      [frames, descriptors] = obj.loadFeatures(imagePath,nargout > 1);
       if numel(frames) > 0; return; end;
       img = imread(imagePath);
-      if(size(img,3)>1), img = rgb2gray(img); end
-      img = single(img); % If not already in uint8, then convert
+      if (size(img,3)>1), img = rgb2gray(img); end
+      img = im2single(img) ;
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = vl_covdet(img,obj.VlCovdetArguments{:});
+        frames = vl_covdet(img, 'verbose', obj.VlCovdetArguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
-          getFileName(imagePath));
-        [frames descriptors] = vl_covdet(img,obj.VlCovdetArguments{:});
+                 getFileName(imagePath));
+        [frames descriptors] = vl_covdet(img, 'verbose', obj.VlCovdetArguments{:});
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
@@ -80,8 +71,10 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       image = single(image); % If not already in uint8, then convert
       obj.info('Computing descriptors of %d frames.',size(frames,2));
       startTime = tic;
-      [frames descriptors] = vl_covdet(image, 'Frames', frames,...
-          'EstimateAffineShape',hasAffineShape,'EstiamteOrientation', hasOrientation);
+      [frames descriptors] = vl_covdet(image, ...
+                                       'Frames', frames, ...
+                                       'Descriptor', 'SIFT', ...
+                                       'Verbose') ;
       timeElapsed = toc(startTime);
       obj.debug('Descriptors of %d frames computed in %gs',...
         size(frames,2),timeElapsed);
