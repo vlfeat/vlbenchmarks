@@ -1,5 +1,6 @@
 function writeFeatures(file, frames, descriptors, varargin)
 % WRITEFEATURES Write frames data files
+import helpers.*;
 
 opts.verbosity = 0 ;
 opts.format = 'oxford' ;
