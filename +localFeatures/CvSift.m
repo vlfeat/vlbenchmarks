@@ -81,7 +81,7 @@ classdef CvSift < localFeatures.GenericLocalFeatureExtractor & ...
       import helpers.*;
       path = fullfile(pwd,'+localFeatures','+mex','');
       srclist = {fullfile(path,'cvSift.cpp')};
-      flags = {[OpenCVInstaller.MEXFLAGS ' ' VlFeatInstaller.MEXFLAGS ]};
+      flags = {[OpenCVInstaller.getMexFlags() ' ' VlFeatInstaller.getMexFlags() ]};
     end
   end
 end

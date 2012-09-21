@@ -2,10 +2,10 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 % VLFEATINSTALLER Downloads and installs the VLFeat library
 %    See or adjust constant class arguments for details about the
 %    library version or location.
-%
-%    The MEXFLAGS constant property can be used for your mexFiles
-%    which depend and link to the VLFeat library.
 
+% Author: Karel Lenc
+
+% AUTORIGHTS
   properties (Constant)
     installVersion = '0.9.15';
     installDir = fullfile('data','software','vlfeat');
@@ -16,12 +16,6 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       helpers.VlFeatInstaller.installVersion);
     mexDir = fullfile(helpers.VlFeatInstaller.dir,'toolbox','mex',mexext);
     makeCmd = 'make';
-
-    % Flags for mex files which link to VLFeat
-    MEXFLAGS = sprintf('LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
-                       helpers.VlFeatInstaller.mexDir, ...
-                       helpers.VlFeatInstaller.mexDir,...
-                       helpers.VlFeatInstaller.dir);
   end
 
   methods
@@ -88,6 +82,24 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 
     function deps = getDependencies(obj)
       deps = {helpers.Installer};
+    end
+  end
+  
+  methods (Static)
+    function mexflags = getMexFlags()
+    % getMexFlags Get flags for compilation of mex files
+    %   MEX_FLAGS = getMexFlags() Returns mex flags needed for compilation
+    %   of mex files which link to VlFeat library.
+      import helpers.*;
+      switch computer()
+        case {'GLNX86','GLNXA64'}
+        mexflags = sprintf(...
+          'LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
+          VlFeatInstaller.mexDir, VlFeatInstaller.mexDir,...
+          VlFeatInstaller.dir);
+        otherwise
+          warning('Architecture not supported yet.');
+      end
     end
   end
 end

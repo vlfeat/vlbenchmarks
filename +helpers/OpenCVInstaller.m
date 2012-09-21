@@ -13,10 +13,10 @@ classdef OpenCVInstaller < helpers.GenericInstaller
 %   Your OpenCV distribution can be also compiled 'by hand' when
 %   'make install' output files are located in 
 %   './data/OpenCV-%VERSION%/install' folder. See constant properties.
-%
-%   Constant property MEXFLAGS can be used for you mex files which
-%   links to OpenCV.
-    
+
+% Author: Karel Lenc
+
+% AUTORIGHTS
   properties (Constant)
     % Version of the installed OpenCV
     version = '2.4.2';
@@ -35,12 +35,6 @@ classdef OpenCVInstaller < helpers.GenericInstaller
     libDir = fullfile(helpers.OpenCVInstaller.installDir,'lib');
     % Location of OpenCV headers
     includeDir = fullfile(helpers.OpenCVInstaller.installDir,'include');
-    
-    % LDFLAGS for mex compilation
-    MEXFLAGS = sprintf(...
-      'LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_contrib -lopencv_nonfree -I%s',...
-      helpers.OpenCVInstaller.libDir,helpers.OpenCVInstaller.libDir,...
-      helpers.OpenCVInstaller.includeDir);
     
     % Make command
     makeCommand = 'make';
@@ -141,6 +135,23 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       deps = {helpers.Installer};
     end
   end
-    
+  
+  methods (Static)
+    function mexflags = getMexFlags()
+    % getMexFlags Get flags for compilation of mex files
+    %   MEX_FLAGS = getMexFlags() Returns mex flags needed for compilation
+    %   of mex files which link to OpenCV library.
+      import helpers.*;
+      switch computer()
+        case {'GLNX86','GLNXA64'}
+        mexflags = sprintf(...
+          'LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_contrib -lopencv_nonfree -I%s',...
+          OpenCVInstaller.libDir,OpenCVInstaller.libDir,...
+          OpenCVInstaller.includeDir);
+        otherwise
+          warning('Architecture not supported yet.');
+      end
+    end
+  end
 end
 
