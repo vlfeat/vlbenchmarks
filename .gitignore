@@ -9,3 +9,5 @@
 data/
 junk/
 results/
+doc/html/*
+doc/demo/*
