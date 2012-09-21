@@ -63,7 +63,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %     Number of 'junk' images preserved in the databse. When inf, all
 %     images preserved.
 %
-%   SamplingRngSeed :: 1
+%   SamplingSeed :: 1
 %     Seed of the random number generator used for sampling the image
 %     dataset.
 %
@@ -89,7 +89,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       'liteOkImagesNum',inf,...
       'liteJunkImagesNum',inf,...
       'liteBadImagesNum',100,...
-      'samplingRngSeed',1,...
+      'samplingSeed',1,...
       'cacheDatabase',true);
     ImagesDir;  % Directory with current category images
     GtDir;      % Directory with current category ground truth data
@@ -210,9 +210,9 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         samples = data;
         return;
       end
-      oldS = rng(obj.Opts.samplingRngSeed,'v5uniform');
-      samples = sort(randsample(data, num));
-      rng(oldS);
+      samplingStream = RandStream('mt19937ar','Seed',...
+        obj.Opts.samplingSeed);
+      samples = sort(randsample(samplingStream,data,num));
     end
   end
 
