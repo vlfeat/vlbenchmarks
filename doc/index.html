@@ -41,6 +41,7 @@ id="lenc12vlbenchmarks">
     <li><a href="%pathto:vlbenchmarks.changes;">Changes</a></li>
   </ul>
   </li>
+  <li><a href="%pathto:vlbenchmarks.quickguide;">Quick guide</a></li>
   <li><a href="%pathto:vlbenchmarks.structure;">Framework structure</a></li>
   <li><a href="%pathto:vlbenchmarks.detobjects;">Detector objects</a></li>
   <li><a href="%pathto:vlbenchmarks.example;">Example: benchmarking built-in detectors</a></li>
@@ -117,7 +118,7 @@ href="http://www.mathworks.com/help/matlab/matlab_external/building-mex-files.ht
 documentation</a>.
 </p>
 
-<p>To test the bechmark installation run</p>
+<p>To test the benchmark installation run</p>
 
 <precode type="matlab">
   >> benchmarksDemo
@@ -127,6 +128,93 @@ documentation</a>.
 Note that this script will download and install the <a
 href="%pathto:vlbenchmarks.ref1;">VGG Affine Dataset</a>.
 </p>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="vlbenchmarks.quickguide">Quick guide</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<p>
+Here is a script for computing image feature detector repeatability [1]. This script gets pair of images from the 'Graffiti' dataset, run the feature detector and compute there repeatability:
+</p>
+
+<precode type="matlab">
+dataset = datasets.VggAffineDataset('Category','graf'); % Test data
+repBenchmark = benchmarks.RepeatabilityBenchmark(); % Benchmark object
+sift = localFeatures.VlFeatSift(); % Tested detector
+
+testedImageNum = 2; % Test reference image to the second image
+refImage = dataset.getImagePath(1); % Path to reference image
+testImage = dataset.getImagePath(testedImageNum); % Path to tested image
+H = dataset.getTransformation(testedImageNum); % Homography between images
+
+[repeatability numCorresp] = ...
+  repBenchmark.testDetector(sift, H, refImage, testImage);
+</precode>
+
+<p>
+With a result:
+</p>
+
+<precode>
+repeatability = 0.6589       numCorresp = 825
+</precode>
+
+<p>
+Running this script once again you will get the results straight away as they are being loaded from cache.
+Now lets play with the descriptor parameters. For example we can test what would happen if we compute features of up-sampled images (by setting <code>vl_sift</code> parameter 'FirstOctave' to -1):
+</p>
+
+<precode type="matlab">
+usSift = localFeatures.VlFeatSift('FirstOctave',-1); % Up-sampling SIFT
+[repeatability numCorresp] = ...
+  repBenchmark.testDetector(usSift, H, refImage, testImage)
+</precode>
+
+<p>
+And after few moments (as the number of features more than doubles)
+</p>
+<precode>
+repeatability =  0.5838       numCorresp =  2435
+</precode>
+
+<p>
+ Now let's run your custom feature frame detector instead. Suppose you have a command line utility called "DETECTORX" that implements it. Start by copying a template wrapper located in '<code>localFeatures/TemplateWrapper.m' </code>and edit it according to your detector:
+</p>
+
+<precode type="matlab">
+classdef DetectorX &lt; localFeatures.GenericLocalFeatureExtractor
+% localFeatures.DetectorX X feature frames detector.
+%   localFeatures.DetectorX('OptionName', optionValue) Construct new
+%   wrapper of X Features detector.
+%
+% See also: localFeatures.SID
+  properties (Constant)
+    BinPath = fullfile('data','software','detx','detectorx');
+  end
+  methods
+    function obj = ExampleLocalFeatureExtractor(varargin)
+      obj.Name = 'Detector X'; % Name of the wrapper
+      obj.DetectorName = obj.Name; % Name of feature detection algorithm
+    end
+    
+    function frames = extractFeatures(obj, imagePath)
+      frames = obj.loadFeatures(imagePath,nargout &gt; 1); % Check cache
+      if numel(frames) &gt; 0; return; end;
+      
+      obj.info('Computing frames of image %s.',getFileName(imagePath));
+      featFile = [tempname '.frames'];
+      system(sprintf('./%s %s %s', obj.BinPath, imagePath, featFile));
+      frames = localFeatures.helpers.readFramesFile(featuresFile);
+      delete(featuresFile);
+      
+      obj.storeFeatures(imagePath, frames, []); % Cache the results
+    end
+    
+    function signature = getSignature(obj)
+      signature = helpers.fileSignature(obj.BinPath); % Detector unique signature
+    end
+  end
+end
+</precode>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="vlbenchmarks.structure">Framework structure</h2>
