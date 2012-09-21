@@ -4,25 +4,25 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
 %
 % AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    binPath
+    BinPath
   end
 
-  properties (Constant)
-    url = 'http://www.cs.ubc.ca/~lowe/keypoints/siftDemoV4.zip';
-    installDir = fullfile('data','software','loweSift','');
-    dir = fullfile(localFeatures.LoweSift.installDir,'siftDemoV4')
+  properties (Constant, Hidden)
+    Url = 'http://www.cs.ubc.ca/~lowe/keypoints/siftDemoV4.zip';
+    InstallDir = fullfile('data','software','loweSift','');
+    ExecDir = fullfile(localFeatures.LoweSift.InstallDir,'siftDemoV4')
   end
 
   methods
     function obj = LoweSift(varargin)
       import localFeatures.*;
-      obj.name = 'Lowe SIFT';
-      obj.detectorName = obj.name;
-      obj.descriptorName = obj.name;
+      obj.Name = 'Lowe SIFT';
+      obj.DetectorName = obj.Name;
+      obj.DescriptorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      obj.configureLogger(obj.name,varargin);
-      execDir = LoweSift.dir;
-      obj.binPath = {fullfile(execDir, 'sift.m') ...
+      obj.configureLogger(obj.Name,varargin);
+      execDir = LoweSift.ExecDir;
+      obj.BinPath = {fullfile(execDir, 'sift.m') ...
         fullfile(execDir, 'sift')};
     end
 
@@ -52,7 +52,7 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
         getFileName(imagePath));
 
       try
-        cd(LoweSift.dir);
+        cd(LoweSift.ExecDir);
         [img descriptors frames] = sift(detImagePath);
         cd(curDir);
       catch err
@@ -71,7 +71,7 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = helpers.fileSignature(obj.binPath{:});
+      sign = helpers.fileSignature(obj.BinPath{:});
     end
   end
 
@@ -82,8 +82,8 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
 
     function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
-      urls = {LoweSift.url};
-      dstPaths = {LoweSift.installDir};
+      urls = {LoweSift.Url};
+      dstPaths = {LoweSift.InstallDir};
     end
   end
 end

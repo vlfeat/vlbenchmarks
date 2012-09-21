@@ -1,8 +1,8 @@
 classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% VGGMSER class to wrap around the VGG MSER implementation
-%   VGGMSER('Option','OptionValue',...) Construct and object which wraps
-%   around a MSER detector [1] binary available at
+% localFeatures.VggMser class to wrap around the VGG MSER implementation
+%   localFeatures.VggMser('Option','OptionValue',...) Construct and object
+%   which wraps around a MSER detector [1] binary available at
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mser.tar.gz
 %
 %   Only supported architectures are GLNX86 and GLNXA64 as for these the
@@ -31,8 +31,8 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the VggMser
     % binary accepts. See the binary help for explanation.
-    binPath
-    opts = struct(...
+    BinPath
+    Opts = struct(...
       'es', -1,...
       'per', -1,...
       'ms', -1,...
@@ -54,18 +54,18 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
       machineType = computer();
       switch(machineType)
         case  {'GLNX86','GLNXA64'}
-          obj.binPath = fullfile(VggMser.rootInstallDir,'mser.ln');
+          obj.BinPath = fullfile(VggMser.rootInstallDir,'mser.ln');
         case  {'PCWIN','PCWIN64'}
-          obj.binPath = fullfile(VggMser.rootInstallDir,'mser.exe');
+          obj.BinPath = fullfile(VggMser.rootInstallDir,'mser.exe');
         otherwise
           error('Arch: %s not supported by VggMser',machineType);
       end
-      obj.name = 'VGG MSER';
-      obj.detectorName = obj.name;
+      obj.Name = 'VGG MSER';
+      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
+      varargin = obj.configureLogger(obj.Name,varargin);
       % Parse the passed options
-      obj.opts = vl_argparse(obj.opts,varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
     end
 
     function [frames] = extractFeatures(obj, imagePath)
@@ -79,16 +79,16 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
       args = ' -t 2'; % Define the output type
-      fields = fieldnames(obj.opts);
+      fields = fieldnames(obj.Opts);
       for i = 1:numel(fields)
-        val = obj.opts.(fields{i});
+        val = obj.Opts.(fields{i});
         if val >= 0
           args = [args,' -',fields{i},' ', num2str(val)];
         end
       end
       args = sprintf('%s -i "%s" -o "%s"',...
                      args, imagePath, framesFile);
-      cmd = [obj.binPath ' ' args];
+      cmd = [obj.BinPath ' ' args];
 
       [status,msg] = system(cmd);
       if status
@@ -104,8 +104,8 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath) ';'... 
-              helpers.struct2str(obj.opts)];
+      sign = [helpers.fileSignature(obj.BinPath) ';'... 
+              helpers.struct2str(obj.Opts)];
     end
   end
 

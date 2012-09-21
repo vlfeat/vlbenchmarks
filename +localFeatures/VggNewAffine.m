@@ -1,6 +1,6 @@
 classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
-% VGGNEWAFFINE class to wrap around the VGG new affine co-variant detectors.
-%   VGGNEWAFFINE('Option','OptionValue',...) Creates object which wraps 
+% VggNewAffine class to wrap around the VGG new affine co-variant detectors.
+%   VggNewAffine('Option','OptionValue',...) Creates object which wraps 
 %   around Philbin's modified VGG Affine detector.
 %
 %   Only supported architectures are GLNX86 and GLNXA64 as for these the
@@ -24,9 +24,9 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
 
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    detBinPath;
-    descrBinPath;
-    opts = struct(...
+    DetBinPath;
+    DescrBinPath;
+    Opts = struct(...
       'detector', hessian',...
       'threshold', -1,...
       'noAngle', false,...
@@ -50,28 +50,28 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
       machineType = computer();
       switch(machineType)
         case {'GLNXA64','GLNX86'}
-          obj.detBinPath = fullfile(obj.rootInstallDir,...
+          obj.DetBinPath = fullfile(obj.rootInstallDir,...
             obj.detBinName);
-          obj.descrBinPath = fullfile(obj.rootInstallDir,...
+          obj.DescrBinPath = fullfile(obj.rootInstallDir,...
             obj.descBinName);
         otherwise
           error('Arch: %s not supported by VggNewAffine',machineType);
       end
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.opts = vl_argparse(obj.opts,varargin);
-      switch(lower(obj.opts.detector))
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
+      switch(lower(obj.Opts.detector))
         case 'hessian'
-          obj.opts.detectorType = 'hesaff';
+          obj.Opts.detectorType = 'hesaff';
         case 'harris'
-          obj.opts.detectorType = 'haraff';
+          obj.Opts.detectorType = 'haraff';
         otherwise
-          error('Invalid detector type: %s\n',obj.opts.detector);
+          error('Invalid detector type: %s\n',obj.Opts.detector);
       end
-      obj.name = ['newVGG' obj.opts.detector '-affine'];
-      obj.detectorName = obj.name;
-      obj.descriptorName = 'newVGG SIFT';
-      obj.extractsDescriptors = true;
+      obj.Name = ['newVGG' obj.Opts.detector '-affine'];
+      obj.DetectorName = obj.Name;
+      obj.DescriptorName = 'newVGG SIFT';
+      obj.ExtractsDescriptors = true;
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -88,15 +88,15 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
           getFileName(imagePath));
       end
       tmpName = tempname;
-      framesFile = [tmpName '.' obj.opts.detectorType];
+      framesFile = [tmpName '.' obj.Opts.detectorType];
       detArgs = '';
-      if obj.opts.threshold >= 0
-        detArgs = sprintf('-thres %f ',obj.opts.threshold);
+      if obj.Opts.threshold >= 0
+        detArgs = sprintf('-thres %f ',obj.Opts.threshold);
       end
       detArgs = sprintf('%s-%s -i "%s" -o "%s" %s',...
-                     detArgs, obj.opts.detectorType,...
+                     detArgs, obj.Opts.detectorType,...
                      imagePath,framesFile);
-      detCmd = [obj.detBinPath ' ' detArgs];
+      detCmd = [obj.DetBinPath ' ' detArgs];
       [status,msg] = system(detCmd);
       if status
         error('%d: %s: %s', status, detCmd, msg) ;
@@ -129,15 +129,15 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
       end
       % Prepare the options
       descrArgs = sprintf('-%s -i "%s" -p1 "%s" -o1 "%s"', ...
-        obj.opts.descType, imagePath, framesFile, outDescFile);
-      if obj.opts.magnification > 0
+        obj.Opts.descType, imagePath, framesFile, outDescFile);
+      if obj.Opts.magnification > 0
         descrArgs = [descrArgs,' -scale-mult ', ...
-          num2str(obj.opts.magnification)];
+          num2str(obj.Opts.magnification)];
       end
-      if obj.opts.noAngle
+      if obj.Opts.noAngle
         descrArgs = strcat(descrArgs,' -noangle');
       end             
-      descrCmd = [obj.descrBinPath ' ' descrArgs];
+      descrCmd = [obj.DescrBinPath ' ' descrArgs];
 
       startTime = tic;
       obj.info('Computing descriptors.');
@@ -151,14 +151,14 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
       delete(outDescFile);
 
       % Remove the magnification from frames scale
-      factor = obj.opts.magnification^2;
+      factor = obj.Opts.magnification^2;
       frames(3:5,:) = frames(3:5,:) ./ factor;
     end
 
     function sign = getSignature(obj)
-      signList = {helpers.fileSignature(obj.detBinPath) ... 
-        helpers.fileSignature(obj.descrBinPath) ...
-        helpers.struct2str(obj.opts)};
+      signList = {helpers.fileSignature(obj.DetBinPath) ... 
+        helpers.fileSignature(obj.DescrBinPath) ...
+        helpers.struct2str(obj.Opts)};
       sign = helpers.cell2str(signList);
     end
   end

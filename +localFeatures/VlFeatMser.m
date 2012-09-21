@@ -1,19 +1,21 @@
 classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% VLFEATMSER class to wrap around the VLFeat MSER implementation
-%   VLFEATMSER('Option','OptionValue',...) constructs an object of the
-%   wrapper around the detector.
+% localFeatures.VlFeatMser class to wrap around the VLFeat MSER implementation
+%   localFeatures.VlFeatMser('Option','OptionValue',...) constructs an object
+%   of the wrapper around the detector.
 %
 %   The options to the constructor are the same as that for vl_mser
 %   See help vl_mser to see those options and their default values.
 %
 %   See also: vl_mser
 
+% Authors: Karel Lenc, Varun Gulshan
+
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
-    vl_mser_arguments
-    binPath
+    vlMserArguments;
+    BinPath; % Path to the detector binaries.
   end
 
   methods
@@ -21,11 +23,11 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     % See help vl_mser for possible parameters
     % The varargin is passed directly to vl_mser
     function obj = VlFeatMser(varargin)
-      obj.name = 'VLFeat MSER';
-      obj.detectorName = obj.name;
+      obj.Name = 'VLFeat MSER';
+      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      obj.vl_mser_arguments = obj.configureLogger(obj.name,varargin);
-      obj.binPath = which('vl_mser');
+      obj.vlMserArguments = obj.configureLogger(obj.Name,varargin);
+      obj.BinPath = which('vl_mser');
     end
 
     function [frames] = extractFeatures(obj, imagePath)
@@ -40,8 +42,8 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img); % If not already in uint8, then convert
 
-      [xx brightOnDarkFrames] = vl_mser(img,obj.vl_mser_arguments{:});
-      [xx darkOnBrightFrames] = vl_mser(255-img,obj.vl_mser_arguments{:});
+      [xx brightOnDarkFrames] = vl_mser(img,obj.vlMserArguments{:});
+      [xx darkOnBrightFrames] = vl_mser(255-img,obj.vlMserArguments{:});
 
       frames = vl_ertr([brightOnDarkFrames darkOnBrightFrames]);
       sel = frames(3,:).*frames(5,:) - frames(4,:).^2 >= 1 ;
@@ -53,8 +55,8 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      signList = {helpers.fileSignature(obj.binPath), ...
-                  helpers.cell2str(obj.vl_mser_arguments)};
+      signList = {helpers.fileSignature(obj.BinPath), ...
+                  helpers.cell2str(obj.vlMserArguments)};
       sign = helpers.cell2str(signList);
     end
   end

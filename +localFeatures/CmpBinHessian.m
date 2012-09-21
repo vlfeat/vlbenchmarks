@@ -1,8 +1,8 @@
 classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     helpers.GenericInstaller
-% CMPBINHESSIAN wrapper around the CMP Hessian Affine detector implementation
-%   CMPBINHESSIAN() Constructs an object which wraps around Hessian Affine 
-%   detector [1] binary available at:
+% localFeatures.CmpBinHessian CMP Hessian Affine binary wrapper
+%   localFeatures.CmpBinHessian() Constructs an object which wraps around
+%   Hessian Affine detector [1] binary available at:
 %   http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09
 %
 %   Only supported architectures are GLNX86 and GLNXA64 as for these the
@@ -14,9 +14,11 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
 %   [1] M. Perdoch, O. Chum and J. Matas: Efficient Representation of Local
 %   Geometry for Large Scale Object Retrieval. CVPR, 9-16, 2009
 
+% Authors: Karel Lenc
+
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    binPath
+    BinPath
   end
 
   properties (Constant)
@@ -31,21 +33,21 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     % hessian binary.
     function obj = CmpBinHessian(varargin)
       import localFeatures.*;
-      obj.name = 'CMP Hessian Affine (bin)';
-      obj.detectorName = obj.name;
-      obj.descriptorName = 'CMP SIFT (bin)';
+      obj.Name = 'CMP Hessian Affine (bin)';
+      obj.DetectorName = obj.Name;
+      obj.DescriptorName = 'CMP SIFT (bin)';
       % Check platform dependence
       machineType = computer();
       switch(machineType)
         case  {'GLNXA64'}
-          obj.binPath = fullfile(obj.rootInstallDir,obj.binName);
+          obj.BinPath = fullfile(obj.rootInstallDir,obj.binName);
         otherwise
           obj.isOk = false;
           obj.errMsg = sprintf('Arch: %s not supported by CmpBinHessian',...
                                 machineType);
       end
       varargin = obj.checkInstall(varargin);
-      obj.configureLogger(obj.name,varargin);
+      obj.configureLogger(obj.Name,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, origImagePath)
@@ -67,7 +69,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
       featFile = [imagePath '.hesaff.sift'];
       args = sprintf(' "%s" ',imagePath);
-      cmd = [obj.binPath ' ' args];
+      cmd = [obj.BinPath ' ' args];
       [status,msg] = system(cmd);
       if status
         error('%d: %s: %s', status, cmd, msg) ;
@@ -82,7 +84,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     end
 
     function sign = getSignature(obj)
-      sign = helpers.fileSignature(obj.binPath);
+      sign = helpers.fileSignature(obj.BinPath);
     end
   end
 

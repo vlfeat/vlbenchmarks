@@ -1,4 +1,4 @@
-function [mAP quertAPs] = retrievalBenchmarkDemo()
+function [mAP queryAPs] = retrievalBenchmarkDemo()
 % RETRIEVALBENCHMARKDEMO Demo of retrieval benchmark usage
 import localFeatures.*;
 import datasets.*;
@@ -21,9 +21,10 @@ dataset = VggRetrievalDataset('Category','oxbuild','Lite',true);
 retBenchmark = RetrievalBenchmark();
 
 mAP = zeros(numel(detectors),1);
-quertAPs = cell(numel(detectors),1);
+queryAPs = zeros(numel(detectors),dataset.NumQueries);
 
 for d=1:numel(detectors)
-  [mAP(d) quertAPs{d}]  = retBenchmark.evalDetector(detectors{d}, dataset);
+  [mAP(d) queryAPs(d,:)]  = retBenchmark.evalDetector(detectors{d}, dataset);
 end
 
+% TODO plot / print the results

@@ -1,47 +1,51 @@
 classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     & helpers.GenericInstaller
-% VGGRETRIEVALDATASET Wrapper of VGG image retrieval datasets.
-%   This class handles VGG image retrieval datasets [1] of images which are
-%   accompanied with groundtruth queries. In these datasets each query q
-%   specify following data:
+% datasets.VggRetrievalDataset Wrapper of VGG image retrieval datasets
+%   datasets.VggRetrievalDataset('OptionName',OptionValue) constructs
+%   new VGG Retrieval dataset object. This class handles VGG image
+%   retrieval datasets [1] [2] of images which are accompanied with
+%   groundtruth queries. In these datasets each query q specify
+%   following data:
 %
 %     q.name - Name of the query
-%     q.imageName - Name of the image file which contain the query region
+%     q.imageName - Name of the image which contain the query region
 %     q.imageId - Unique identifier of the query image.
 %     q.box [xmin ymin xmax ymax] - Box of the query region
 %
 %   And three sets of image ids [1]:
 %     q.good -  A nice, clear picture of the object/building
 %     q.ok - More than 25% of the object is clearly visible.
-%     q.junk - Less than 25% of the object is visible, or there are very 
-%       high levels of occlusion or distortion.
+%     q.junk - Less than 25% of the object is visible, or there are 
+%       very high levels of occlusion or distortion.
 %
-%   Images which are not present in these three sets are considered to be
-%   in a 'bad' set, i.e. object is not present.
+%   Images which are not present in these three sets are considered to
+%   be in a 'bad' set, i.e. object is not present.
 %
-%   This class allows to pick only a susbset of the database by defining
-%   the 'Lite' parameter to true. In this case, all images from query sets
-%   'good' and 'ok' are preserved together with a subset of 'junk' sets
-%   (defined by 'LiteJunkImagesNum' parameter). This limits the number of
-%   irrelevant images for each query therefore improves the retrieval
-%   performance. Main purpose of the lite dataset is to limit number of
-%   images and therefore make the testing faster.
+%   This class allows to pick only a susbset of the database by
+%   defining the 'Lite' parameter to true. In this case, all images
+%   from query sets 'good' and 'ok' are preserved together with a
+%   subset of 'junk' sets (defined by 'LiteJunkImagesNum' parameter).
+%   This limits the number of irrelevant images for each query
+%   therefore improves the retrieval performance. Main purpose of the
+%   lite dataset is to limit number of images and therefore make the
+%   testing faster.
 %
-%   Downloaded data are parsed and a database of the images and queries is
-%   created and on default is cached. However the validity of cached data
-%   is checked only based on the class options and not on the files.
-%   Therefore if you want change the contents of the database, make sure
-%   that caching is disabled (option 'CacheDatabase').
+%   Downloaded data are parsed and a database of the images and
+%   queries is created and on default is cached. However the validity
+%   of cached data is checked only based on the class options and not
+%   on the files. Therefore if you want change the contents of the
+%   database, make sure that caching is disabled (option
+%   'CacheDatabase').
 %
 % Options:
 %   Category :: 'oxbuild'
 %     Dataset category. Available are 'oxbuild'.
 %
-%   Lite :: true
+%   Lite :: true 
 %     Use only a subset of the whole database. The subset is generated
-%     based on 'liteGoodImagesNum', 'liteOkImagesNum', 'liteJunkImagesNum',
-%     'liteBadImagesNum' and 'samplingRngSeed' which defines the seed for
-%     random samples generator.
+%     based on 'liteGoodImagesNum', 'liteOkImagesNum',
+%     'liteJunkImagesNum', 'liteBadImagesNum' and 'samplingRngSeed'
+%     which defines the seed for random samples generator.
 %
 %   LiteGoodImagesNum :: inf
 %     Number of 'Good' images preserved in the databse. When inf, all
@@ -66,14 +70,19 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %   CacheDatabase :: true
 %     Cache parsed images and queries database.
 %
+%   See also: benchmarks.RetrievalBenchmark
+%
 %   REFERENCES
 %   [1] J. Philbin, O. Chum, M. Isard, J. Sivic and A. Zisserman.
-%       Object retrieval with large vocabularies and fast spatial matching
-%       CVPR, 2007
+%       Object retrieval with large vocabularies and fast spatial 
+%       matching CVPR, 2007
+
+% Authors: Karel Lenc, Andrea Vedaldi
 
 % AUTORIGHTS
   properties (SetAccess=protected, GetAccess=public)
-    opts = struct(...
+    % Dataset options
+    Opts = struct(...
       'category','oxbuild',...
       'lite',true,...
       'liteGoodImagesNum',inf,...
@@ -82,78 +91,86 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       'liteBadImagesNum',100,...
       'samplingRngSeed',1,...
       'cacheDatabase',true);
-    imagesDir;  % Directory with current category images
-    gtDir;      % Directory with current category ground truth data
-    images;     % Array of structs defining the dataset images
-    queries;    % Array of structs with the dataset queries
-    numQueries; % Number of queries
+    ImagesDir;  % Directory with current category images
+    GtDir;      % Directory with current category ground truth data
+    Images;     % Array of structs defining the dataset images
+    Queries;    % Array of structs with the dataset queries
+    NumQueries; % Number of queries
   end
 
-  properties (Constant)
-    rootInstallDir = fullfile('data','datasets','vggRetrievalDataset','');
-    allCategories = {'oxbuild'};
-    imagesUrls = {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/oxbuild_images.tgz'};
-    gtDataUrls = {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/gt_files_170407.tgz'};
+  properties(Constant)
+    AllCategories = {'oxbuild','paris'}; % Available categories
+  end
+
+  properties (Constant, Hidden)
+    % Data location
+    RootInstallDir = fullfile('data','datasets','vggRetrievalDataset','');
+    % Images URLs (same order as categories)
+    ImagesUrls = {...
+      {'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/oxbuild_images.tgz'},...
+      {'http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_1.tgz',...
+      'http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_2.tgz'}};
+    % Ground truth data URLs (same order as categories)
+    GtDataUrls = {...
+      'http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/gt_files_170407.tgz',...
+      'http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/paris_120310.tgz'};
   end
 
   methods
     function obj = VggRetrievalDataset(varargin)
-      % OBJ = VGGRETRIEVALDATASET('OptionName',OptionValue)
-      %   Constructs the object of the retrieval dataset with the given
-      %   option. For details see the class documentation.
       import datasets.*;
       import helpers.*;
-      [obj.opts varargin] = helpers.vl_argparse(obj.opts,varargin);
-      assert(ismember(obj.opts.category,obj.allCategories),...
+      [obj.Opts varargin] = helpers.vl_argparse(obj.Opts,varargin);
+      assert(ismember(obj.Opts.category,obj.AllCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
-             obj.opts.category));
-      obj.datasetName = ['VggRetrievalDataset-' obj.opts.category];
-      if obj.opts.lite
-        obj.datasetName = [obj.datasetName '-lite'];
+             obj.Opts.category));
+      obj.DatasetName = ['VggRetrievalDataset-' obj.Opts.category];
+      if obj.Opts.lite
+        obj.DatasetName = [obj.DatasetName '-lite'];
       end
-      varargin = obj.configureLogger(obj.datasetName, varargin);
+      varargin = obj.configureLogger(obj.DatasetName, varargin);
       obj.checkInstall(varargin);
-      obj.imagesDir = fullfile(obj.rootInstallDir,obj.opts.category,'');
-      obj.gtDir = fullfile(obj.rootInstallDir,...
-        [obj.opts.category '_gt'],'');
+      obj.ImagesDir = fullfile(obj.RootInstallDir,obj.Opts.category,'');
+      obj.GtDir = fullfile(obj.RootInstallDir,...
+        [obj.Opts.category '_gt'],'');
 
-      if obj.opts.cacheDatabase
-        dataKey = [obj.datasetName ';' struct2str(obj.opts)];
+      if obj.Opts.cacheDatabase
+        dataKey = [obj.DatasetName ';' struct2str(obj.Opts)];
         data = DataCache.getData(dataKey);
         if ~isempty(data)
           obj.debug('Database loaded from cache.');
-          [obj.images obj.queries] = data{:};
+          [obj.Images obj.Queries] = data{:};
         else
-          [obj.images obj.queries] = obj.buildImageDatabase();
-          DataCache.storeData({obj.images obj.queries},dataKey);
+          [obj.Images obj.Queries] = obj.buildImageDatabase();
+          DataCache.storeData({obj.Images obj.Queries},dataKey);
         end
       else
-        [obj.images obj.queries] = obj.buildImageDatabase();
+        [obj.Images obj.Queries] = obj.buildImageDatabase();
       end
-      obj.numImages = numel(obj.images.id);
-      obj.numQueries = numel(obj.queries);
+      obj.NumImages = numel(obj.Images.id);
+      obj.NumQueries = numel(obj.Queries);
     end
 
     function imgPath = getImagePath(obj,imageNo)
-      % GETIMAGEPATHB Get a path of an image from the database.
-      %   IMG_PATH = GETIMAGEPATH(IMG_NO) Get path IMG_PATH of an image 
-      %   defined by its number 0 < IMG_NO < obj.numImages. When a subset
-      %   of images is used, only this subset of images can be accessed
-      %   with this method.
-      if imageNo >= 1 && imageNo <= obj.numImages
-        imgPath = fullfile(obj.imagesDir,obj.images.names{imageNo});
+      % getImagePath Get a path of an image from the database.
+      %   IMG_PATH = obj.getImagePath(IMG_NO) Get path IMG_PATH of an
+      %   image defined by its number 0 < IMG_NO < obj.NumImages.
+      if imageNo >= 1 && imageNo <= obj.NumImages
+        imgPath = fullfile(obj.ImagesDir,obj.Images.names{imageNo});
       else
         obj.error('Out of bounds image number.\n');
       end
     end
 
     function query = getQuery(obj,queryIdx)
-      % GETQUERY Get a dataset query
-      %  QUERY = GETQUERY(QUERYID) Returns struct QUERY defined by 
-      %    0 < QUERYID < obj.numQueries. For query definition see class
-      %    documentation.
-      if queryIdx >= 1 && queryIdx <= obj.numQueries
-        query = obj.queries(queryIdx);
+      % getQuery Get a dataset query
+      %  QUERY = obj.getQuery(QUERYID) Returns struct QUERY defined by
+      %  0 < QUERYID < obj.NumQueries. For query definition see class
+      %  documentation.
+      %
+      %  See also: datasets.VggRetrievalDataset
+      if queryIdx >= 1 && queryIdx <= obj.NumQueries
+        query = obj.Queries(queryIdx);
       else
         obj.error('Out of bounds idx');
       end
@@ -165,11 +182,11 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       %   queries in the dataset.
       import helpers.*;
       querySignatures = '';
-      for queryIdx = 1:obj.numQueries
+      for queryIdx = 1:obj.NumQueries
         querySignatures = strcat(querySignatures, ...
           obj.getQuerySignature(queryIdx));
       end
-      signature = ['queries_' obj.datasetName CalcMD5.CalcMD5(querySignatures)];
+      signature = ['queries_' obj.DatasetName CalcMD5.CalcMD5(querySignatures)];
     end
 
     function querySignature = getQuerySignature(obj, queryIdx)
@@ -185,15 +202,15 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     end
 
     function samples = sampleArray(obj, data, num)
-      % sampleArray Generate reproducible samples from an array
-      %   SAMPLES = sampleArray(DATA, NUM) Get NUM of uniformly disturbed 
-      %   samples from DATA based on the seed obj.opts.samplingRngSeed.
-      %   If isinf(NUM), SAMPLES = DATA.
+      % sampleArray Generate reproducible samples from an array      
+      %   SAMPLES = obj.sampleArray(DATA, NUM) Get NUM of uniformly
+      %   disturbed samples from DATA based on the seed
+      %   obj.Opts.samplingRngSeed. If isinf(NUM), SAMPLES = DATA.
       if isinf(num)
         samples = data;
         return;
       end
-      oldS = rng(obj.opts.samplingRngSeed,'v5uniform');
+      oldS = rng(obj.Opts.samplingRngSeed,'v5uniform');
       samples = sort(randsample(data, num));
       rng(oldS);
     end
@@ -202,8 +219,8 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
   methods(Access = protected)
     function [images queries] = buildImageDatabase(obj)
       import datasets.*;
-      obj.info('Loading dataset %s.',obj.datasetName);
-      names = dir(fullfile(obj.imagesDir, '*.jpg')) ;
+      obj.info('Loading dataset %s.',obj.DatasetName);
+      names = dir(fullfile(obj.ImagesDir, '*.jpg')) ;
       numImages = numel(names);
       images.id = 1:numImages ;
       images.names = {names.name} ;
@@ -216,15 +233,15 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         [ok,i] = ismember(x,postfixless) ;
         i = i(ok) ;
       end
-      names = dir(fullfile(obj.gtDir,'*_query.txt'));
+      names = dir(fullfile(obj.GtDir,'*_query.txt'));
       names = {names.name} ;
       if numel(names) == 0
-        obj.warn('No queries in %s',obj.gtDir);
+        obj.warn('No queries in %s',obj.GtDir);
       end
 
       for i = 1:numel(names)
         base = names{i} ;
-        [imageName,x0,y0,x1,y1] = textread(fullfile(obj.gtDir, base), ...
+        [imageName,x0,y0,x1,y1] = textread(fullfile(obj.GtDir, base), ...
           '%s %f %f %f %f') ;
         name = base ;
         name = name(1:end-10) ;
@@ -234,15 +251,15 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         queries(i).imageName = imageName ;
         queries(i).imageId = toindex(imageName) ;
         queries(i).box = [x0;y0;x1;y1] ;
-        queries(i).good = toindex(textread(fullfile(obj.gtDir, ...
+        queries(i).good = toindex(textread(fullfile(obj.GtDir, ...
           sprintf('%s_good.txt',name)), '%s'))' ;
-        queries(i).ok = toindex(textread(fullfile(obj.gtDir, ...
+        queries(i).ok = toindex(textread(fullfile(obj.GtDir, ...
           sprintf('%s_ok.txt',name)), '%s'))' ;
-        queries(i).junk = toindex(textread(fullfile(obj.gtDir, ...
+        queries(i).junk = toindex(textread(fullfile(obj.GtDir, ...
           sprintf('%s_junk.txt',name)), '%s'))' ;
       end
 
-      if obj.opts.lite
+      if obj.Opts.lite
         allGoodImages = [queries(:).good];
         allOkImages = [queries(:).ok];
         allJunkImages = [queries(:).junk];
@@ -252,13 +269,13 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 
         % Pick random samples from the images based on the class settings
         goodImages = ...
-          obj.sampleArray(allGoodImages,obj.opts.liteGoodImagesNum);
+          obj.sampleArray(allGoodImages,obj.Opts.liteGoodImagesNum);
         okImages = ...
-          obj.sampleArray(allOkImages,obj.opts.liteOkImagesNum);
+          obj.sampleArray(allOkImages,obj.Opts.liteOkImagesNum);
         junkImages = ...
-          obj.sampleArray(allJunkImages,obj.opts.liteJunkImagesNum);
+          obj.sampleArray(allJunkImages,obj.Opts.liteJunkImagesNum);
         badImages = ...
-          obj.sampleArray(allBadImages,obj.opts.liteBadImagesNum);
+          obj.sampleArray(allBadImages,obj.Opts.liteBadImagesNum);
 
         pickedImages = [allQueriesImages, goodImages, okImages, ...
           junkImages, badImages];
@@ -281,13 +298,14 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 
     function [urls dstPaths] = getTarballsList(obj)
       import datasets.*;
-      installDir = VggRetrievalDataset.rootInstallDir;
-      curCategory = obj.opts.category;
-      cIdx = strcmp(curCategory, VggRetrievalDataset.allCategories);
-      urls = {VggRetrievalDataset.imagesUrls{cIdx} ...
-        VggRetrievalDataset.gtDataUrls{cIdx}};
-      dstPaths = {fullfile(installDir,curCategory) ...
-        fullfile(installDir,[curCategory '_gt'])};
+      installDir = VggRetrievalDataset.RootInstallDir;
+      curCategory = obj.Opts.category;
+      cIdx = strcmp(curCategory, VggRetrievalDataset.AllCategories);
+      imagesUrls = VggRetrievalDataset.ImagesUrls{cIdx};
+      imagesPaths = cell(size(imagesUrls));
+      imagesPaths(:) = {fullfile(installDir,curCategory)};
+      urls = [imagesUrls VggRetrievalDataset.GtDataUrls(cIdx)];
+      dstPaths = [imagesPaths {fullfile(installDir,[curCategory '_gt'])}];
     end
   end
 end % -------- end of class ---------

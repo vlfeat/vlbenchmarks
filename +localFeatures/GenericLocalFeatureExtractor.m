@@ -48,21 +48,21 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 % AUTORIGHTS
 
   properties (SetAccess=public, GetAccess=public)
-    name % General name of the feature extractor
-    detectorName = '' % Particular name of the frames detector
-    descriptorName = '' % Name of descriptor extr. algorithm
+    Name % General name of the feature extractor
+    DetectorName = '' % Particular name of the frames detector
+    DescriptorName = '' % Name of descriptor extr. algorithm
   end
 
   properties (SetAccess=protected, GetAccess = public)
-    useCache = true; % Do cache results
+    UseCache = true; % Do cache results
     % If detector support desc. extraction of descriptors from provided
     % frames, set to true.
-    extractsDescriptors = false;
+    ExtractsDescriptors = false;
   end
 
-  properties (Constant)
-    framesKeyPrefix = 'frames'; % Prefix of the cached features key
-    descsKeyPrefix = '+desc'; % Prefix of the cached features key
+  properties (Constant, Hidden)
+    FramesKeyPrefix = 'frames'; % Prefix of the cached features key
+    DescsKeyPrefix = '+desc'; % Prefix of the cached features key
   end
 
   methods
@@ -131,12 +131,12 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     function disableCaching(obj)
       % DISABLECACHING Do not use cached features and always run the
       % features extractor.
-      obj.useCache = false;
+      obj.UseCache = false;
     end
 
     function enableCaching(obj)
       % ENABLECACHING Do cache extracted features
-      obj.useCache = true;
+      obj.UseCache = true;
     end
   end
 
@@ -153,7 +153,7 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
       import helpers.*;
       frames = [];
       descriptors = [];
-      if ~obj.useCache, return; end
+      if ~obj.UseCache, return; end
 
       key = obj.getFeaturesKey(imagePath,loadDescriptors);
       data = DataCache.getData(key);
@@ -179,7 +179,7 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
       % will create different records in the cache.
       %
       % If useCache=false, nothing is done.
-      if ~obj.useCache, return; end
+      if ~obj.UseCache, return; end
       hasDescriptors = true;
       if nargin < 4 || isempty(descriptors)
         descriptors = [];
@@ -199,9 +199,9 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
       import helpers.*;
       imageSignature = helpers.fileSignature(imagePath);
       detSignature = obj.getSignature();
-      prefix = GenericLocalFeatureExtractor.framesKeyPrefix;
+      prefix = GenericLocalFeatureExtractor.FramesKeyPrefix;
       if hasDescriptors
-        prefix = strcat(prefix,GenericLocalFeatureExtractor.descsKeyPrefix);
+        prefix = strcat(prefix,GenericLocalFeatureExtractor.DescsKeyPrefix);
       end
       key = cell2str({prefix,detSignature,imageSignature});
     end

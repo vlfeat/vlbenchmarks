@@ -1,7 +1,6 @@
 function benchmarkDemo()
 % BENCHMARKDEMO Script demonstrating how to run the repeatability 
 %   benchmarks for different algorithms.
-%
 
 %% Local Features Detectors
 import localFeatures.*;
@@ -67,7 +66,7 @@ detectors{3} = gridGenerator;
 
 % Prealocate the results
 numDetectors = numel(detectors);
-numImages = dataset.numImages;
+numImages = dataset.NumImages;
 repeatability = zeros(numDetectors, numImages);
 numCorresp = zeros(numDetectors, numImages);
 
@@ -121,14 +120,14 @@ subplot(1,2,1); imshow(image);
 benchmarks.helpers.plotFrameMatches(siftCorresps, siftReprojFrames,...
   'IsReferenceImage',false);
 title(sprintf('SIFT Correspondences with %d image (%s dataset).',...
-  imageBIdx,dataset.datasetName));
+  imageBIdx,dataset.DatasetName));
 
 subplot(1,2,2); imshow(image);
 
 benchmarks.helpers.plotFrameMatches(mserCorresps, mserReprojFrames,...
   'IsReferenceImage',false);
 title(sprintf('MSER Correspondences with %d image (%s dataset).',...
-  imageBIdx,dataset.datasetName));
+  imageBIdx,dataset.DatasetName));
 
 %% Detectors matching score
 % For matching score each detector must have defined descriptor
@@ -211,13 +210,13 @@ subplot(1,2,1); imshow(image);
 benchmarks.helpers.plotFrameMatches(siftMatches, siftReprojFrames,...
   'IsReferenceImage',false);
 title(sprintf('SIFT Matches with %d image (%s dataset).',...
-  imageBIdx,dataset.datasetName));
+  imageBIdx,dataset.DatasetName));
 
 subplot(1,2,2); imshow(image);
 benchmarks.helpers.plotFrameMatches(mvmMatches, mvmReprojFrames,...
   'IsReferenceImage',false);
 title(sprintf('Matches using mean-variance-median descriptor with %d image (%s dataset).',...
-  imageBIdx,dataset.datasetName));
+  imageBIdx,dataset.DatasetName));
 
 %% Helper functions
 function printScores(detectorNames, scores, name)

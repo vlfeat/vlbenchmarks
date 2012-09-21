@@ -1,33 +1,42 @@
 classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
     & helpers.GenericInstaller
-% VGGAFFINEDATASET class to wrap around the vgg affine datasets
-%   VGGAFFINEDATASET('Option','OptionValue',...) Constructs an object which
-%   implements access to VGG Affine dataset used for affine invariant
-%   detectors evaluation.
+% datasets.VggAffineDataset Wrapper around the vgg affine datasets
+%   datasets.VggAffineDataset('Option','OptionValue',...) Constructs
+%   an object which implements access to VGG Affine dataset used for
+%   affine invariant detectors evaluation.
 %
-%   The dataset is available at: http://www.robots.ox.ac.uk/~vgg/research/affine/
+%   The dataset is available at: 
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/
 %
-%   This class perform automatic installation when the dataset data are
-%   not available.
+%   This class perform automatic installation when the dataset data
+%   are not available.
 %
 %   Following options are supported:
 %
 %   Category :: ['graf']
-%     The category within the vgg dataset, has to be one of 'bikes','trees',
-%     'graf','wall','bark','boat','leuven','ubc'
+%     The category within the vgg dataset, has to be one of
+%     'bikes','trees', 'graf','wall','bark','boat','leuven','ubc'
+
+% Authors: Varun Gulshan, Karel Lenc
 
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    category = 'graf';
-    dataDir
-    imgExt
+    Category = 'graf'; % Dataset category
+    DataDir; % Image location
+    ImgExt; % Image extension
   end
 
   properties (Constant)
-    rootInstallDir = fullfile('data','datasets','vggAffineDataset','');
-    allCategories = {'graf','wall','boat','bark','bikes','trees',...
+    % All dataset categories
+    AllCategories = {'graf','wall','boat','bark','bikes','trees',...
       'ubc','leuven'};
-    categoryImageNames = {...
+  end
+
+  properties (Constant, Hidden)
+    % Installation directory
+    RootInstallDir = fullfile('data','datasets','vggAffineDataset','');
+    % Names of the image transformations in particular categories
+    CategoryImageNames = {...
       'Viewpoint angle',... % graf
       'Viewpoint angle',... % wall
       'Scale changes',... % boat
@@ -37,7 +46,8 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       'JPEG compression %',... % ubc
       'Decreasing light'...% leuven
       };
-    categoryImageLabels = {...
+    % Image labels for particular categories (degree of transf.)
+    CategoryImageLabels = {...
       [20 30 40 50 60],... % graf
       [20 30 40 50 60],... % wall
       [1.12 1.38 1.9 2.35 2.8],... % boat
@@ -47,6 +57,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       [60 80 90 95 98],... % ubc
       [2 3 4 5 6]...% leuven
       };
+    % Root url for dataset tarballs
     rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
   end
 
@@ -54,40 +65,40 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
     function obj = VggAffineDataset(varargin)
       import datasets.*;
       import helpers.*;
-      opts.category = obj.category;
+      opts.Category = obj.Category;
       [opts varargin] = vl_argparse(opts,varargin);
-      [valid loc] = ismember(opts.category,obj.allCategories);
+      [valid loc] = ismember(opts.Category,obj.AllCategories);
       assert(valid,...
-        sprintf('Invalid category for vgg dataset: %s\n',opts.category));
-      obj.datasetName = ['VggAffineDataset-' opts.category];
-      obj.category= opts.category;
-      obj.dataDir = fullfile(obj.rootInstallDir,opts.category,'');
-      obj.numImages = 6;
+        sprintf('Invalid category for vgg dataset: %s\n',opts.Category));
+      obj.DatasetName = ['VggAffineDataset-' opts.Category];
+      obj.Category= opts.Category;
+      obj.DataDir = fullfile(obj.RootInstallDir,opts.Category,'');
+      obj.NumImages = 6;
       obj.checkInstall(varargin);
-      ppm_files = dir(fullfile(obj.dataDir,'img*.ppm'));
-      pgm_files = dir(fullfile(obj.dataDir,'img*.pgm'));
+      ppm_files = dir(fullfile(obj.DataDir,'img*.ppm'));
+      pgm_files = dir(fullfile(obj.DataDir,'img*.pgm'));
       if size(ppm_files,1) == 6
-        obj.imgExt = 'ppm';
+        obj.ImgExt = 'ppm';
       elseif size(pgm_files,1) == 6
-        obj.imgExt = 'pgm';
+        obj.ImgExt = 'pgm';
       else
         error('Ivalid dataset image files.');
       end
-      obj.imageNames = obj.categoryImageLabels{loc};
-      obj.imageNamesLabel = obj.categoryImageNames{loc};
+      obj.imageNames = obj.CategoryImageLabels{loc};
+      obj.imageNamesLabel = obj.CategoryImageNames{loc};
     end
 
     function imgPath = getImagePath(obj,imgNo)
-      assert(imgNo >= 1 && imgNo <= obj.numImages,'Out of bounds idx\n');
-      imgPath = fullfile(obj.dataDir,sprintf('img%d.%s',imgNo,obj.imgExt));
+      assert(imgNo >= 1 && imgNo <= obj.NumImages,'Out of bounds idx\n');
+      imgPath = fullfile(obj.DataDir,sprintf('img%d.%s',imgNo,obj.ImgExt));
     end
 
     function tfs = getTransformation(obj,imgIdx)
-      assert(imgIdx >= 1 && imgIdx <= obj.numImages,'Out of bounds idx\n');
+      assert(imgIdx >= 1 && imgIdx <= obj.NumImages,'Out of bounds idx\n');
       if(imgIdx == 1), tfs = eye(3); return; end
       tfs = zeros(3,3);
       [tfs(:,1) tfs(:,2) tfs(:,3)] = ...
-         textread(fullfile(obj.dataDir,sprintf('H1to%dp',imgIdx)),...
+         textread(fullfile(obj.DataDir,sprintf('H1to%dp',imgIdx)),...
          '%f %f %f%*[^\n]');
     end
   end
@@ -95,9 +106,9 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
   methods (Access = protected)
     function [urls dstPaths] = getTarballsList(obj)
       import datasets.*;
-      installDir = VggAffineDataset.rootInstallDir;
-      dstPaths = {fullfile(installDir,obj.category)};
-      urls = {[VggAffineDataset.rootUrl obj.category '.tar.gz']};
+      installDir = VggAffineDataset.RootInstallDir;
+      dstPaths = {fullfile(installDir,obj.Category)};
+      urls = {[VggAffineDataset.rootUrl obj.Category '.tar.gz']};
     end
   end
 end

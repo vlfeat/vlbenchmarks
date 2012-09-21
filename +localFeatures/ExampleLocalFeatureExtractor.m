@@ -1,6 +1,6 @@
 classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
     & localFeatures.GenericLocalFeatureExtractor
-% EXAMPLELOCALFEATUREEXTRACTOR  An example wrapper for a local feature
+% localFeatures.ExampleLocalFeatureExtractor Example image feature extractor
 %   To use your own feature extractor (detector and/or descriptor)
 %   modify this class in the following manner.
 %
@@ -19,13 +19,13 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
 %
 %   This example detector need image processing toolbox.
 
-% Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
+% Authors: Karel Lenc
 
 % AUTORIGHTS
 
   properties (SetAccess=private, GetAccess=public)
     % Set the default values of the detector options
-    opts = struct(...
+    Opts = struct(...
       'scales', 8:4:20,... % Generated scales
       'framesDistance',3,... % Distance between frames in grid (in scale)
       'useMean', true,... % Use mean value in a descriptor
@@ -37,25 +37,25 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
   methods
     function obj = ExampleLocalFeatureExtractor(varargin)
       % Implement a constructor to parse any option passed to the
-      % feature extractor and store them in the obj.opts structure.
+      % feature extractor and store them in the obj.Opts structure.
 
       % Information that this detector is able to extract descriptors
-      obj.extractsDescriptors = true;
+      obj.ExtractsDescriptors = true;
       % Name of the features extractor
-      obj.name = 'Example detector';
+      obj.Name = 'Example detector';
       % Name of the feature frames detector
-      obj.detectorName = 'Grid Frames';
+      obj.DetectorName = 'Grid Frames';
       % Name of descriptor extractor
-      obj.descriptorName = 'Example descriptor';
+      obj.DescriptorName = 'Example descriptor';
       % Because this class inherits methods from helpers.GenericInstalles
       % we can test whether this detector is installed
       varargin = obj.checkInstall(varargin);
       % Configure the logger. The parameters accepted by logger are
       % consumend and the rest is passed back to varargin.
-      varargin = obj.configureLogger(obj.name,varargin);
+      varargin = obj.configureLogger(obj.Name,varargin);
       % Parse the class options. See the properties of this class where the
       % options are defined.
-      obj.opts = vl_argparse(obj.opts,varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -81,8 +81,8 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
       % Get the size of the image
       imgSize = helpers.imageSize(imagePath);
       % Generate the grid of frames in all user selected grids
-      for scale = obj.opts.scales
-        fDist = scale*obj.opts.framesDistance;
+      for scale = obj.Opts.scales
+        fDist = scale*obj.Opts.framesDistance;
         xGrid = fDist:fDist:(imgSize(1) - fDist);
         yGrid = fDist:fDist:(imgSize(2) - fDist);
         [yCoords xCoords] = meshgrid(xGrid,yGrid);
@@ -138,13 +138,13 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
         y = round(frames(2,fidx));
         s = floor(frames(3,fidx));
         frameBox = img(y-s:y+s,x-s:x+s);
-        if obj.opts.useMean
+        if obj.Opts.useMean
           descriptors(1,fidx) = mean(frameBox(:));
         end
-        if obj.opts.useVariance
+        if obj.Opts.useVariance
           descriptors(2,fidx) = var(frameBox(:));
         end
-        if obj.opts.useMedian
+        if obj.Opts.useMedian
           descriptors(3,fidx) = median(frameBox(:));
         end
       end
@@ -161,7 +161,7 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
       % the string signature of both of them.
       % fileSignature returns a string which contain information about the
       % file including the last modification date.
-      signature = [helpers.struct2str(obj.opts),';',...
+      signature = [helpers.struct2str(obj.Opts),';',...
         helpers.fileSignature(mfilename('fullpath'))];
     end
   end

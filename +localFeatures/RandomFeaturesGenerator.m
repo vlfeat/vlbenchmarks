@@ -1,14 +1,13 @@
 classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
-% RANDOMFEATURESGENERATOR Generates random features and descriptors
-%   RANDOMFEATURESGENERATOR('OptionName','OptionValue',...) Constructs and
-%   object of random features generator.
-%   This class generated bot frames and descriptors based on the given
-%   options. Frames locations are generated with uniform distribution over
-%   the input image with density defined by 'FeaturesDensity' parameter.
-%   The supported frames types are Discs and Oriented Discs. Scale of the
-%   generated frames is generated with uniform distribution limited by
-%   'MaxScale' and 'MinScale' parameter. Frame orientations are uniformly
-%   distributed in interval [0, 2*pi].
+% localFeatures.RandomFeaturesGenerator Random features generator
+%   localFeatures.RandomFeaturesGenerator('OptionName','OptionValue',...)
+%   Constructs and object of random features generator. This class generated
+%   bot frames and descriptors based on the given options. Frames locations
+%   are generated with uniform distribution over the input image with density
+%   defined by 'FeaturesDensity' parameter. The supported frames types are
+%   Discs and Oriented Discs. Scale of the generated frames is generated with
+%   uniform distribution limited by 'MaxScale' and 'MinScale' parameter. Frame
+%   orientations are uniformly distributed in interval [0, 2*pi].
 %
 %   Descriptors generation can be affected by parameters 'DescMinValue' and
 %   'DescMaxValue' and 'DescInteger' for integer descriptors generation.
@@ -40,9 +39,11 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
 %   DescInteger:: false
 %     Generate descriptors as integers.
 
+% Authors: Karel Lenc, Andrea Vedaldi
+
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    opts = struct(...
+    Opts = struct(...
       'featuresDensity', 2e-3,... % Number of features  per pixel
       'frameType', localFeatures.RandomFeaturesGenerator.DISC,...
       'maxScale', 30,...
@@ -63,12 +64,12 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
     function obj = RandomFeaturesGenerator(varargin)
       import localFeatures.*;
       import helpers.*;
-      obj.name = 'Random features';
-      obj.detectorName = obj.name;
-      obj.descriptorName = obj.name;
-      obj.extractsDescriptors = true;
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.opts = vl_argparse(obj.opts,varargin);
+      obj.Name = 'Random features';
+      obj.DetectorName = obj.Name;
+      obj.DescriptorName = obj.Name;
+      obj.ExtractsDescriptors = true;
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -86,14 +87,14 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
       rand('state',mean(img(:))) ;
 
       imageArea = imgSize(1) * imgSize(2);
-      numFeatures = round(imageArea * obj.opts.featuresDensity);
+      numFeatures = round(imageArea * obj.Opts.featuresDensity);
 
       locations = rand(2,numFeatures);
       locations(1,:) = locations(1,:) .* imgSize(2);
       locations(2,:) = locations(2,:) .* imgSize(1);
-      scales = rand(1,numFeatures)*(obj.opts.maxScale - obj.opts.minScale) + obj.opts.minScale;
+      scales = rand(1,numFeatures)*(obj.Opts.maxScale - obj.Opts.minScale) + obj.Opts.minScale;
 
-      switch obj.opts.frameType
+      switch obj.Opts.frameType
         case obj.DISC
           frames = [locations;scales];
         case obj.ORIENTED_DISC
@@ -114,19 +115,19 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
       imgSize = size(img);
 
       imageArea = imgSize(1) * imgSize(2);
-      numFeatures = round(imageArea * obj.opts.featuresDensity);
-      descMinValue = obj.opts.descMinValue;
-      descMaxValue = obj.opts.descMaxValue;
-      descriptors = rand(obj.opts.descSize,numFeatures)...
+      numFeatures = round(imageArea * obj.Opts.featuresDensity);
+      descMinValue = obj.Opts.descMinValue;
+      descMaxValue = obj.Opts.descMaxValue;
+      descriptors = rand(obj.Opts.descSize,numFeatures)...
         * (descMaxValue - descMinValue) + descMinValue;
 
-      if obj.opts.descInteger
+      if obj.Opts.descInteger
         descriptors = round(descriptors);
       end
     end
 
     function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.opts);
+      signature = helpers.struct2str(obj.Opts);
     end
   end
 end % ----- end of class definition ----

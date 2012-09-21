@@ -288,7 +288,7 @@ for category=categories
   dataset = VggAffineDataset('category',category{:});
 
   %% Run the new benchmarks in parallel
-  numImages = dataset.numImages;
+  numImages = dataset.NumImages;
 
   repeatability = zeros(numDetectors, numImages);
   numCorresp = zeros(numDetectors, numImages);

@@ -8,11 +8,11 @@ classdef GenericBenchmark< handle
 % AUTORIGHTS
 
   properties
-    benchmarkName % Name of the benchmark
+    BenchmarkName % Name of the benchmark
   end
 
   properties(GetAccess=public, SetAccess = protected)
-    useCache = true;
+    UseCache = true; % Cache results
   end
 
   methods (Abstract)
@@ -23,12 +23,12 @@ classdef GenericBenchmark< handle
   methods
     function enableCaching(obj)
       % ENABLECACHING Enable caching of results
-      obj.useCache = true;
+      obj.UseCache = true;
     end
 
     function disableCaching(obj)
       % DISABLECACHING Disable caching of results
-      obj.useCache = false;
+      obj.UseCache = false;
     end
   end
 
@@ -36,9 +36,9 @@ classdef GenericBenchmark< handle
     function cachedResults = loadResults(obj,resultsKey)
       % RES = LOADRESULTS(RESULTS_KEY) Load result RES defined by 
       %   RESULTS_KEY from the cache. When no result found or 
-      %   useCache=false, returned empty array.
+      %   UseCache=false, returned empty array.
       import helpers.*;
-      if obj.useCache
+      if obj.UseCache
         cachedResults = DataCache.getData(resultsKey);
       else
         cachedResults = [];
@@ -47,9 +47,9 @@ classdef GenericBenchmark< handle
 
     function storeResults(obj, results, resultsKey)
       % STORERESULTS(RES, RESULTS_KEY) Store results to a cache. If
-      % useCache=false, nothing is done.
+      % UseCache=false, nothing is done.
       import helpers.*;
-      if ~obj.useCache, return; end;
+      if ~obj.UseCache, return; end;
       helpers.DataCache.storeData(results, resultsKey);
     end
   end

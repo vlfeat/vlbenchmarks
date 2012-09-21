@@ -1,7 +1,7 @@
 classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% VLFEATCOVDET class to wrap around the VLFeat Frame det implementation
-%   VLFEATCOVDET('OptionName',OptionValue,...) Created new object which
+% localFeatures.VlFeatCovdet VLFeat vl_covdet wrapper
+%   VlFeatCovdet('OptionName',OptionValue,...) Creates new object which
 %   wraps around VLFeat covariant image frames detector. All given options
 %   defined in the constructor are passed directly to the vl_covdet 
 %   function when called.
@@ -11,30 +11,33 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 %
 %   See also: vl_covdet
 
+% Authors: Karel Lenc, Varun Gulshan
+
 % AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    opts
-    vl_covdet_arguments
-    binPath
+    Opts
+    VlCovdetArguments
+    BinPath
   end
 
   methods
     function obj = VlFeatCovdet(varargin)
+      import helpers.*;
       % def. arguments
       vlArgs.method = 'DoG';
       vlArgs.affineAdaptation = false;
       [vlArgs, drop] = vl_argparse(vlArgs,varargin);
-      obj.name = ['VLFeat ' vlArgs.method];
-      if vlArgs.affineAdaptation, obj.name = [obj.name '-affine']; end
-      obj.detectorName = obj.name;
-      obj.descriptorName = 'VLFeat SIFT';
-      obj.extractsDescriptors = true;
-      obj.opts.forceOrientation = false; % Force orientation for SIFT desc.
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+      obj.Name = ['VLFeat ' vlArgs.method];
+      if vlArgs.affineAdaptation, obj.Name = [obj.Name '-affine']; end
+      obj.DetectorName = obj.Name;
+      obj.DescriptorName = 'VLFeat SIFT';
+      obj.ExtractsDescriptors = true;
+      obj.Opts.forceOrientation = false; % Force orientation for SIFT desc.
+      [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
       varargin = obj.checkInstall(varargin);
       % Rest of the arguments use as vl_covdet arguments
-      obj.vl_covdet_arguments = obj.configureLogger(obj.name,varargin);
-      obj.binPath = {which('vl_covdet') which('libvl.so')};
+      obj.VlCovdetArguments = obj.configureLogger(obj.Name,varargin);
+      obj.BinPath = {which('vl_covdet') which('libvl.so')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -47,11 +50,11 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = vl_covdet(img,obj.vl_covdet_arguments{:});
+        [frames] = vl_covdet(img,obj.VlCovdetArguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        [frames descriptors] = vl_covdet(img,obj.vl_covdet_arguments{:});
+        [frames descriptors] = vl_covdet(img,obj.VlCovdetArguments{:});
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
@@ -67,7 +70,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       hasAffineShape = numValues > 4;
       hasOrientation = numValues == 4 || numValues == 6;
       if nargin >= 3
-        if obj.opts.forceOrientation
+        if obj.Opts.forceOrientation
           hasOrientation = true; % force calculating orientations
         end
       end
@@ -84,8 +87,8 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.vl_covdet_arguments)];
+      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+              helpers.cell2str(obj.VlCovdetArguments)];
     end
   end
 

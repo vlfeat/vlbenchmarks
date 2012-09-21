@@ -1,8 +1,9 @@
 classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% EBR Edge-based detector
-%   EBR('OptionName',optionValue,...) Constructs wrapper around edge-based
-%   detector binary [1] [2] used is downlaoded from:
+% localFeatures.Ebr Edge-based detector
+
+%   localFeatures.Ebr('OptionName',optionValue,...) Constructs wrapper around
+%   edge-based detector binary [1] [2] used is downlaoded from:
 %
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ebr.ln.gz
 %
@@ -18,11 +19,13 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
 %   [2] T. Tuytelaars, L. Van Gool. Matching Widely Seprated Views based on
 %   Affine Invariant Regions. IJCV 59(1):61-85, 2004.
 
+% Authors: Karel Lenc
+
 % AUTORIGHTS
-  properties (Constant)
-    rootInstallDir = fullfile('data','software','ebr','');
-    binPath = fullfile(localFeatures.Ebr.rootInstallDir,'ebr.ln');
-    softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ebr.ln.gz';
+  properties (Constant, Hidden)
+    RootInstallDir = fullfile('data','software','ebr','');
+    BinPath = fullfile(localFeatures.Ebr.RootInstallDir,'ebr.ln');
+    SoftwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ebr.ln.gz';
   end
 
   methods
@@ -34,10 +37,10 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
           error('Arch: %s not supported by EBR',machineType);
       end
-      obj.name = 'EBR';
-      obj.detectorName = obj.name;
+      obj.Name = 'EBR';
+      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      obj.configureLogger(obj.name,varargin);
+      obj.configureLogger(obj.Name,varargin);
     end
 
     function [frames] = extractFeatures(obj, imagePath)
@@ -51,7 +54,7 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
       args = sprintf('"%s" "%s"',imagePath, framesFile);
-      cmd = [obj.binPath ' ' args];
+      cmd = [obj.BinPath ' ' args];
 
       [status,msg] = system(cmd,'-echo');
       if status ~= 0
@@ -66,21 +69,21 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = helpers.fileSignature(obj.binPath);
+      sign = helpers.fileSignature(obj.BinPath);
     end
   end
 
   methods (Access=protected)
     function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
-      urls = {Ebr.softwareUrl};
-      dstPaths = {Ebr.rootInstallDir};
+      urls = {Ebr.SoftwareUrl};
+      dstPaths = {Ebr.RootInstallDir};
     end
 
     function compile(obj)
       import localFeatures.*;
       % When unpacked, ebr is not executable
-      helpers.setFileExecutable(Ebr.binPath);
+      helpers.setFileExecutable(Ebr.BinPath);
     end
   end % ---- end of static methods ----
 end % ----- end of class definition ----

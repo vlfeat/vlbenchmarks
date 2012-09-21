@@ -1,6 +1,6 @@
 classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% CVFAST feature extractor wrapper of OpenCV FAST detector
+% localFeatures.CvFast feature extractor wrapper of OpenCV FAST detector
 %
 % Feature Extractor wrapper around the OpenCV ORB detector. This class
 % constructor accepts the same options as localFeatures.mex.cvFast.
@@ -9,20 +9,22 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
 %
 % See also: localFeatures.mex.cvFast helpers.OpenCVInstaller
 
+% Authors: Karel Lenc
+
 % AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    cvFast_arguments
-    binPath
+    CvFastArguments; % Arguments passed to cvFast function
+    BinPath % Path to the mex binary
   end
 
   methods
     function obj = CvFast(varargin)
-      obj.name = 'OpenCV FAST';
-      obj.detectorName = obj.name;
+      obj.Name = 'OpenCV FAST';
+      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.cvFast_arguments = obj.configureLogger(obj.name,varargin);
-      obj.binPath = {which('localFeatures.mex.cvFast')};
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.CvFastArguments = obj.configureLogger(obj.Name,varargin);
+      obj.BinPath = {which('localFeatures.mex.cvFast')};
     end
 
     function frames = extractFeatures(obj, imagePath)
@@ -35,7 +37,7 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
       img = imread(imagePath);
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img); % If not already in uint8, then convert
-      [frames] = localFeatures.mex.cvFast(img,obj.cvFast_arguments{:});
+      [frames] = localFeatures.mex.cvFast(img,obj.CvFastArguments{:});
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
         getFileName(imagePath),timeElapsed);      
@@ -43,8 +45,8 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvFast_arguments)];
+      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+              helpers.cell2str(obj.CvFastArguments)];
     end
   end
 

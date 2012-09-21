@@ -1,8 +1,8 @@
 classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
     & helpers.GenericInstaller
-% VGGAFFINE class to wrap around the VGG affine co-variant detectors.
-%   VGGAFFINE('Option','OptionValue',...) Constructs the object of the
-%   wrapper. 
+% localFeatures.VggAffine VGG affine co-variant detectors wrapper
+%   localFeatures.VggAffine('Option','OptionValue',...) Constructs the object
+%   of the wrapper.
 %
 %   This version of VGG descriptor calculation internaly compute with 
 %   magnification factor equal 3 and cannot be adjusted in the binary
@@ -37,7 +37,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
 %   Crop frames which after magnification overlap the image borders.
 
   properties (SetAccess=private, GetAccess=public)
-    opts = struct(...
+    Opts = struct(...
       'detector', 'hesaff',...
       'threshold', -1,...
       'noAngle', false,...
@@ -46,18 +46,20 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       'cropFrames', true...
       );
   end
-  
   properties (Constant)
-    binDir = fullfile('data','software','vggAffine','');
-    detBinPath = fullfile(localFeatures.VggAffine.binDir,'h_affine.ln');
-    descrBinPath = fullfile(localFeatures.VggAffine.binDir,'compute_descriptors.ln');
-    detUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/h_affine.ln.gz';
-    descUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/compute_descriptors.ln.gz'
-    validDetectors = {'hesaff', 'haraff', 'heslap', 'harlap','har'};
-    validDescriptors = {'sift','jla','gloh','mom','koen','kf','sc',...
+    ValidDetectors = {'hesaff', 'haraff', 'heslap', 'harlap','har'};
+    ValidDescriptors = {'sift','jla','gloh','mom','koen','kf','sc',...
       'spin','pca','cc'};
-    builtInMagnification = 3;
-    supportedImageFormats = {'.png','.ppm','.pgm'};
+  end
+
+  properties (Constant, Hidden)
+    BinDir = fullfile('data','software','vggAffine','');
+    DetBinPath = fullfile(localFeatures.VggAffine.BinDir,'h_affine.ln');
+    DescrBinPath = fullfile(localFeatures.VggAffine.BinDir,'compute_descriptors.ln');
+    DetUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/h_affine.ln.gz';
+    DescUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/compute_descriptors.ln.gz'
+    BuiltInMagnification = 3;
+    SupportedImageFormats = {'.png','.ppm','.pgm'};
   end
 
   methods
@@ -71,18 +73,18 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
         error('Arch: %s not supported by VGG Affine.',machineType);
       end
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.opts = vl_argparse(obj.opts,varargin);
-      if ~ismember(obj.opts.detector, obj.validDetectors)
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
+      if ~ismember(obj.Opts.detector, obj.ValidDetectors)
         obj.error('Invalid detector');
       end
-      if ~ismember(obj.opts.descriptor, obj.validDescriptors)
+      if ~ismember(obj.Opts.descriptor, obj.ValidDescriptors)
         obj.error('Invalid descriptor');
       end
-      obj.name = ['VGG ' obj.opts.detector ' ' obj.opts.descriptor];
-      obj.detectorName = ['VGG ' obj.opts.detector];
-      obj.descriptorName = ['VGG ' obj.opts.descriptor];
-      obj.extractsDescriptors = true;
+      obj.Name = ['VGG ' obj.Opts.detector ' ' obj.Opts.descriptor];
+      obj.DetectorName = ['VGG ' obj.Opts.detector];
+      obj.DescriptorName = ['VGG ' obj.Opts.descriptor];
+      obj.ExtractsDescriptors = true;
     end
 
     function [frames descriptors] = extractFeatures(obj, origImagePath)
@@ -99,20 +101,20 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       end
       % Check whether image is of supported format
       [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
-        obj.supportedImageFormats);
+        obj.SupportedImageFormats);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
 
       tmpName = tempname;
-      framesFile = [tmpName '.' obj.opts.detector];
+      framesFile = [tmpName '.' obj.Opts.detector];
       detArgs = '';
-      if obj.opts.threshold >= 0
-        detArgs = sprintf('-thres %f ',obj.opts.threshold);
+      if obj.Opts.threshold >= 0
+        detArgs = sprintf('-thres %f ',obj.Opts.threshold);
       end
       detArgs = sprintf('%s-%s -i "%s" -o "%s" %s',...
-                     detArgs, obj.opts.detector,...
+                     detArgs, obj.Opts.detector,...
                      imagePath,framesFile);
 
-      detCmd = [obj.detBinPath ' ' detArgs];
+      detCmd = [obj.DetBinPath ' ' detArgs];
       startTime = tic;
       [status,msg] = system(detCmd);
       timeElapsed = toc(startTime);
@@ -121,8 +123,8 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       end
       frames = helpers.readFramesFile(framesFile);
       if nargout ==2
-        if obj.opts.magnification == obj.builtInMagnification ...
-            && ~obj.opts.cropFrames
+        if obj.Opts.magnification == obj.BuiltInMagnification ...
+            && ~obj.Opts.cropFrames
           % When frames does not have to be magnified or cropped, process
           % directly the file from the frames detector.
           [frames descriptors] = obj.computeDescriptors(imagePath,framesFile);
@@ -138,10 +140,14 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      % EXTRACTDESCRIPTORS Compute SIFT descriptors using 
-      %   compute_descriptors.ln binary.
+      % extractDescriptors Compute SIFT descriptors
+      %   [DFRAMES FRAMES] = obj.extractDescriptors(IMG_PATH, FRAMES) extracts
+      %   DESCRIPTORS of FRAMES from image IMG_PATH using the
+      %   compute_descriptors.ln.
       %
-      %  frames can be both array of frames or path to a frames file.
+      %   [DFRAMES FRAMES] = obj.extractDescriptors(IMG_PATH, FRAMES_PATH)
+      %   extracts DESCRIPTORS of frames stored in file FRAMES_PATH from image
+      %   IMG_PATH .
       import localFeatures.*;
       magFactor = 1;
       tmpName = tempname;
@@ -149,18 +155,18 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
         frames = helpers.frameToEllipse(frames);
       end
 
-      if obj.opts.cropFrames
+      if obj.Opts.cropFrames
         imgSize = size(imread(imagePath));
         imgbox = [1 1 imgSize(2)+1 imgSize(1)+1];
-        mf = obj.opts.magnification ^ 2;
+        mf = obj.Opts.magnification ^ 2;
         magFrames = [frames(1:2,:) ; frames(3:5,:) .* mf];
         isVisible = benchmarks.helpers.isEllipseInBBox(imgbox,magFrames);
         frames = frames(:,isVisible);
       end
 
-      if obj.opts.magnification ~= obj.builtInMagnification
+      if obj.Opts.magnification ~= obj.BuiltInMagnification
         % Magnify the frames accordnig to set magnif. factor
-        magFactor = obj.opts.magnification / obj.builtInMagnification;
+        magFactor = obj.Opts.magnification / obj.BuiltInMagnification;
         magFactor = magFactor ^ 2;
         frames(3:5,:) = frames(3:5,:) .* magFactor;
       end
@@ -168,7 +174,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       framesFile = [tmpName '.frames'];
       helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
       [frames descriptors] = obj.computeDescriptors(imagePath,framesFile);
-      if obj.opts.magnification ~= obj.builtInMagnification
+      if obj.Opts.magnification ~= obj.BuiltInMagnification
         % Resize the frames back to their size
         frames(3:5,:) = frames(3:5,:) ./ magFactor;
       end
@@ -182,16 +188,16 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       outDescFile = [tmpName '.descs'];
 
       [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
-        obj.supportedImageFormats);
+        obj.SupportedImageFormats);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
       % Prepare the options
       descrArgs = sprintf('-%s -i "%s" -p1 "%s" -o1 "%s"', ...
-        obj.opts.descriptor, imagePath, framesFile, outDescFile);
+        obj.Opts.descriptor, imagePath, framesFile, outDescFile);
 
-      if obj.opts.noAngle
+      if obj.Opts.noAngle
         descrArgs = strcat(descrArgs,' -noangle');
       end             
-      descrCmd = [obj.descrBinPath ' ' descrArgs];
+      descrCmd = [obj.DescrBinPath ' ' descrArgs];
       obj.info('Computing descriptors.');
       startTime = tic;
       [status,msg] = system(descrCmd);
@@ -206,9 +212,9 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
     end
 
     function sign = getSignature(obj)
-      signList = {helpers.fileSignature(obj.detBinPath) ... 
-        helpers.fileSignature(obj.descrBinPath) ...
-        helpers.struct2str(obj.opts)};
+      signList = {helpers.fileSignature(obj.DetBinPath) ... 
+        helpers.fileSignature(obj.DescrBinPath) ...
+        helpers.struct2str(obj.Opts)};
       sign = helpers.cell2str(signList);
     end
   end
@@ -216,19 +222,19 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
   methods  (Access=protected)
     function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
-      urls = {VggAffine.detUrl VggAffine.descUrl};
-      dstPaths = {VggAffine.binDir VggAffine.binDir};
+      urls = {VggAffine.DetUrl VggAffine.DescUrl};
+      dstPaths = {VggAffine.BinDir VggAffine.BinDir};
     end
 
     function compile(obj)
       import localFeatures.*;
       % When unpacked, binaries are not executable
-      chmodCmds = {sprintf('chmod +x %s',VggAffine.detBinPath) ...
-        sprintf('chmod +x %s',VggAffine.descrBinPath)}; 
+      chmodCmds = {sprintf('chmod +x %s',VggAffine.DetBinPath) ...
+        sprintf('chmod +x %s',VggAffine.DescrBinPath)}; 
       for cmd = chmodCmds
         [status msg] = system(cmd{:});
         if status ~= 0, error(msg); end
       end
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

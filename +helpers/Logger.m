@@ -1,11 +1,11 @@
 classdef Logger < handle
-% LOGGER A simple logger class
-%  LOGGER supports both prinitng of messages to the console or writing
+% helpers.Logger A simple logger class
+%  Logger supports both printing of messages to the console or writing
 %  them to a log file with different verbosity levels. To use the
 %  logging framework, define this class as a superclass and call
-%  method configureLogger with the rest of the constructor arguments.
+%  method configureLogger(LogLabel).
 %
-%  LOGGER supports the following verbosity levels:
+%  Logger supports the following verbosity levels:
 %
 %    helpers.Logger.TRACE - Tracing minute detail of the execution.
 %    helpers.Logger.DEBUG - Debugging information.
@@ -17,7 +17,8 @@ classdef Logger < handle
 %  To log a message, call method trace(msg), debug(msg), info(msg),
 %  warn(msg) or error(msg) according to the importance of the event.
 %
-%  LOGGER supports the following 'Name',value options:
+%  Method configureLogger(LogLabel, 'OptionName', OptionValue) accepts
+%  the following options:
 %
 %  VerboseLevel:: [helpers.Logger.DEBUG]
 %    Verbosity level of messages sent to stdout. If set to OFF all
@@ -34,26 +35,25 @@ classdef Logger < handle
 
 % AUTORIGHTS
 
-  properties
+  properties (GetAccess=public, SetAccess = protected)
     % Verbose level of messages printed to stdout
-    verboseLevel = helpers.Logger.DEBUG;
+    VerboseLevel = helpers.Logger.DEBUG;
     % Verbose level of messages written to a log file
-    fileVerboseLevel = helpers.Logger.OFF;
+    FileVerboseLevel = helpers.Logger.OFF;
     % Path to a log file
-    logFile = fullfile('data','log');
+    LogFile = fullfile('data','log');
     % Log label used as a preamble of all messages
-    logLabel = '';
+    LogLabel = '';
   end
 
-  properties (Constant)
-    % Verbose levels
-    ALL = 4;
-    TRACE = 3;
-    DEBUG = 2;
-    INFO = 1;
-    WARN = 0;
-    ERROR = -1;
-    OFF = -2;
+  properties (Constant, Hidden)
+    ALL = 4; % Log all
+    TRACE = 3; % Log tracing events
+    DEBUG = 2; % Log debugging events
+    INFO = 1; % Log informative events
+    WARN = 0; % Log warnings
+    ERROR = -1; % Log errors only
+    OFF = -2; % Do not log
 
     levelStr = containers.Map(...
       {helpers.Logger.TRACE,helpers.Logger.DEBUG,helpers.Logger.INFO, ...
@@ -61,22 +61,23 @@ classdef Logger < handle
       {'TRACE','DEBUG','INFO','WARN','ERROR'});
   end
 
-  methods (Access = protected)
-    function varargin = configureLogger(obj,logLabel,varargin)
-    % args = configureLogger(logLabel, varargin)
+  methods (Access = protected, Hidden)
+    function varargin = configureLogger(obj,LogLabel,varargin)
+    % configureLogger Configure logger options
+    %   remArgs = obj.configureLogger(LogLabel, varargin)
     %   Configures the logger. LogLabel defines the preamble of
     %   all the log messages and usually is the name of the class.
     %   varargin are arguments in the vl_argparse ('Name', value)
-    %   format, see Logger domuentation for details.
+    %   format, see Logger documentation for details.
       import helpers.*;
-      obj.logLabel = logLabel;
-      opts.verbose = obj.verboseLevel;
-      opts.fileVerbose = obj.fileVerboseLevel;
-      opts.logFile = obj.logFile;
+      obj.LogLabel = LogLabel;
+      opts.verbose = obj.VerboseLevel;
+      opts.fileVerbose = obj.FileVerboseLevel;
+      opts.logFile = obj.LogFile;
       [opts varargin] = vl_argparse(opts,varargin{:});
-      obj.verboseLevel = opts.verbose;
-      obj.fileVerboseLevel = opts.fileVerbose;
-      obj.logFile = opts.logFile;
+      obj.VerboseLevel = opts.verbose;
+      obj.FileVerboseLevel = opts.fileVerbose;
+      obj.LogFile = opts.logFile;
     end
 
     function trace(obj, varargin)
@@ -109,10 +110,10 @@ classdef Logger < handle
 
   methods (Access = private)
     function log(obj, level, varargin)
-      if level <= obj.verboseLevel
+      if level <= obj.VerboseLevel
         obj.displayLog(level,varargin{:});
       end
-      if ~isempty(obj.logFile) && level <= obj.fileVerboseLevel
+      if ~isempty(obj.LogFile) && level <= obj.FileVerboseLevel
         obj.logToFile(level,varargin)
       end
     end
@@ -129,14 +130,14 @@ classdef Logger < handle
       else
         % Adjust this to modify your output to stdout
         display(sprintf('(%s)\t%s:\t%s',obj.levelStr(level),...
-          obj.logLabel,str));
+          obj.LogLabel,str));
       end
     end
 
     function logToFile(obj,level,varargin)
       % Change this method if you want to change the format of log
       % messages stored in a log file.
-      lFile = fopen(obj.logFile,'a');
+      lFile = fopen(obj.LogFile,'a');
       name = obj.getName();
       str = srpintf(varargin{:});
       % Adjust this to modify the output to log file

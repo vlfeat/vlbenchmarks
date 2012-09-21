@@ -18,7 +18,7 @@ classdef Installer < helpers.GenericInstaller
           CvSurf(noInstArgs{:})};
       end
       detectors = [detectors,{...
-        Ebr(noInstArgs{:}),...
+        %Ebr(noInstArgs{:}),...
         Ibr(noInstArgs{:}),...
         LoweSift(noInstArgs{:}),...
         Sfop(noInstArgs{:}),...
@@ -39,24 +39,25 @@ classdef Installer < helpers.GenericInstaller
       detectors = Installer().getDependencies();
       for detIdx = 1:numel(detectors)
         % Test frames detection
-        detector = detector{detIdx};
+        detector = detectors{detIdx};
+        if ~detector.isInstalled(), detector.install(); end;
         detector.disableCaching();
-        if ~isempty(detector.detectorName)
+        if ~isempty(detector.DetectorName)
           frames = detector.extractFeatures(imgPath);
-          fprintf('%s - extracted %d frames.\n',detector.name, ...
+          fprintf('%s - extracted %d frames.\n',detector.Name, ...
             size(frames,2));
 
-          if ~isempty(detector.descriptorName)
+          if ~isempty(detector.DescriptorName)
             [frames descs] = detector.extractFeatures(imgPath);
             fprintf('%s - extracted %d frames and descriptors.\n',...
-              detector.name, size(frames,2));
+              detector.Name, size(frames,2));
           end
         end
-        if detector.extractsDescriptors
+        if detector.ExtractsDescriptors
           frames = randomDet.extractFeatures(imgPath);
           [drop descs] = detector.extractDescriptors(imgPath, frames);
           fprintf('%s - extracted %d descriptors from %d frames.\n',...
-            detector.name, size(descs,2),size(frames,2));
+            detector.Name, size(descs,2),size(frames,2));
         end
       end
     end

@@ -8,26 +8,28 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 %     Research report, INRIA 2011
 %     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
 
+% Authors: Karel Lenc, Relja Arandjelovic
+
 % AUTORIGHTS
 
   properties
-    opts = struct(...
+    Opts = struct(...
       'k', 50,...
       'distMetric', 'L2',...
       'maxNumQueries',inf);
   end
 
-  properties (Constant)
-    resultsKeyPrefix = 'retreivalResults';
-    queryResKeyPrefix = 'retreivalQueryResults';
-    datasetFeaturesKeyPrefix = 'datasetFeatures';
+  properties (Constant, Hidden)
+    ResultsKeyPrefix = 'retreivalResults';
+    QueryResKeyPrefix = 'retreivalQueryResults';
+    DatasetFeaturesKeyPrefix = 'datasetFeatures';
   end
 
   methods
     function obj = RetrievalBenchmark(varargin)
-      obj.benchmarkName = 'RetrBenchmark';
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
-      varargin = obj.configureLogger(obj.benchmarkName,varargin);
+      obj.BenchmarkName = 'RetrBenchmark';
+      [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
+      varargin = obj.configureLogger(obj.BenchmarkName,varargin);
       obj.checkInstall(varargin);
     end
 
@@ -35,7 +37,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       import helpers.*;
 
       obj.info('Evaluating detector %s on dataset %s.',...
-        detector.detectorName, dataset.datasetName);
+        detector.DetectorName, dataset.DatasetName);
       startTime = tic;
 
       % Try to load data from cache
@@ -43,7 +45,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       detSignature = detector.getSignature;
       imagesSignature = dataset.getImagesSignature();
       queriesSignature = dataset.getQueriesSignature();
-      resultsKey = strcat(obj.resultsKeyPrefix, testSignature, ...
+      resultsKey = strcat(obj.ResultsKeyPrefix, testSignature, ...
         detSignature, imagesSignature, queriesSignature);
       results = DataCache.getData(resultsKey);
       if ~isempty(results)
@@ -53,15 +55,15 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       end
 
       % Try to load already computed queries
-      numQueries = min([dataset.numQueries obj.opts.maxNumQueries]);
+      numQueries = min([dataset.NumQueries obj.Opts.maxNumQueries]);
       queriesAp = zeros(numQueries,1);
       cachedQueries = [];
       queryResKeys = cell(1,numQueries);
-      cacheResults = detector.useCache && obj.useCache;
+      cacheResults = detector.UseCache && obj.UseCache;
       if cacheResults
         for q = 1:numQueries
           querySignature = dataset.getQuerySignature(q);
-          queryResKeys{q} = strcat(obj.queryResKeyPrefix, testSignature,...
+          queryResKeys{q} = strcat(obj.QueryResKeyPrefix, testSignature,...
             detSignature, imagesSignature, querySignature);
           qResults = DataCache.getData(queryResKeys{q});
           if ~isempty(qResults);
@@ -99,7 +101,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       import benchmarks.*;
 
       startTime = tic;
-      k = obj.opts.k;
+      k = obj.Opts.k;
 
       qImgId = query.imageId;
       % Pick only features in the query box
@@ -123,7 +125,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       
       obj.info('Computing %d-nearest neighbours of %d descriptors.',...
         k,qNumDescriptors);
-      distMetric = YaelInstaller.distMetricParamMap(obj.opts.distMetric);
+      distMetric = YaelInstaller.distMetricParamMap(obj.Opts.distMetric);
       [indexes, dists] = yael_nn(single(allDescriptors), ...
         single(qDescriptors), min(k, size(qDescriptors,2)),distMetric);
 
@@ -142,20 +144,20 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.opts);
+      signature = helpers.struct2str(obj.Opts);
     end
 
     function [frames descriptors] = getAllDatasetFeatures(obj, dataset, detector)
       import helpers.*;
-      numImages = dataset.numImages;
+      numImages = dataset.NumImages;
 
       % Retreive features of all images
       detSignature = detector.getSignature;
       imagesSignature = dataset.getImagesSignature();
-      featKeyPrefix = obj.datasetFeaturesKeyPrefix;
+      featKeyPrefix = obj.DatasetFeaturesKeyPrefix;
       featuresKey = strcat(featKeyPrefix, detSignature,imagesSignature);
       features = [];
-      if detector.useCache
+      if detector.UseCache
         features = DataCache.getData(featuresKey);
       end;
       if isempty(features)
@@ -170,7 +172,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
             detector.extractFeatures(imagePath);
         end
         obj.debug('Features computed in %fs.',toc(featStartTime));
-        if detector.useCache
+        if detector.UseCache
           DataCache.storeData({frames, descriptors},featuresKey);
         end
       else 

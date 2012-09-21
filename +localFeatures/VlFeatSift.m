@@ -1,33 +1,35 @@
 classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% VLFEATSIFT class to wrap around the VLFeat Frame det implementation
-%   VLFEATSIFT('OptionName',OptionValue,...) Created new object which
-%   wraps around VLFeat covariant image frames detector. All given options
-%   defined in the constructor are passed directly to the vl_sift 
-%   function when called.
+% localFeatures.VlFeatSift VlFeat vl_sift wrapper
+%   localFeatures.VlFeatSift('OptionName',OptionValue,...) Creates new
+%   object which wraps around VLFeat covariant image frames detector.
+%   All given options defined in the constructor are passed directly
+%   to the vl_sift function when called.
 %
 %   The options to the constructor are the same as that for vl_sift
 %   See help vl_sift to see those options and their default values.
 %
 %   See also: vl_sift
 
+% Authors: Karel Lenc
+
 % AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    opts
-    vl_sift_arguments
-    binPath
+    Opts
+    VlSiftArguments
+    BinPath
   end
 
   methods
     function obj = VlFeatSift(varargin)
       % def. arguments
-      obj.name = 'VLFeat SIFT';
-      obj.detectorName = 'VLFeat DoG';
-      obj.descriptorName = 'VLFeat SIFT';
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.vl_sift_arguments = obj.checkInstall(varargin);
-      obj.binPath = {which('vl_sift') which('libvl.so')};
-      obj.extractsDescriptors = true;
+      obj.Name = 'VLFeat SIFT';
+      obj.DetectorName = 'VLFeat DoG';
+      obj.DescriptorName = 'VLFeat SIFT';
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.VlSiftArguments = obj.checkInstall(varargin);
+      obj.BinPath = {which('vl_sift') which('libvl.so')};
+      obj.ExtractsDescriptors = true;
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -40,11 +42,11 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = vl_sift(img,obj.vl_sift_arguments{:});
+        [frames] = vl_sift(img,obj.VlSiftArguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        [frames descriptors] = vl_sift(img,obj.vl_sift_arguments{:});
+        [frames descriptors] = vl_sift(img,obj.VlSiftArguments{:});
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
@@ -53,12 +55,13 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      % EXTRACTDESCRIPTORS Extract SIFT descriptors of disc frames FRAMES
-      %   EXTRACTDESCRIPTORS(IMG_PATH, FRAMES) Extracts SIFT descriptors of 
-      %     disc frames FRAMES from image defined by IMG_PATH. For the
-      %     descriptor extraction, scale-space is used.
-      %     Ellipses are converted to discs using their scale. The
-      %     orientation of an oriented ellipse is dropped.
+      % extractDescriptor Extract SIFT descriptors of disc frames
+      %   [DFRAMES DESCRIPTORS] = obj.extractDescriptor(IMG_PATH,
+      %   FRAMES) Extracts SIFT descriptors DESCRIPTPORS of disc
+      %   frames FRAMES from image defined by IMG_PATH. For the
+      %   descriptor extraction, scale-space is used. Ellipses are
+      %   converted to discs using their scale. The orientation of an
+      %   oriented ellipse is dropped.
       import localFeatures.helpers.*;
       obj.info('Computing descriptors.');
       startTime = tic;
@@ -79,14 +82,14 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       end
       % Compute the descriptors (using scale space).
       [frames, descriptors] = vl_sift(img,'Frames',frames,...
-        obj.vl_sift_arguments{:});
+        obj.VlSiftArguments{:});
       elapsedTime = toc(startTime);
       obj.debug('Descriptors computed in %gs',elapsedTime);
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.vl_sift_arguments)];
+      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+              helpers.cell2str(obj.VlSiftArguments)];
     end
   end
 

@@ -29,26 +29,18 @@ classdef GenericInstaller < handle
 %
 %   The method install() executes all the installation steps.
 
+% Author: Karel Lenc
+
 % AUTORIGHTS
-  properties (Constant)
+  properties (Constant, Hidden)
     unpackedTagFileExt = '.unpacked';
   end
 
-  methods
-    function varargin = checkInstall(obj, varargin)
-      % CHECKINSTALL Check whether object is installed.
-      %   CHECKINSTALL('AutoInstall', false) Do not install if not
-      %   installed.
-	  import helpers.*;
-      opts.autoInstall = true;
-      [opts varargin] = vl_argparse(opts, varargin{:});
-      if opts.autoInstall && ~obj.isInstalled()
-        obj.install();
-      end
-    end
-
+  methods (Access = public)
     function res = isInstalled(obj)
-    % ISINSTALLED Test whether all the specified data are installed
+    % isInstalled Test whether all the specified data are installed
+    %   RES = obj.isInstalled() Returns RES=true when the class has
+    %   got installed all needed resources.
       res = obj.dependenciesInstalled() ...
         && obj.tarballsInstalled() ...
         && obj.isCompiled() ...
@@ -56,17 +48,51 @@ classdef GenericInstaller < handle
     end
 
     function install(obj)
-    % INSTALL Install class dependencies
-    %   Install unmet dependencies, downloads and unpack tarballs,
-    %   run the compile script based on isCompiled() return value and
-    %   compiles the mex files.
+    % install Install class dependencies 
+    %   obj.install() Installs unmet dependencies, downloads and
+    %   unpack tarballs, run the compile script based on isCompiled()
+    %   return value and compiles the mex files.
       obj.installDependencies();
       obj.installTarballs();
       obj.compile();
       obj.compileMexFiles();
-	  obj.setup();
+	    obj.setup();
     end
 
+    function clean(obj)
+    % clean Clean all installed resources
+    %   clean() Cleans all allocated resources. Deletes compiled mex
+    %   files, cleans compiled files (calling cleanCompiled()) and
+    %   deletes downloaded tarballs.
+      if ~obj.isInstalled(), return; end;
+      srclist = obj.getMexSources();
+      % Clean the compiled mex files
+      for mexSrc = srclist
+        [srcPath srcFilename] = fileparts(mexSrc{:});
+        mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
+        if exist(mexFile,'file')
+          delete(mexFile);
+        end
+      end
+      % Clean compiled resources
+      obj.cleanCompiled();
+      % Clean downloaded archives
+      [urls dstPaths] = obj.getTarballsList();
+      for path = dstPaths
+        if exist(path{:},'dir')
+          rmdir(path{:},'s')
+        end
+      end
+    end
+
+    function setup(obj)
+    % setup Setup the class environment.
+    %   obj.setup() Implementation of this method should set up the
+    %   environment needed by the class object (e.g. path etc.).
+    end
+  end
+
+  methods (Access=protected, Hidden)
     function res = dependenciesInstalled(obj)
     % DEPENDENCIESINSTALED Test whether all class dependencies
     %   are installed
@@ -151,37 +177,18 @@ classdef GenericInstaller < handle
       end
     end
 
-    function clean(obj)
-      % CLEAN() Clean all allocated resources. Deletes compiled mex files,
-      % cleans compiled files (calling cleanCompiled()) and deletes
-      % downloaded tarballs.
-      if ~obj.isInstalled(), return; end;
-      srclist = obj.getMexSources();
-      % Clean the compiled mex files
-      for mexSrc = srclist
-        [srcPath srcFilename] = fileparts(mexSrc{:});
-        mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
-        if exist(mexFile,'file')
-          delete(mexFile);
-        end
-      end
-      % Clean compiled resources
-      obj.cleanCompiled();
-      % Clean downloaded archives
-      [urls dstPaths] = obj.getTarballsList();
-      for path = dstPaths
-        if exist(path{:},'dir')
-          rmdir(path{:},'s')
-        end
+    function varargin = checkInstall(obj, varargin)
+    % CHECKINSTALL Check whether object is installed.
+    %   CHECKINSTALL('AutoInstall', false) Do not install if not
+    %   installed.
+      import helpers.*;
+      opts.autoInstall = true;
+      [opts varargin] = vl_argparse(opts, varargin{:});
+      if opts.autoInstall && ~obj.isInstalled()
+        obj.install();
       end
     end
 
-	function setup(obj)
-	  % SETUP Method run after succesful installation.
-	end
-  end
-  
-  methods (Access=protected)
     function [srclist flags]  = getMexSources(obj)
       % [SRCLIST FLAGS] = GETMEXSOURCES()
       %   Reimplement this method if mex files compilation
@@ -227,7 +234,7 @@ classdef GenericInstaller < handle
     end
   end
 
-  methods (Static)
+  methods (Static, Hidden)
     function res = mexFileCompiled(mexFile)
       % MEXFILECOMPILED Test whether a mex file is compiled
       [srcPath srcFilename] = fileparts(mexFile);

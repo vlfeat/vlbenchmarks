@@ -1,41 +1,42 @@
 classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% SFOP class to wrap around the SFOP detector implementation
-%   SFOP('Option','OptionValue',...) create new object of the wrapper
-%   around the implementation of SFOP available at:
-%   http://www.ipb.uni-bonn.de/index.php?id=220#software
-%   Options passed to the constructor are passed to SFOP.
+% localFeatures.Sfop class to wrap around the SFOP detector implementation
+%   localFeatures.Sfop('Option','OptionValue',...) create new object of the
+%   wrapper around the implementation of SFOP available at: 
+%   http://www.ipb.uni-bonn.de/index.php?id=220#software 
+%   Options passed to the constructor are passed to SFOP function.
 %
 %   The options are documented in the SFOP code, which you can see at
 %   +affineDetectors/thirdParty/sfop/sfop-0.9/matlab/sfopParams.m
 %   (the above file only exists once you have installed all the third party
 %   software using install command)
 
+% Authors: Karel Lenc, Varun Gulshan
+
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    % Properties below correspond to the binary downloaded
-    % from vgg
-    sfop_varargin % See SFOP documentation for parameters, in the file:
-                  % sfop-0.9/matlab/sfopParams.m
+    % See SFOP documentation for parameters, in the file:
+    % sfop-0.9/matlab/sfopParams.m
+    SfopArguments 
   end
 
-  properties (Constant)
-    rootInstallDir = fullfile('data','software','sfop','');
-    dir = fullfile(localFeatures.Sfop.rootInstallDir,'sfop-1.0','');
-    matDir = fullfile(pwd,localFeatures.Sfop.dir,'matlab','');
-    binPath = fullfile(pwd,localFeatures.Sfop.dir,'src','sfop');
-    softwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-1.0.tar.gz';
-    configCmd = './configure --disable-gpu --disable-doxygen CC=%s CXX=%s';
-    makeCmd = 'make';
+  properties (Constant, Hidden)
+    RootInstallDir = fullfile('data','software','sfop','');
+    DataDir = fullfile(localFeatures.Sfop.RootInstallDir,'sfop-1.0','');
+    MatDir = fullfile(pwd,localFeatures.Sfop.DataDir,'matlab','');
+    BinPath = fullfile(pwd,localFeatures.Sfop.DataDir,'src','sfop');
+    SoftwareUrl = 'http://www.ipb.uni-bonn.de/fileadmin/research/media/sfop/sfop-1.0.tar.gz';
+    ConfigCmd = './configure --disable-gpu --disable-doxygen CC=%s CXX=%s';
+    MakeCmd = 'make';
   end
   
   methods
     function obj = Sfop(varargin)
       import localFeatures.*;
-      obj.name = 'SFOP';
-      obj.detectorName = obj.name;
+      obj.Name = 'SFOP';
+      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      obj.sfop_varargin = obj.configureLogger(obj.name,varargin);
+      obj.SfopArguments = obj.configureLogger(obj.Name,varargin);
     end
 
     function frames = extractFeatures(obj, imagePath)
@@ -55,9 +56,9 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
 
       detImagePath = fullfile(pwd,imagePath);
       curDir = pwd;
-      cd(obj.matDir);
+      cd(obj.MatDir);
       try
-        sfop(detImagePath,outFile,obj.sfop_varargin{:});
+        sfop(detImagePath,outFile,obj.SfopArguments{:});
       catch err
         cd(curDir);
         throw(err);
@@ -77,15 +78,15 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
 
     function signature = getSignature(obj)
       import helpers.*;
-      signature = helpers.fileSignature(obj.binPath);
+      signature = helpers.fileSignature(obj.BinPath);
     end
   end
 
   methods (Access=protected)
     function [urls dstPaths] = getTarballsList(obj)
       import localFeatures.*;
-      urls = {Sfop.softwareUrl};
-      dstPaths = {Sfop.rootInstallDir};
+      urls = {Sfop.SoftwareUrl};
+      dstPaths = {Sfop.RootInstallDir};
     end
 
     function compile(obj)
@@ -94,10 +95,10 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
       cc = mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable;
       
       curDir = pwd;
-      cd(Sfop.dir);
+      cd(Sfop.DataDir);
       try
-        system(sprintf(Sfop.configCmd,cc,cxx),'-echo');
-        system(Sfop.makeCmd, '-echo');
+        system(sprintf(Sfop.ConfigCmd,cc,cxx),'-echo');
+        system(Sfop.MakeCmd, '-echo');
         cd(curDir);
       catch err
         cd(curDir);

@@ -1,20 +1,26 @@
 function bareDemo()
 % BAREDEMO Script demonstrating basic interface of the benchmarks.
 
+% TODO show the matches
+% TODO plot the score.
+% TODO caching
+
 %% Define Local features detectors
-
 import localFeatures.*;
-
-detector = RandomFeaturesGenerator();
+detectors{1} = RandomFeaturesGenerator();
+detectors{1} = localFeatures.ExampleLocalFeatureExtractor(...
+  'UseMean',true,...
+  'UseVariance',true,...
+  'UseMedian',true); 
+detectors{1} = DescriptorAdapter(VlFeatMser(),VlFeatSift());
+%detectors{3} = VlFeatSift();
 
 %% Define dataset
-
 import datasets.*;
-
 dataset = VggAffineDataset('category','graf');
+numImages = dataset.NumImages;
 
 %% Define benchmarks
-
 import benchmarks.*;
 repeatabilityTest = RepeatabilityBenchmark(...
   'MatchFramesGeometry',true,...
@@ -32,40 +38,33 @@ matchingTest = RepeatabilityBenchmark(...
   'OverlapError',0.4);
 ijcvTest = IjcvOriginalBenchmark('CommonPart',1,'OverlapError',0.4);
 
-%% Run the benchmarks
+%% Compare the results of VlFeat repeatability and the IJCV05 repeatability
 
-numImages = dataset.numImages;
-
-repeatability = zeros(2, numImages);
-numCorresp = zeros(2, numImages);
-
-matchingScore = zeros(2, numImages);
-numMatches = zeros(2, numImages);
+repeatability = zeros(numel(detectors), numImages);
+numCorresp = zeros(numel(detectors), numImages);
+matchingScore = zeros(numel(detectors), numImages);
+numMatches = zeros(numel(detectors), numImages);
 
 % Get path of the reference image
 imageAPath = dataset.getImagePath(1);
 
-for imageIdx = 2:numImages
-  imageBPath = dataset.getImagePath(imageIdx);
-  tf = dataset.getTransformation(imageIdx);
-  
-  % Run the repeatability and matching benchmark
-  [repeatability(1,imageIdx) numCorresp(1,imageIdx)] = ...
-    repeatabilityTest.testDetector(detector, tf, imageAPath,imageBPath);
-  [matchingScore(1,imageIdx) numMatches(1,imageIdx)] = ...
-    matchingTest.testDetector(detector, tf, imageAPath,imageBPath);
+for detIdx = 1:numel(detectors)
+  for imageIdx = 2:numImages
+    imageBPath = dataset.getImagePath(imageIdx);
+    tf = dataset.getTransformation(imageIdx);
 
-  % Run the IJCV test for comparison
-  [repeatability(2,imageIdx) numCorresp(2,imageIdx) ...
-    matchingScore(2,imageIdx) numMatches(2,imageIdx)] = ...
-    ijcvTest.testDetector(detector, tf, imageAPath,imageBPath);
+    % Run the repeatability and matching benchmark
+    [repeatability(detIdx,imageIdx) numCorresp(detIdx,imageIdx)] = ...
+      repeatabilityTest.testDetector(detectors{detIdx}, tf, imageAPath,imageBPath);
+    [matchingScore(detIdx,imageIdx) numMatches(detIdx,imageIdx)] = ...
+      matchingTest.testDetector(detectors{detIdx}, tf, imageAPath,imageBPath);
+  end
 end
-
 
 
 %% Show scores
 
-scoreLineNames = {'Random Frames'};
+scoreLineNames = {'VLFB res.','IJCV res.','asdf'};
 
 printScores(repeatability, scoreLineNames ,'Repeatability');
 printScores(numCorresp, scoreLineNames, 'Number of correspondences');
@@ -81,10 +80,10 @@ function printScores(scores, scoreLineNames, name)
     maxNameLen = max(maxNameLen,length(scoreLineNames{k}));
   end
   maxNameLen = max(length('Method name'),maxNameLen);
-  fprintf(strcat('\nPriting ', name,':\n'));
+  fprintf(['\n',name,':\n']);
   formatString = ['%' sprintf('%d',maxNameLen) 's:'];
   fprintf(formatString,'Method name');
-  for k = 1:size(scores,2)
+  for k = 2:size(scores,2)
     fprintf('\tImg#%02d',k);
   end
   fprintf('\n');

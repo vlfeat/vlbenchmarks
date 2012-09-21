@@ -31,13 +31,13 @@ mser = localFeatures.VlFeatMser();
 detectors = {sift, thrSift, mser};
 
 % Prealocate the results
-rep = zeros(numel(detectors),dataset.numImages);
-numCorr = zeros(numel(detectors),dataset.numImages);
+rep = zeros(numel(detectors),dataset.NumImages);
+numCorr = zeros(numel(detectors),dataset.NumImages);
 
 imageAPath = dataset.getImagePath(1);
 for detIdx = 1:numel(detectors)
   detector = detectors{detIdx};
-  for imgIdx = 2:dataset.numImages
+  for imgIdx = 2:dataset.NumImages
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [rep(detIdx,imgIdx) numCorr(detIdx,imgIdx)] = ...
@@ -77,12 +77,12 @@ matchingBenchmark = benchmarks.RepeatabilityBenchmark(...
 mserWithSift = localFeatures.DescriptorAdapter(mser, sift);
 detectors = {sift, thrSift, mserWithSift};
 
-matching = zeros(numel(detectors),dataset.numImages);
-numMatches = zeros(numel(detectors),dataset.numImages);
+matching = zeros(numel(detectors),dataset.NumImages);
+numMatches = zeros(numel(detectors),dataset.NumImages);
 
 for detIdx = 1:numel(detectors)
   detector = detectors{detIdx};
-  for imgIdx = 2:dataset.numImages
+  for imgIdx = 2:dataset.NumImages
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [matching(detIdx,imgIdx) numMatches(detIdx,imgIdx)] = ...

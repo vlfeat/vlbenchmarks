@@ -1,18 +1,19 @@
 classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
-% REPEATABILITYBENCHMARK evaluates the repeatability and matching scores of features
-%   REPEATABILITYBENCHMARK('OptionName',optionValue,...)
+% benchmarks.RepeatabilityBenchmark Image features repeatability
+%   benchmarks.RepeatabilityBenchmark('OptionName',optionValue,...)
 %   constructs an object to compute the detector repeatabiliy and the
 %   descriptor matching scores as given in [1].
 %
 %   Using this class is a two step process. First, create an instance
-%   of the class specifying any parameter needed in the
-%   constructor. Then, use TESTFEATURES() to evaluate the scores given
-%   a pair of images, the detected features (and optionally their
+%   of the class specifying any parameter needed in the constructor.
+%   Then, use obj.testFeatures() to evaluate the scores given a pair
+%   of images, the detected features (and optionally their
 %   descriptors), and the homography between the two images.
 %
-%   Use TESTDETECTOR() to evaluate the test for a given detector and
-%   pair of images and being able to cache the results of the test.
+%   Use obj.testDetector() to evaluate the test for a given detector
+%   and pair of images and being able to cache the results of the
+%   test.
 %
 %   DETAILS ON THE REPEATABILITY AND MATCHING SCORES
 %
@@ -117,7 +118,9 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %
 %   DescriptorsDistanceMetric:: 'L2'
 %     Distance metric used for matching the descriptors. See
-%     documentation of VL_ALLDIST2 for details.
+%     documentation of vl_alldist2 for details.
+%
+%   See also: datasets.VggAffineDataset, vl_alldist2
 %
 %   REFERENCES
 %   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
@@ -129,7 +132,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 % AUTORIGHTS
 
   properties
-    opts = struct(...
+    Opts = struct(...
       'overlapError', 0.4,...
       'normaliseFrames', true,...
       'cropFrames', true,...
@@ -142,41 +145,42 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
   end
 
   properties(Constant)
-    keyPrefix = 'repeatability';
+    KeyPrefix = 'repeatability';
   end
 
   methods
     function obj = RepeatabilityBenchmark(varargin)
       import benchmarks.*;
       import helpers.*;
-      obj.benchmarkName = 'repeatability';
+      obj.BenchmarkName = 'repeatability';
       if numel(varargin) > 0
-        [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+        [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
       end
-      varargin = obj.configureLogger(obj.benchmarkName,varargin);
+      varargin = obj.configureLogger(obj.BenchmarkName,varargin);
       obj.checkInstall(varargin);
-      if ~obj.opts.matchFramesGeometry && ~obj.opts.matchFramesDescriptors
+      if ~obj.Opts.matchFramesGeometry && ~obj.Opts.matchFramesDescriptors
         obj.error('Invalid options - no way how to match frames.');
       end
     end
 
     function [score numMatches bestMatches reprojFrames] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
-      % TESTDETECTOR Computes the repeatability of a detector on a pair of images
-      %   REPEATABILITY = TESTDETECTOR(DETECTOR, TF, IMAGEAPATH, IMAGEBPATH)
-      %   computes the repeatability REP of a detector DETECTOR and its
-      %   frames extracted from images defined by their path IMAGEAPATH and
-      %   IMAGEBPATH whose geometry is related by the homography
-      %   transformation TF.
+      % testDetector Image feature extractor repeatability
+      %   REPEATABILITY = obj.testDetector(DETECTOR, TF, IMAGEAPATH,
+      %   IMAGEBPATH) computes the repeatability REP of a detector
+      %   DETECTOR and its frames extracted from images defined by
+      %   their path IMAGEAPATH and IMAGEBPATH whose geometry is
+      %   related by the homography transformation TF.
       %
-      %   [REPEATABILITY, NUMMATCHES] = TESTDETECTOR(...) returns also the
-      %   total number of feature matches found.
+      %   [REPEATABILITY, NUMMATCHES] = obj.testDetector(...) returns
+      %   also the total number of feature matches found.
       %
-      %   [REP, NUMMATCHES, REPR_FRAMES, MATCHES] = TESTDETECTOR(...)
-      %   returns cell array REPR_FRAMES which contains reprojected and
-      %   eventually cropped frames in format:
+      %   [REP, NUMMATCHES, REPR_FRAMES, MATCHES] =
+      %   obj.testDetector(...) returns cell array REPR_FRAMES which
+      %   contains reprojected and eventually cropped frames in
+      %   format:
       %
-      %    REPR_FRAMES = {CFRAMES_A,CFRAMES_B,REP_CFRAMES_A,REP_CFRAMES_B}
+      %   REPR_FRAMES = {CFRAMES_A,CFRAMES_B,REP_CFRAMES_A,REP_CFRAMES_B}
       %
       %   where CFRAMES_A are (cropped) frames detected in the IMAGEAPATH
       %   image REP_CFRAMES_A are CFRAMES_A reprojected to the IMAGEBPATH
@@ -190,25 +194,25 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       %   recompute the repeatability score unless the cache is manually
       %   cleared.
       %
-      %   See also: RepeatabilityBenchmark().
+      %   See also: benchmarks.RepeatabilityBenchmark().
       import benchmarks.*;
       import helpers.*;
 
       obj.info('Comparing frames from det. %s and images %s and %s.',...
-          detector.detectorName,getFileName(imageAPath),...
+          detector.DetectorName,getFileName(imageAPath),...
           getFileName(imageBPath));
 
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
       imageASize = helpers.imageSize(imageAPath);
       imageBSize = helpers.imageSize(imageBPath);
-      resultsKey = cell2str({obj.keyPrefix, obj.getSignature(), ...
+      resultsKey = cell2str({obj.KeyPrefix, obj.getSignature(), ...
         detector.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
 
       % When detector does not cache results, do not use the cached data
-      if isempty(cachedResults) || ~detector.useCache
-        if obj.opts.matchFramesDescriptors
+      if isempty(cachedResults) || ~detector.UseCache
+        if obj.Opts.matchFramesDescriptors
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
           [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
@@ -220,7 +224,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
           [score numMatches bestMatches reprojFrames] = ...
             obj.testFeatures(tf,imageASize, imageBSize,framesA, framesB);
         end
-        if detector.useCache
+        if detector.UseCache
           results = {score numMatches bestMatches reprojFrames};
           obj.storeResults(results, resultsKey);
         end
@@ -234,21 +238,22 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     function [score numMatches matches reprojFrames] = ...
                 testFeatures(obj, tf, imageASize, imageBSize, ...
                 framesA, framesB, descriptorsA, descriptorsB)
-      % TESTFEATURES Compute matching score of a given frames and descriptors.
-      %   [SCORE NUM_MATCHES] = TESTFEATURES(TF, IMAGE_A_SIZE, IMAGE_B_SIZE,
-      %   FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute matching score
-      %   SCORE between frames FRAMES_A and FRAMES_B and their
-      %   descriptors DESCS_A and DESCS_B which were extracted from
-      %   pair of images with sizes IMAGE_A_SIZE and IMAGE_B_SIZE
-      %   which geometry is related by homography TF. NUM_MATHCES is
-      %   number of matches which is calcuated according to object
-      %   settings.
+      % testFeatures Compute repeatability of given image features
+      %   [SCORE NUM_MATCHES] = obj.testFeatures(TF, IMAGE_A_SIZE,
+      %   IMAGE_B_SIZE, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute
+      %   matching score SCORE between frames FRAMES_A and FRAMES_B
+      %   and their descriptors DESCS_A and DESCS_B which were
+      %   extracted from pair of images with sizes IMAGE_A_SIZE and
+      %   IMAGE_B_SIZE which geometry is related by homography TF.
+      %   NUM_MATHCES is number of matches which is calcuated
+      %   according to object settings.
       %
-      %   [SCORE, NUM_MATCHES, REPR_FRAMES, MATCHES] = TESTFEATURES(...)
-      %   returns cell array REPR_FRAMES which contains reprojected and
-      %   eventually cropped frames in format:
+      %   [SCORE, NUM_MATCHES, REPR_FRAMES, MATCHES] =
+      %   obj.testFeatures(...) returns cell array REPR_FRAMES which
+      %   contains reprojected and eventually cropped frames in
+      %   format:
       %
-      %    REPR_FRAMES = {CFRAMES_A,CFRAMES_B,REP_CFRAMES_A,REP_CFRAMES_B}
+      %   REPR_FRAMES = {CFRAMES_A,CFRAMES_B,REP_CFRAMES_A,REP_CFRAMES_B}
       %
       %   where CFRAMES_A are (cropped) frames detected in the IMAGEAPATH
       %   image REP_CFRAMES_A are CFRAMES_A reprojected to the IMAGEBPATH
@@ -268,13 +273,13 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
             || size(framesB,2) ~= size(descriptorsB,2)
           obj.error('Number of frames and descriptors must be the same.');
         end
-      elseif obj.opts.matchFramesDescriptors
+      elseif obj.Opts.matchFramesDescriptors
         obj.error('Unable to match descriptors without descriptors.');
       end
 
       startTime = tic;
-      normFrames = obj.opts.normaliseFrames;
-      overlapError = obj.opts.overlapError;
+      normFrames = obj.Opts.normaliseFrames;
+      overlapError = obj.Opts.overlapError;
       overlapThresh = 1 - overlapError;
 
       % convert frames from any supported format to unortiented
@@ -284,13 +289,13 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       % map frames from image A to image B and viceversa
       reprojFramesA = warpEllipse(tf, framesA,...
-        'Method',obj.opts.warpMethod) ;
+        'Method',obj.Opts.warpMethod) ;
       reprojFramesB = warpEllipse(inv(tf), framesB,...
-        'Method',obj.opts.warpMethod) ;
+        'Method',obj.Opts.warpMethod) ;
 
       % optionally remove frames that are not fully contained in
       % both images
-      if obj.opts.cropFrames
+      if obj.Opts.cropFrames
         % find frames fully visible in both images
         bboxA = [1 1 imageASize(2)+1 imageASize(1)+1] ;
         bboxB = [1 1 imageBSize(2)+1 imageBSize(1)+1] ;
@@ -307,7 +312,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         framesB = framesB(:,visibleFramesB);
         reprojFramesB = reprojFramesB(:,visibleFramesB);
 
-        if obj.opts.matchFramesDescriptors
+        if obj.Opts.matchFramesDescriptors
           descriptorsA = descriptorsA(:,visibleFramesA);
           descriptorsB = descriptorsB(:,visibleFramesB);
         end
@@ -315,7 +320,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       if ~normFrames
         % When frames are not normalised, account the descriptor region
-        magFactor = obj.opts.magnification^2;
+        magFactor = obj.Opts.magnification^2;
         framesA = [framesA(1:2,:); framesA(3:5,:).*magFactor];
         reprojFramesB = [reprojFramesB(1:2,:); ...
           reprojFramesB(3:5,:).*magFactor];
@@ -328,11 +333,11 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       % Find all ellipse overlaps (in one-to-n array)
       frameOverlaps = fastEllipseOverlap(reprojFramesB, framesA, ...
         'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh,...
-        'NormalisedScale',obj.opts.normalisedScale);
+        'NormalisedScale',obj.Opts.normalisedScale);
 
       matches = [];
 
-      if obj.opts.matchFramesGeometry
+      if obj.Opts.matchFramesGeometry
         % Create an edge between each feature in A and in B
         % weighted by the overlap. Each edge is a candidate match.
         corresp = cell(1,numFramesA);
@@ -367,10 +372,10 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         matches = [matches ; geometryMatches];
       end
 
-      if obj.opts.matchFramesDescriptors
+      if obj.Opts.matchFramesDescriptors
         obj.info('Computing cross distances between all descriptors');
         dists = vl_alldist2(single(descriptorsA),single(descriptorsB),...
-          obj.opts.descriptorsDistanceMetric);
+          obj.Opts.descriptorsDistanceMetric);
         obj.info('Sorting distances')
         [dists, perm] = sort(dists(:),'ascend');
 
@@ -412,7 +417,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.opts);
+      signature = helpers.struct2str(obj.Opts);
     end
   end
 

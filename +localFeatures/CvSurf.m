@@ -1,6 +1,6 @@
 classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% CVSURF feature extractor wrapper of OpenCV SURF detector
+% localFeatures.CvSurf feature extractor wrapper of OpenCV SURF detector
 %
 % Feature Extractor wrapper around the OpenCV SURF detector. This class
 % constructor accepts the same options as localFeatures.mex.cvSurf.
@@ -9,22 +9,24 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
 %
 % See also: localFeatures.mex.cvSurf helpers.OpenCVInstaller
 
+% Atuhors: Karel Lenc
+
 % AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    cvsurf_arguments
-    binPath
+    CvsurfArguments; % Arguments passed to cvSurf function
+    BinPath; % Path to the mex binary
   end
 
   methods
     function obj = CvSurf(varargin)
-      obj.name = 'OpenCV SURF';
-      obj.detectorName = obj.name;
-      obj.descriptorName = obj.name;
-      obj.extractsDescriptors = true;
+      obj.Name = 'OpenCV SURF';
+      obj.DetectorName = obj.Name;
+      obj.DescriptorName = obj.Name;
+      obj.ExtractsDescriptors = true;
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.cvsurf_arguments = obj.configureLogger(obj.name,varargin);
-      obj.binPath = {which('localFeatures.mex.cvSurf')};
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.CvsurfArguments = obj.configureLogger(obj.Name,varargin);
+      obj.BinPath = {which('localFeatures.mex.cvSurf')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -39,11 +41,11 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = localFeatures.mex.cvSurf(img,obj.cvsurf_arguments{:});
+        [frames] = localFeatures.mex.cvSurf(img,obj.CvsurfArguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        [frames descriptors] = mex.cvSurf(img,obj.cvsurf_arguments{:});
+        [frames descriptors] = mex.cvSurf(img,obj.CvsurfArguments{:});
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
@@ -58,15 +60,15 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
       img = uint8(img);
       startTime = tic;
       [frames descriptors] = mex.cvSurf(img,'Frames', ...
-        frames,obj.cvsurf_arguments{:});
+        frames,obj.CvsurfArguments{:});
       timeElapsed = toc(startTime);
       obj.debug('Descriptors of %d frames computed in %gs',...
         size(frames,2),timeElapsed);
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvsurf_arguments)];
+      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+              helpers.cell2str(obj.CvsurfArguments)];
     end
   end
 

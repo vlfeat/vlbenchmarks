@@ -1,6 +1,6 @@
 classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% CVORB feature extractor wrapper of OpenCV ORB detector
+% localFeatures.CvOrb feature extractor wrapper of OpenCV ORB detector
 %
 % Feature Extractor wrapper around the OpenCV ORB detector. This class
 % constructor accepts the same options as localFeatures.mex.cvOrb.
@@ -15,23 +15,24 @@ classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
 
 % AUTORIGHTS
   properties (SetAccess=public, GetAccess=public)
-    cvorb_arguments
-    opts
-    binPath
+    CvOrbArguments; % Arguments passed to cvOrb mex
+    Opts; % Object options
+    BinPath; % Mex file path
   end
 
   methods
     function obj = CvOrb(varargin)
-      obj.opts.scoreType = 'FAST';
-      [obj.opts, drop] = vl_argparse(obj.opts, varargin);
-      obj.name = 'OpenCV ORB';
-      obj.detectorName = [obj.name,' ',obj.opts.scoreType];
-      obj.descriptorName = obj.name;
-      obj.extractsDescriptors = true;
+      import helpers.*;
+      obj.Opts.scoreType = 'FAST';
+      [obj.Opts, drop] = vl_argparse(obj.Opts, varargin);
+      obj.Name = 'OpenCV ORB';
+      obj.DetectorName = [obj.Name,' ',obj.Opts.scoreType];
+      obj.DescriptorName = obj.Name;
+      obj.ExtractsDescriptors = true;
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
-      obj.cvorb_arguments = varargin;
-      obj.binPath = {which('localFeatures.mex.cvOrb')};
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.CvOrbArguments = varargin;
+      obj.BinPath = {which('localFeatures.mex.cvOrb')};
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -46,11 +47,11 @@ classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        [frames] = localFeatures.mex.cvOrb(img,obj.cvorb_arguments{:});
+        [frames] = localFeatures.mex.cvOrb(img,obj.CvOrbArguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        [frames descriptors] = mex.cvOrb(img,obj.cvorb_arguments{:});
+        [frames descriptors] = mex.cvOrb(img,obj.CvOrbArguments{:});
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
@@ -65,15 +66,15 @@ classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
       img = uint8(img);
       startTime = tic;
       [frames descriptors] = mex.cvOrb(img,'Frames',...
-        frames,obj.cvorb_arguments{:});
+        frames,obj.CvOrbArguments{:});
       timeElapsed = toc(startTime);
       obj.debug('Descriptors of %d frames computed in %gs',...
         size(frames,2),timeElapsed);
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath{:}) ';'...
-              helpers.cell2str(obj.cvorb_arguments)];
+      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+              helpers.cell2str(obj.CvOrbArguments)];
     end
   end
   

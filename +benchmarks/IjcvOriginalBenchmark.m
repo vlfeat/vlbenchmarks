@@ -1,10 +1,10 @@
 classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
-% IjcvOriginalBenchmark Kristians Mikolajczyk's affine detectors test
-%   IjcvOriginalBenchmark('OptionName',OptionValue,...) Constructs an
-%   object which wraps around Kristian's testing script of affine
-%   covariant image regions (frames). Calls directly 'repeatability.m'
-%   script.
+% benchmarks.IjcvOriginalBenchmark IJCV05 affine detectors test 
+%   benchmarks.IjcvOriginalBenchmark('OptionName',OptionValue,...)
+%   Constructs an object which wraps around Kristian's testing script
+%   of affine covariant image regions (frames). Calls directly
+%   'repeatability.m' script.
 %
 %   Script used is available on:
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz
@@ -24,19 +24,26 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
 %       J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
 %       comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
 
+% Authors: Karel Lenc, Varun Gulshan
+
 % AUTORIGHTS
   
   properties
-    opts = struct(...
+    % Object options
+    Opts = struct(...
       'overlapError', 0.4,...
       'commonPart', 1);
   end
   
-  properties (Constant)
-    installDir = fullfile('data','software','repeatability','');
-    keyPrefix = 'kmEval';
-    testTypeKeys = {'rep','rep+match'};
-    url = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz';
+  properties (Constant, Hidden)
+    % Installation directory
+    InstallDir = fullfile('data','software','repeatability','');
+    % Cache key prefix for storing the results
+    KeyPrefix = 'kmEval';
+    % Prefixes for particular results
+    TestTypeKeys = {'rep','rep+match'};
+    % URL Address of the test source code
+    Url = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz';
   end
   
   methods
@@ -44,51 +51,52 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       import benchmarks.*;
       import helpers.*;
       
-      obj.benchmarkName = 'IjcvOriginalBenchmark'; 
-      [obj.opts varargin] = vl_argparse(obj.opts,varargin);
+      obj.BenchmarkName = 'IjcvOriginalBenchmark'; 
+      [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
       
       % Index of a value from the test results corresponding to idx*10 overlap
       % error. Original benchmark computes only overlap errors in step of 0.1
-      overlapErr = obj.opts.overlapError;
+      overlapErr = obj.Opts.overlapError;
       overlapErrIdx = round(overlapErr*10);
       if (overlapErr*10 - overlapErrIdx) ~= 0
           obj.warn(['IJCV affine benchmark supports only limited set of overlap errors. ',...
              'Your overlap error was rounded.']);
       end
        
-      varargin = obj.configureLogger(obj.benchmarkName,varargin);
+      varargin = obj.configureLogger(obj.BenchmarkName,varargin);
       obj.checkInstall(varargin);
     end
     
     function [repScore, numCorresp, matchScore, numMatches] = ...
                 testDetector(obj, detector, tf, imageAPath, imageBPath)
-      %TESTDETECTOR Compute repeatability and matching score.
-      %  [REP NUM_CORR MATCHING NUM_MATCHES] = testDetector(DETECTOR,
-      %     TF, IMAGEA_PATH, IMAGEB_PATH) Compute repeatability REP 
-      %     and matching score MATCHING of detector DETECTOR and its 
-      %     frames and descriptors extracted from images defined by 
-      %     their path IMAGEA_PATH and IMAGEB_PATH whose geometry is 
-      %     related by homography TF.
-      %     NUM_CORR is number of found correspondences and 
-      %     NUM_MATHCES number of matching detected features.
-      %     This function caches results.
-      %  [REP NUM_CORR] = testDetector(DETECTOR, TF, IMAGEA_PATH, 
-      %     IMAGEB_PATH) Compute only repeatability of the detector
-      %     based only on detected frames.
+      % TestDetector Compute repeatability and matching score.      
+      %   [REP NUM_CORR MATCHING NUM_MATCHES] =
+      %   obj.testDetector(DETECTOR, TF, IMAGEA_PATH, IMAGEB_PATH)
+      %   Compute repeatability REP and matching score MATCHING of
+      %   detector DETECTOR and its frames and descriptors extracted
+      %   from images defined by their path IMAGEA_PATH and
+      %   IMAGEB_PATH whose geometry is related by homography TF.
+      %   NUM_CORR is number of found correspondences and NUM_MATHCES
+      %   number of matching detected features. This function caches
+      %   results.
+      %
+      %   [REP NUM_CORR] = testDetector(DETECTOR, TF, IMAGEA_PATH,
+      %   IMAGEB_PATH) Compute only repeatability of the detector
+      %   based only on detected frames.
       import helpers.*;
       import benchmarks.*;
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
-      resultsKey = cell2str({obj.keyPrefix, nargout, obj.getSignature(),...
+      resultsKey = cell2str({obj.KeyPrefix, nargout, obj.getSignature(),...
         detector.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
       
       % When detector does not cache results, do not use the cached data
-      if isempty(cachedResults) || ~detector.useCache
+      if isempty(cachedResults) || ~detector.UseCache
         if nargout == 4
           obj.info('Comparing frames and descriptors from det. %s and images %s and %s.',...
-            detector.detectorName,getFileName(imageAPath),getFileName(imageBPath));
+            detector.DetectorName,getFileName(imageAPath),getFileName(imageBPath));
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
           [repScore, numCorresp, matchScore, numMatches] = ...
@@ -96,7 +104,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
                              framesA, framesB, descriptorsA, descriptorsB);
         else
           obj.info('Comparing frames from det. %s and images %s and %s.',...
-            detector.detectorName,getFileName(imageAPath),getFileName(imageBPath));
+            detector.DetectorName,getFileName(imageAPath),getFileName(imageBPath));
           [framesA] = detector.extractFeatures(imageAPath);
           [framesB] = detector.extractFeatures(imageBPath);
           [repScore, numCorresp] = ...
@@ -104,7 +112,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
           matchScore = -1;
           numMatches = -1;
         end
-        if detector.useCache
+        if detector.UseCache
           results = {repScore numCorresp matchScore numMatches};
           obj.storeResults(results, resultsKey);
         end
@@ -118,17 +126,18 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     function [repScore numCorresp matchScore numMatches] = ... 
                testFeatures(obj, tf, imageAPath, imageBPath, ...
                  framesA, framesB, descriptorsA, descriptorsB)
-      %TESTFEATURES Compute repeatability and matching score of image features
-      %  [REP NUM_CORR MATCHING NUM_MATCHES] = testFeatures(TF, 
-      %     IMAGEA_PATH, IMAGEB_PATH, FRAMES_A, FRAMES_B, 
-      %     DESCRIPTORS_A, DESCRIPTORS_B) Compute repeatability REP and
-      %     matching MATHICNG score between FRAMES_A and FRAMES_B which 
-      %     are related by homography TF and their descriptors 
-      %     DESCRIPTORS_A and DESCRIPTORS_B which were extracted from 
-      %     images IMAGE_A and IMAGE_B.
-      %  [REP NUM_CORR] = testFeatures(TF, IMAGEA_PATH, IMAGEB_PATH, 
-      %     FRAMES_A, FRAMES_B) Compute only repeatability between the
-      %     the frames FRAMES_A and FRAMES_B.
+      % TestFeatures Compute scores of image features      
+      %   [REP NUM_CORR MATCHING NUM_MATCHES] = obj.testFeatures(TF,
+      %   IMAGEA_PATH, IMAGEB_PATH, FRAMES_A, FRAMES_B, DESCRIPTORS_A,
+      %   DESCRIPTORS_B) Compute repeatability REP and matching
+      %   MATHICNG score between FRAMES_A and FRAMES_B which are
+      %   related by homography TF and their descriptors DESCRIPTORS_A
+      %   and DESCRIPTORS_B which were extracted from images IMAGE_A
+      %   and IMAGE_B.
+      %
+      %   [REP NUM_CORR] = obj.testFeatures(TF, IMAGEA_PATH,
+      %   IMAGEB_PATH, FRAMES_A, FRAMES_B) Compute only repeatability
+      %   between the the frames FRAMES_A and FRAMES_B.
       import benchmarks.*;
       import helpers.*;
       
@@ -146,7 +155,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
         descriptorsB = [];
       end
      
-      krisDir = IjcvOriginalBenchmark.installDir;
+      krisDir = IjcvOriginalBenchmark.InstallDir;
       tmpFile = tempname;
       ellBFile = [tmpFile 'ellB.txt'];
       tmpHFile = [tmpFile 'H.txt'];
@@ -157,13 +166,13 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       localFeatures.helpers.writeFeatures(ellBFile,ellBFrames, descriptorsB);
       H = tf;
       save(tmpHFile,'H','-ASCII');
-      overlap_err_idx = round(obj.opts.overlapError*10);
+      overlap_err_idx = round(obj.Opts.overlapError*10);
 
       addpath(krisDir);
       rehash;
       [err, tmprepScore, tmpnumCorresp, matchScore, numMatches] ...
           = repeatability(ellAFile,ellBFile,tmpHFile,imageAPath,...
-              imageBPath,obj.opts.commonPart);
+              imageBPath,obj.Opts.commonPart);
       rmpath(krisDir);
 
       repScore = tmprepScore(overlap_err_idx)./100;
@@ -183,26 +192,26 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.opts);
+      signature = helpers.struct2str(obj.Opts);
     end
   end
 
-  methods (Access = protected)
+  methods (Access = protected, Hidden)
     function deps = getDependencies(obj)
       deps = {helpers.Installer(),benchmarks.helpers.Installer()};
     end
 
     function [srclist flags] = getMexSources(obj)
       import benchmarks.*;
-      path = IjcvOriginalBenchmark.installDir;
+      path = IjcvOriginalBenchmark.InstallDir;
       srclist = {fullfile(path,'c_eoverlap.cxx')};
       flags = {''};
     end
 
-    function [urls dstPaths] = getTarballsList(obj)
+    function [Urls dstPaths] = getTarballsList(obj)
       import benchmarks.*;
-      urls = {IjcvOriginalBenchmark.url};
-      dstPaths = {IjcvOriginalBenchmark.installDir};
+      Urls = {IjcvOriginalBenchmark.Url};
+      dstPaths = {IjcvOriginalBenchmark.InstallDir};
     end
   end
 end

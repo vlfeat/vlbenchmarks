@@ -1,8 +1,8 @@
 classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
-% IBR Intensity extrema-based region detector
-%   IBR('OptionName',OptionValue,...) Constructs wrapper around intensity
-%   extrema-based detector binary [1] [2] used is downlaoded from:
+% localFeatures.Ibr Intensity extrema-based region detector
+%   localFeatures.Ibr('OptionName',OptionValue,...) Constructs wrapper around
+%   intensity extrema-based detector binary [1] [2] used is downlaoded from:
 %
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ibr.ln.gz
 %
@@ -27,9 +27,11 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
 %   [2] T. Tuytelaars, L. Van Gool. Matching Widely Seprated Views based on
 %   Affine Invariant Regions. IJCV 59(1):61-85, 2004.
 
+% Authors: Karel Lenc
+
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
-    opts = struct(...
+    Opts = struct(...
       'scalefactor', -1,...
       'numberofregions', -1,...
       'stabilitythreshold', -1,...
@@ -38,7 +40,7 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
 
   properties (Constant)
     rootInstallDir = fullfile('data','software','ibr','');
-    binPath = fullfile(localFeatures.Ibr.rootInstallDir,'ibr.ln');
+    BinPath = fullfile(localFeatures.Ibr.rootInstallDir,'ibr.ln');
     softwareUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/ibr.ln.gz';
   end
 
@@ -51,12 +53,12 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
           error('Arch: %s not supported by EBR',machineType);
       end
-      obj.name = 'IBR';
-      obj.detectorName = obj.name;
+      obj.Name = 'IBR';
+      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
-      varargin = obj.configureLogger(obj.name,varargin);
+      varargin = obj.configureLogger(obj.Name,varargin);
       % Parse the passed options
-      obj.opts = vl_argparse(obj.opts,varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
     end
 
     function [frames] = extractFeatures(obj, imagePath)
@@ -69,18 +71,18 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
 
       tmpName = tempname;
       framesFile = [tmpName '.feat'];
-      fields = fieldnames(obj.opts);
+      fields = fieldnames(obj.Opts);
       args = '';
       for i = numel(fields)
         field = fields{i};
-        val = obj.opts.(field);
+        val = obj.Opts.(field);
         if val >= 0
           args = strcat(args,' -',field,' ', num2str(val));
         end
       end
       args = sprintf('%s "%s" "%s"',...
                      args, imagePath, framesFile);
-      cmd = [obj.binPath ' ' args];
+      cmd = [obj.BinPath ' ' args];
       [status,msg] = system(cmd,'-echo');
       if status ~= 1
         error('%d: %s: %s', status, cmd, msg) ;
@@ -94,8 +96,8 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.binPath) ';'... 
-              helpers.struct2str(obj.opts)];
+      sign = [helpers.fileSignature(obj.BinPath) ';'... 
+              helpers.struct2str(obj.Opts)];
     end
   end
 
@@ -109,7 +111,7 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
     function compile(obj)
       import localFeatures.*;
       % When unpacked, ibr is not executable
-      helpers.setFileExecutable(Ibr.binPath);
+      helpers.setFileExecutable(Ibr.BinPath);
     end
   end % ---- end of static methods ----
 end % ----- end of class definition ----
