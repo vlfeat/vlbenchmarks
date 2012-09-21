@@ -1,19 +1,20 @@
 classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 % localFeatures.VlFeatCovdet VLFeat vl_covdet wrapper
-%   VlFeatCovdet('OptionName',OptionValue,...) Creates new object which
-%   wraps around VLFeat covariant image frames detector. All given options
-%   defined in the constructor are passed directly to the vl_covdet 
-%   function when called.
+%   VlFeatCovdet('OptionName',OptionValue,...) creates new object
+%   which wraps around VLFeat covariant image frames detector. All
+%   given options defined in the constructor are passed directly to
+%   the vl_covdet function when called.
 %
 %   The options to the constructor are the same as that for vl_covdet
 %   See help vl_covdet to see those options and their default values.
 %
-%   See also: vl_covdet
+%   See also: VL_COVDET().
 
 % Authors: Karel Lenc, Varun Gulshan
 
 % AUTORIGHTS
+
   properties (SetAccess=public, GetAccess=public)
     Opts
     VlCovdetArguments
@@ -23,9 +24,9 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
   methods
     function obj = VlFeatCovdet(varargin)
       import helpers.*;
-      % def. arguments
+      % default arguments
       vlArgs.method = 'DoG';
-      vlArgs.affineAdaptation = false;
+      vlArgs.affineAdaptation = false ;
       [vlArgs, drop] = vl_argparse(vlArgs,varargin);
       obj.Name = ['VLFeat ' vlArgs.method];
       if vlArgs.affineAdaptation, obj.Name = [obj.Name '-affine']; end
@@ -58,10 +59,10 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
+                getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, descriptors);
     end
-    
+
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
       numValues = size(frames,1);
       if numValues < 3 || numValues > 6
@@ -80,7 +81,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       obj.info('Computing descriptors of %d frames.',size(frames,2));
       startTime = tic;
       [frames descriptors] = vl_covdet(image, 'Frames', frames,...
-          'AffineAdaptation',hasAffineShape,'Orientation', hasOrientation);
+          'EstimateAffineShape',hasAffineShape,'EstiamteOrientation', hasOrientation);
       timeElapsed = toc(startTime);
       obj.debug('Descriptors of %d frames computed in %gs',...
         size(frames,2),timeElapsed);
