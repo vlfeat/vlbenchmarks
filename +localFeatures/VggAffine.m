@@ -152,10 +152,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       import localFeatures.*;
       magFactor = 1;
       tmpName = tempname;
-      if isempty(frames)
-        descriptors = [];
-        return;
-      end
+      if isempty(frames), descriptors = []; return; end;
       if size(frames,1) ~= 5
         frames = helpers.frameToEllipse(frames);
       end
@@ -168,6 +165,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
         isVisible = benchmarks.helpers.isEllipseInBBox(imgbox,magFrames);
         frames = frames(:,isVisible);
       end
+      if isempty(frames), descriptors = []; return; end;
 
       if obj.Opts.magnification ~= obj.BuiltInMagnification
         % Magnify the frames accordnig to set magnif. factor
