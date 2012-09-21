@@ -71,7 +71,7 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       end
       
       [frames descriptors] = vl_ubcread(featFile,'format','oxford');
-      delete(featFile);
+      delete(featFile); delete(imgFile);
       
       timeElapsed = toc(startTime);
       obj.debug(sprintf('Features from image %s computed in %gs',...

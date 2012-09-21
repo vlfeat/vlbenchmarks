@@ -211,7 +211,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
       obj.debug('Descriptors computed in %gs',elapsedTime);
-      delete(outDescFile);
+      delete(outDescFile); delete(framesFile);
       if imIsTmp, delete(imagePath); end;
     end
 
