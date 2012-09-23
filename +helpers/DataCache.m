@@ -52,13 +52,19 @@ classdef DataCache
       dataFile = DataCache.buildDataFileName(key);
 
       if exist(dataFile,'file')
-        packedData = load(dataFile,'packedData');
-        packedData = packedData.packedData;
-        if packedData.key == key
-          DataCache.updateModificationDate(dataFile);
-          data = packedData.data;
-        else
-          warning(strcat('Data collision for ',key));
+        try
+          packedData = load(dataFile,'packedData');
+          packedData = packedData.packedData;
+          if packedData.key == key
+            DataCache.updateModificationDate(dataFile);
+            data = packedData.data;
+          else
+            warning('Data collision for %s',key);
+            DataCache.removeData(key);
+            data = [];
+          end
+        catch err
+          warning('Invalid data for key %s:\n%s',key,getReport(err));
           DataCache.removeData(key);
           data = [];
         end
