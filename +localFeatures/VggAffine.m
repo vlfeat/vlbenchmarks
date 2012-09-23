@@ -173,10 +173,24 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
         magFactor = magFactor ^ 2;
         frames(3:5,:) = frames(3:5,:) .* magFactor;
       end
+      
+      % Prevent segmentation fault when only 1 frame present
+      oneFrameHack = false;
+      if size(frames,2) == 1
+        % Insert a dummy frame
+        frames = [frames [1;1;1;0;1]];
+        oneFrameHack = true;
+      end
 
       framesFile = [tmpName '.frames'];
       helpers.writeFeatures(framesFile,frames,[],'Format','oxford');
       [frames descriptors] = obj.computeDescriptors(imagePath,framesFile);
+      delete(framesFile);
+
+      if oneFrameHack
+        frames = frames(:,1:end-1);
+      end
+
       if obj.Opts.magnification ~= obj.BuiltInMagnification
         % Resize the frames back to their size
         frames(3:5,:) = frames(3:5,:) ./ magFactor;
@@ -199,7 +213,7 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
 
       if obj.Opts.noAngle
         descrArgs = strcat(descrArgs,' -noangle');
-      end             
+      end
       descrCmd = [obj.DescrBinPath ' ' descrArgs];
       obj.info('Computing descriptors.');
       obj.debug('Executing: %s',descrCmd);
@@ -207,11 +221,11 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       [status,msg] = system(descrCmd);
       elapsedTime = toc(startTime);
       if status
-        error('%d: %s: %s', status, descrCmd, msg) ;
+        error('Computing descriptors failed.\nOffending command: %s\n%s',descrCmd, msg);
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
       obj.debug('Descriptors computed in %gs',elapsedTime);
-      delete(outDescFile); delete(framesFile);
+      delete(outDescFile);
       if imIsTmp, delete(imagePath); end;
     end
 
