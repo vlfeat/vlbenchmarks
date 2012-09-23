@@ -18,11 +18,19 @@ classdef YaelInstaller < helpers.GenericInstaller
     glnxA64url = 'https://gforge.inria.fr/frs/download.php/30399/yael_matlab_linux64_v277.tar.gz';
     maciA64url = 'https://gforge.inria.fr/frs/download.php/30399/yael_matlab_linux64_v277.tar.gz';
     srcurl = 'https://gforge.inria.fr/frs/download.php/30394/yael_v277.tar.gz';
-    
+
     mexDir = fullfile(helpers.YaelInstaller.installDir,'matlab');
     distMetricParamMap = containers.Map(...
       {'L1','L2','CHI2','ACHI2','HI','DP','L20','DPO'},...
       {1,2,3,4,5,6,12,16});
+  end
+
+  methods
+    function obj = YaelInstaller()
+      if obj.isInstalled()
+        obj.setup();
+      end
+    end
   end
 
   methods (Access=protected)
