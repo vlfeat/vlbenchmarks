@@ -8,8 +8,8 @@ classdef GenericTransfDataset < datasets.GenericDataset
   properties (SetAccess=protected, GetAccess=public)
     % Setting these properties is not mandatory however are usefull in 
     % functions for plotting results.
-    imageNames % Labels of images, e.g. degree of transformation
-    imageNamesLabel % Label of image names, e.g. type of transformation
+    ImageNames % Labels of images, e.g. degree of transformation
+    ImageNamesLabel % Label of image names, e.g. type of transformation
   end
 
   methods(Abstract)

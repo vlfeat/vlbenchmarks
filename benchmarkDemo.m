@@ -74,12 +74,7 @@ dataset = VggAffineDataset('category','graf');
 % parameters. The defaults correspond to the seetting in the original
 % publication (IJCV05).
 
-repBenchmark = RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,... % Do create one-to-one matches from overlaps
-  'MatchFramesDescriptors',false,... % Do not use descriptors for matching
-  'CropFrames',true,... % Crop the frames out of overlap regions
-  'NormaliseFrames',true,... % Normalise frame scale
-  'OverlapError',0.4); % Maximal overlap error for frame match
+repBenchmark = RepeatabilityBenchmark('Mode','Repeatability');
 
 % Prepare three detectors, the two from PART 1 and a third one that
 % simply detects features on a grid.
@@ -200,19 +195,14 @@ detectors{3} = DescriptorAdapter(siftDetector,meanVarMedianDescExtractor);
 % We create a benchmark object and run the tests as before, but in
 % this case we request that descriptor-based matched should be tested.
 
-matchBenchmark = RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,...
-  'MatchFramesDescriptors',true,... % Match both geometry and descriptors
-  'CropFrames',true,...
-  'NormaliseFrames',true,...
-  'OverlapError',0.4);
+matchBenchmark = RepeatabilityBenchmark('Mode','MatchingScore');
 
 matchScore = [] ;
 numMatches = [] ;
 for d = 1:numel(detectors)
   for i = 2:dataset.NumImages
     [matchScore(d,i) numMatches(d,i)] = ...
-      repBenchmark.testDetector(detectors{d}, ...
+      matchBenchmark.testDetector(detectors{d}, ...
                                 dataset.getTransformation(i), ...
                                 dataset.getImagePath(1), ...
                                 dataset.getImagePath(i)) ;
