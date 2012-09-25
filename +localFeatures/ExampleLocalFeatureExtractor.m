@@ -43,10 +43,6 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
       obj.ExtractsDescriptors = true;
       % Name of the features extractor
       obj.Name = 'Example detector';
-      % Name of the feature frames detector
-      obj.DetectorName = 'Grid Frames';
-      % Name of descriptor extractor
-      obj.DescriptorName = 'Example descriptor';
       % Because this class inherits methods from helpers.GenericInstalles
       % we can test whether this detector is installed
       varargin = obj.checkInstall(varargin);

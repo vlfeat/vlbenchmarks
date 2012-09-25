@@ -20,7 +20,6 @@ classdef CvStar < localFeatures.GenericLocalFeatureExtractor & ...
   methods
     function obj = CvStar(varargin)
       obj.Name = 'OpenCV STAR';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.CvStarArguments = obj.configureLogger(obj.Name,varargin);

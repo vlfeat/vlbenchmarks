@@ -20,8 +20,6 @@ classdef CvSift < localFeatures.GenericLocalFeatureExtractor & ...
   methods
     function obj = CvSift(varargin)
       obj.Name = 'OpenCV SIFT';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = obj.Name;
       obj.ExtractsDescriptors = true;
       varargin = obj.checkInstall(varargin);
       varargin = obj.configureLogger(obj.Name,varargin);

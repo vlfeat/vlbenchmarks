@@ -34,8 +34,6 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     function obj = CmpBinHessian(varargin)
       import localFeatures.*;
       obj.Name = 'CMP Hessian Affine (bin)';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = 'CMP SIFT (bin)';
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -63,8 +61,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
           getFileName(origImagePath));
       end
       % Write image in correct format
-      [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
-        obj.supportedImageFormats);
+      [imagePath imIsTmp] = obj.ensureImageFormat(origImagePath);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
       featFile = [imagePath '.hesaff.sift'];
       args = sprintf(' "%s" ',imagePath);

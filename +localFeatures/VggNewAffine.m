@@ -69,8 +69,6 @@ classdef VggNewAffine < localFeatures.GenericLocalFeatureExtractor
           error('Invalid detector type: %s\n',obj.Opts.detector);
       end
       obj.Name = ['newVGG' obj.Opts.detector '-affine'];
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = 'newVGG SIFT';
       obj.ExtractsDescriptors = true;
     end
 

@@ -7,7 +7,7 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
 %   genericLocalFeatureExtractor. The name of the created loc. feat. extractor
 %   is:
 %
-%     OBJ.Name = [FRAME_DET.DetectorName '+' DESC_EXTRACT.DescriptorName]
+%     OBJ.Name = [FRAME_DET.Name ' + ' DESC_EXTRACT.Name]
 %
 %   This class is mainly an convenience wrapper which handles the
 %   genericLocalFeatureExtractor methods and solves the issues of correct
@@ -37,10 +37,18 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
       end
       obj.FrameDetector = frameDetector;
       obj.DescExtractor = descExtractor;
-      obj.DetectorName = frameDetector.DetectorName;
-      obj.DescriptorName = descExtractor.DescriptorName;
-      obj.Name = [obj.DetectorName ' + ' obj.DescriptorName];
+      obj.Name = [frameDetector.Name ' + ' descExtractor.Name];
       obj.configureLogger(obj.Name,varargin);
+
+      obj.SupportedImgFormats = intersect(frameDetector.SupportedImgFormats,...
+        descExtractor.SupportedImgFormats);
+      % Handle the supported formats so double conversion is prevented
+      if isempty(obj.SupportedImgFormats) || ischar(obj.SupportedImgFormats) ...
+          || ismember('all',obj.SupportedImgFormats)
+        % When there is no intersection or both are all, set to all so no
+        % conversion is made in this class.
+        obj.SupportedImgFormats = 'all';
+      end
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
@@ -57,9 +65,12 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
       else
         obj.info('Computing frames and descriptors of image %s.',...
           getFileName(imagePath));
-        frames = obj.FrameDetector.extractFeatures(imagePath);
+        % Prevent to convert image twice.
+        [valImagePath imIsTmp] = obj.ensureImageFormat(imagePath);
+        frames = obj.FrameDetector.extractFeatures(valImagePath);
         [frames descriptors] = ...
-          obj.DescExtractor.extractDescriptors(imagePath, frames);
+          obj.DescExtractor.extractDescriptors(valImagePath, frames);
+        if imIsTmp, delete(valImagePath); end;
       end
       timeElapsed = toc(startTime);
       obj.debug('Features of image %s computed in %gs',...

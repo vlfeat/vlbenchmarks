@@ -23,6 +23,7 @@ classdef Installer < helpers.GenericInstaller
         LoweSift(noInstArgs{:}),...
         Sfop(noInstArgs{:}),...
         VggAffine(noInstArgs{:}),...
+        VggDescriptor(noInstArgs{:}),...
         VggMser(noInstArgs{:}),...
         VlFeatCovdet(noInstArgs{:}),...
         VlFeatMser(noInstArgs{:}),...
@@ -35,29 +36,22 @@ classdef Installer < helpers.GenericInstaller
       % CHECKDETECTORS Run all detectors. Before testing them all used
       % detectors must be installed calling localFeatures.install().
       import localFeatures.*;
-      randomDet = RandomFeaturesGenerator();
+      randomDet = RandomFeaturesGenerator('FeaturesDensity',2e-4);
       detectors = Installer().getDependencies();
       for detIdx = 1:numel(detectors)
         % Test frames detection
         detector = detectors{detIdx};
         if ~detector.isInstalled(), detector.install(); end;
         detector.disableCaching();
-        if ~isempty(detector.DetectorName)
+        if detector.ExtractsDescriptors
+          frames = randomDet.extractFeatures(imgPath);
+          [frames descs] = detector.extractDescriptors(imgPath,frames);
+          fprintf('%s - extracted %d frames and descriptors.\n',...
+            detector.Name, size(frames,2));
+        else
           frames = detector.extractFeatures(imgPath);
           fprintf('%s - extracted %d frames.\n',detector.Name, ...
             size(frames,2));
-
-          if ~isempty(detector.DescriptorName)
-            [frames descs] = detector.extractFeatures(imgPath);
-            fprintf('%s - extracted %d frames and descriptors.\n',...
-              detector.Name, size(frames,2));
-          end
-        end
-        if detector.ExtractsDescriptors
-          frames = randomDet.extractFeatures(imgPath);
-          [drop descs] = detector.extractDescriptors(imgPath, frames);
-          fprintf('%s - extracted %d descriptors from %d frames.\n',...
-            detector.Name, size(descs,2),size(frames,2));
         end
       end
     end

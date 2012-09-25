@@ -85,7 +85,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %   Mode:: 'Repeatability'
 %     Type of score to be calculated. Changes the criteria which are used
 %     for finding one-to-one matches between image features.
-%     
+%
 %     'Repeatability'
 %       Match frames geometry only. 
 %       Corresponds to detector repeatability measure in [1].
@@ -211,7 +211,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       import helpers.*;
 
       obj.info('Comparing frames from det. %s and images %s and %s.',...
-          detector.DetectorName,getFileName(imageAPath),...
+          detector.Name,getFileName(imageAPath),...
           getFileName(imageBPath));
 
       imageASign = helpers.fileSignature(imageAPath);

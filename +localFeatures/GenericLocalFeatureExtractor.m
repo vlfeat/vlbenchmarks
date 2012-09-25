@@ -41,6 +41,11 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 %   which supports enabling/disabling caching using methods 
 %   disableCaching() and enableCaching().
 %
+%   Constant property SupportedImageFormat is cell array of supported image
+%   formats extension. If you extractor supports same formats as Matlab's
+%   imread, keep it 'all'. This is used in descriptor adapter in order to
+%   prevent double image conversion (for detector and for descriptor).
+%
 %   See also: extractFeatures, extractDescriptors
 
 % Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
@@ -49,8 +54,6 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 
   properties (SetAccess=public, GetAccess=public)
     Name % General name of the feature extractor
-    DetectorName = '' % Particular name of the frames detector
-    DescriptorName = '' % Name of descriptor extr. algorithm
   end
 
   properties (SetAccess=protected, GetAccess = public)
@@ -58,6 +61,9 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     % If detector support desc. extraction of descriptors from provided
     % frames, set to true.
     ExtractsDescriptors = false;
+    % Supported image formats, 'all' when supporting all formats as imread
+    % or cell array of supported image formats.
+    SupportedImgFormats = 'all';
   end
 
   properties (Constant, Hidden)
@@ -205,7 +211,48 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
       end
       key = cell2str({prefix,detSignature,imageSignature});
     end
-
+    
+    function [imagePath isTemp] = ensureImageFormat(obj, imagePath)
+    % ENSUREIMAGEFORMAT Ensure that image format is supported
+    % NIMAGE_PATH = obj.ensureImageFormat(IMG_PATH) checks
+    %   whether image format, defined by its extension of IMG_PATH is
+    %   supported, i.e. the extension is in SUPPORTED. If not, new
+    %   temporary image '.ppm' or '.pgm' is created.
+    %   This script suppose that at least the '.pgm' format is supported.
+    % [NIMAGE_PATH IS_TMP] = obj.ensureImageFormat(IMG_PATH)
+    %   IS_TMP is true when temporary image is created as this image
+    %   should be deleted in the end.
+      import helpers.*;
+      isTemp = false;
+      if ischar(obj.SupportedImgFormats) ...
+          && strcmp(obj.SupportedImgFormats,'all')
+        return;
+      end
+      [path name ext] = fileparts(imagePath);
+      if ismember(ext, obj.SupportedImgFormats)
+        return;
+      else
+        isTemp = true;
+        % Create temporary image
+        tmpPath = fileparts(tempname);
+        tmpName = fullfile(tmpPath,[name ext]);
+        image = imread(imagePath);
+        if size(image,3) == 3
+          if ismember('.ppm',obj.SupportedImgFormats)
+            imagePath = [tmpName,'.ppm'];
+            helpers.writenetpbm(image, imagePath);
+          else
+            imagePath = [tmpName,'.pgm'];
+            image = rgb2gray(image);
+            helpers.writenetpbm(image, imagePath);
+          end
+        elseif size(image,3) == 1
+          imagePath = [tmpName,'.pgm'];
+          image = rgb2gray(image);
+          helpers.writenetpbm(image, imagePath);
+        end
+      end
+    end
   end % ------- end of methods --------
 
 end % -------- end of class ---------

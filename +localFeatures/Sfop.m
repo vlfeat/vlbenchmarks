@@ -34,7 +34,6 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = Sfop(varargin)
       import localFeatures.*;
       obj.Name = 'SFOP';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       obj.SfopArguments = obj.configureLogger(obj.Name,varargin);
     end

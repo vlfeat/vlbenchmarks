@@ -20,8 +20,6 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
   methods
     function obj = CvSurf(varargin)
       obj.Name = 'OpenCV SURF';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = obj.Name;
       obj.ExtractsDescriptors = true;
       varargin = obj.checkInstall(varargin);
       varargin = obj.configureLogger(obj.Name,varargin);

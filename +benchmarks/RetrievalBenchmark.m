@@ -37,7 +37,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       import helpers.*;
 
       obj.info('Evaluating detector %s on dataset %s.',...
-        detector.DetectorName, dataset.DatasetName);
+        detector.Name, dataset.DatasetName);
       startTime = tic;
 
       % Try to load data from cache

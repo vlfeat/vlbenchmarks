@@ -24,7 +24,6 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     % The varargin is passed directly to vl_mser
     function obj = VlFeatMser(varargin)
       obj.Name = 'VLFeat MSER';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       obj.vlMserArguments = obj.configureLogger(obj.Name,varargin);
       obj.BinPath = which('vl_mser');

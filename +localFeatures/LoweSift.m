@@ -17,8 +17,6 @@ classdef LoweSift < localFeatures.GenericLocalFeatureExtractor & ...
     function obj = LoweSift(varargin)
       import localFeatures.*;
       obj.Name = 'Lowe SIFT';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       obj.configureLogger(obj.Name,varargin);
       execDir = LoweSift.ExecDir;
