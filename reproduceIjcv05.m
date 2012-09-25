@@ -34,11 +34,11 @@ opts = helpers.vl_argparse(opts, varargin);
 %% Define Local features extractors
 % Create local features extractor such that each of them uses the same
 % algorithm and parameters for computing SIFT descriptors.
-descDet = VggAffine('CropFrames',true,'Magnification',3); % Descriptor calc.
-%detectors{1} = DescriptorAdapter(...
-%  VggAffine('Detector','haraff','Threshold',1000), descDet);
-%detectors{2} = DescriptorAdapter(...
-%  VggAffine('Detector','hesaff','Threshold',500), descDet);
+descDet = VggDescriptor('CropFrames',true,'Magnification',3); % Descriptor calc.
+detectors{1} = DescriptorAdapter(...
+  VggAffine('Detector','haraff','Threshold',1000), descDet);
+detectors{2} = DescriptorAdapter(...
+  VggAffine('Detector','hesaff','Threshold',500), descDet);
 detectors{1} = DescriptorAdapter(VggMser('es',1),descDet);
 %detectors{4} = DescriptorAdapter(Ibr('ScaleFactor',1),descDet);
 %detectors{5} = DescriptorAdapter(Ebr(),descDet);
@@ -192,8 +192,8 @@ for mf = 1:numel(magFactors)
   imageAPath = dataset.getImagePath(1);
   imageBPath = dataset.getImagePath(imageBIdx);
   H = dataset.getTransformation(imageBIdx);
-  parfor detectorIdx = 1:numDetectors
-    descrExtr = VggAffine('Magnification',magFactor);
+  for detectorIdx = 1:numDetectors
+    descrExtr = VggDescriptor('Magnification',magFactor);
     detector = DescriptorAdapter(detectors{detectorIdx},descrExtr);
     magnifScores(detectorIdx,mf) = ...
       matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
