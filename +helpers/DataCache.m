@@ -31,24 +31,30 @@ classdef DataCache
   %     clearCache() - Check the overall size of the cached data and delete
   %       last recently used data if exceedes.
   %     deleteAllCachedData() - Delete all cached data.
+  %     disableAutoClear() - temporarly disable autoclear. Cannot be called
+  %       in parallel function.
+  %     enableAutoClear() - enable autoClear after disableAutoClear. Cannot
+  %       be called in parallel function.
   
   properties (Constant)
     maxDataSize = 5000*1024^2; % Max. size of data in cache in Bytes
     dataPath = fullfile(pwd,'data','cache',''); % Cached data storage
     dataFileVersion = '-V7'; % Version of the .mat files stored
     autoClear = true; % Clear data cache automatically
-    lockCache = false; % Prevent removal of accessed data, for SMP
     disabled = false; % Disable caching
   end
-  
+
+  properties (Constant, Hidden)
+    % Path to file which represents temporary disabled auto clear.
+    LockFileName = fullfile(helpers.DataCache.dataPath,'.lock');
+  end
+
   methods (Static)
-    
     function data = getData(key)
       % data = GETDATA(key) Get data from the cache indexed by string key.
       %   If the data has not been found, returns [];
       import helpers.DataCache;
       if DataCache.disabled, data = []; return; end
-      DataCache.waitForUnlock();
       dataFile = DataCache.buildDataFileName(key);
 
       if exist(dataFile,'file')
@@ -77,7 +83,6 @@ classdef DataCache
       % STOREDATA(DATA,KEY) - Store data DATA identified by key KEY.
       import helpers.DataCache;
       import helpers.*;
-      DataCache.waitForUnlock();
       dataFile = DataCache.buildDataFileName(key);
       
       if ~exist(DataCache.dataPath,'dir')
@@ -89,7 +94,7 @@ classdef DataCache
       
       save(dataFile,'packedData',DataCache.dataFileVersion);
       
-      if DataCache.autoClear
+      if DataCache.autoClearEnabled()
         DataCache.clearCache();
       end
     end
@@ -97,7 +102,6 @@ classdef DataCache
     function removeData(key)
       % REMOVEDATA(KEY) - Remove data defined by KEY from the cache.
       import helpers.DataCache;
-      DataCache.waitForUnlock();
       dataFile = DataCache.buildDataFileName(key);
       if exist(dataFile,'file')
         delete(dataFile);
@@ -113,7 +117,6 @@ classdef DataCache
       %   DataCache.maxDataSize.
       import helpers.DataCache;
       maxDataSizeBytes = DataCache.maxDataSize;
-      DataCache.lock();
       
       dataFiles = dir(fullfile(DataCache.dataPath,'*.mat'));
       dataModDates = [dataFiles.datenum];
@@ -135,7 +138,6 @@ classdef DataCache
           delete(fullfile(DataCache.dataPath,fileName{:}));
         end
       end
-      DataCache.unlock();
     end
 
     function deleteAllCachedData()
@@ -144,10 +146,29 @@ classdef DataCache
       fprintf('Deleting all cached data...\n');
       delete(fullfile(DataCache.dataPath,'*.mat'));
     end
+
+    function disableAutoClear()
+      % disableAutoClear Temporarly disable cache auto clear.
+      %   If DataCache.autoClear = false, this function has no effect. This
+      %   function cannot be called in parallel part of the code.
+      import helpers.DataCache;
+      if DataCache.autoClear
+        % Create lock file.
+        lockFile = fopen(DataCache.LockFileName,'w');
+        fclose(lockFile);
+      end
+    end
+
+    function enableAutoClear()
+      % enableAutoClear Enable auto clear after calling disableAutoClear.
+      import helpers.DataCache;
+      if exist(DataCache.LockFileName,'file')
+        delete(DataCache.LockFileName); 
+      end
+    end
   end
-  
+
   methods (Static, Access=protected)
-    
     function dataFile = buildDataFileName(key)
       import helpers.*;
       hash = CalcMD5.CalcMD5(key);
@@ -157,52 +178,11 @@ classdef DataCache
     function updateModificationDate(fileName)
       helpers.touch(fileName);
     end
-    
-    function lock()
-      import helpers.DataCache;
-      if DataCache.lockCache
-        lockFileName = strcat('.lock');
-        lockFile = fopen(lockFileName,'w');
-        fclose(lockFile);
-      end
-    end
-    
-    function unlock()
-      import helpers.DataCache;
-      if DataCache.lockCache
-        lockFileName = strcat('.lock');
-        if exist(lockFileName,'file')
-          delete(lockFileName); 
-        end
-      end
-    end
-    
-    function locked = isLocked()
-      import helpers.DataCache;
-      if DataCache.lock
-        lockFileName = strcat('.lock');
-        locked = exist(lockFileName,'file');
-      else
-        locked = false;
-      end
-    end
 
-    function waitForUnlock()
-      import helpers.*;
-      if ~DataCache.lockCache, return; end;
-      maxWaitTime = 10*60;
-      waitTime = 0;
-      fprintf('Cache locked. Waiting.\n');
-      while DataCache.isLocked()
-        pause(1)
-        waitTime = waitTime + 1;
-        if waitTime > maxWaitTime
-          warning('Data cache is locked for too long. Unlock forced.');
-          DataCache.unlock();
-        end
-      end
+    function locked = autoClearEnabled()
+      import helpers.DataCache;
+      locked = DataCache.autoClear && ~exist(DataCache.LockFileName,'file');
     end
   end
-  
 end
 

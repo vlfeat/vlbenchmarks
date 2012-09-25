@@ -79,6 +79,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       [frames descriptors] = obj.getAllDatasetFeatures(dataset, detector);
 
       % Compute average precisions
+      helpers.DataCache.disableAutoClear();
       parfor q = nonComputedQueries
         obj.info('Computing query %d/%d.',q,numQueries);
         query = dataset.getQuery(q);
@@ -87,6 +88,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
           DataCache.storeData(queriesAp(q), queryResKeys{q});
         end
       end
+      helpers.DataCache.enableAutoClear();
 
       mAP = mean(queriesAp);
       obj.debug('mAP computed in %fs.',toc(startTime));
@@ -165,12 +167,14 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
         frames = cell(numImages,1);
         descriptors = cell(numImages,1);
         featStartTime = tic;
+        helpers.DataCache.disableAutoClear();
         parfor imgNo = 1:numImages
           obj.info('Computing features of image %d/%d.',imgNo,numImages);
           imagePath = dataset.getImagePath(imgNo);
           [frames{imgNo} descriptors{imgNo}] = ...
             detector.extractFeatures(imagePath);
         end
+        helpers.DataCache.enableAutoClear();
         obj.debug('Features computed in %fs.',toc(featStartTime));
         if detector.UseCache
           DataCache.storeData({frames, descriptors},featuresKey);
