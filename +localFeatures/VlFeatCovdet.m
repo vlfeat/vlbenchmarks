@@ -17,7 +17,6 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
   properties (SetAccess=public, GetAccess=public)
     VlCovdetArguments
-    BinPath
   end
 
   methods
@@ -25,7 +24,6 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       obj.Name = 'VLFeat Covdet';
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.VlCovdetArguments = obj.checkInstall(varargin);
-      obj.BinPath = {which('vl_covdet') which('libvl.so')};
       obj.ExtractsDescriptors = true;
     end
 
@@ -67,7 +65,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+      sign = [helpers.VlFeatInstaller.getBinSignature('vl_covdet'),...
               helpers.cell2str(obj.VlCovdetArguments)];
     end
   end
