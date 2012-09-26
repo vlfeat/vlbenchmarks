@@ -1,4 +1,4 @@
-function my()
+function testVLFeatCovdet(testDescriptors)
 % BENCHMARKDEMO Demonstrates how to run the feature repatability benchmark
 
 % Author: Karel Lenc and Andrea Vedaldi
@@ -12,8 +12,9 @@ import benchmarks.*;
 
 dataset = VggAffineDataset('category','graf');
 
-testDescriptors = false ;
-testDescriptors = true ;
+if nargin < 1
+  testDescriptors = false ;
+end
 
 repBenchmark = RepeatabilityBenchmark(...
   'MatchFramesGeometry',true,...
