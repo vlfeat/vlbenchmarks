@@ -21,14 +21,11 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %   Images which are not present in these three sets are considered to
 %   be in a 'bad' set, i.e. object is not present.
 %
-%   This class allows to pick only a susbset of the database by
-%   defining the 'Lite' parameter to true. In this case, all images
-%   from query sets 'good' and 'ok' are preserved together with a
-%   subset of 'junk' sets (defined by 'LiteJunkImagesNum' parameter).
-%   This limits the number of irrelevant images for each query
-%   therefore improves the retrieval performance. Main purpose of the
-%   lite dataset is to limit number of images and therefore make the
-%   testing faster.
+%   The dataset object can be also created only with a subset of images by
+%   definition of '<catgory name>ImagesNum'. When all of these values are
+%   set to inf, whole original dataset is used.
+%
+%   Note that when aby subset is used, the image indexes changes.
 %
 %   Downloaded data are parsed and a database of the images and
 %   queries is created and on default is cached. However the validity
@@ -41,25 +38,19 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %   Category :: 'oxbuild'
 %     Dataset category. Available are 'oxbuild'.
 %
-%   Lite :: true 
-%     Use only a subset of the whole database. The subset is generated
-%     based on 'liteGoodImagesNum', 'liteOkImagesNum',
-%     'liteJunkImagesNum', 'liteBadImagesNum' and 'samplingRngSeed'
-%     which defines the seed for random samples generator.
-%
-%   LiteGoodImagesNum :: inf
+%   GoodImagesNum :: inf
 %     Number of 'Good' images preserved in the databse. When inf, all
 %     images preserved.
 %
-%   LiteOkImagesNum :: inf
+%   OkImagesNum :: inf
 %     Number of 'ok' images preserved in the databse. When inf, all
 %     images preserved.
 %
-%   LiteJunkImagesNum :: inf
+%   JunkImagesNum :: inf
 %     Number of 'junk' images preserved in the databse. When inf, all
 %     images preserved.
 %
-%   LiteBadImagesNum :: 100
+%   BadImagesNum :: 100
 %     Number of 'junk' images preserved in the databse. When inf, all
 %     images preserved.
 %
@@ -84,11 +75,10 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     % Dataset options
     Opts = struct(...
       'category','oxbuild',...
-      'lite',true,...
-      'liteGoodImagesNum',inf,...
-      'liteOkImagesNum',inf,...
-      'liteJunkImagesNum',inf,...
-      'liteBadImagesNum',100,...
+      'goodImagesNum',inf,...
+      'okImagesNum',inf,...
+      'junkImagesNum',inf,...
+      'badImagesNum',100,...
       'samplingSeed',1,...
       'cacheDatabase',true);
     ImagesDir;  % Directory with current category images
@@ -125,9 +115,6 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
              obj.Opts.category));
       obj.DatasetName = ['VggRetrievalDataset-' obj.Opts.category];
-      if obj.Opts.lite
-        obj.DatasetName = [obj.DatasetName '-lite'];
-      end
       varargin = obj.configureLogger(obj.DatasetName, varargin);
       obj.checkInstall(varargin);
       obj.ImagesDir = fullfile(obj.RootInstallDir,obj.Opts.category,'');
@@ -259,7 +246,11 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
           sprintf('%s_junk.txt',name)), '%s'))' ;
       end
 
-      if obj.Opts.lite
+      useSubset = ~isinf(obj.Opts.goodImagesNum) ...
+        || ~isinf(obj.Opts.okImagesNum) ...
+        || ~isinf(obj.Opts.junkImagesNum) ...
+        || ~isinf(obj.Opts.badImagesNum);
+      if useSubset
         allGoodImages = [queries(:).good];
         allOkImages = [queries(:).ok];
         allJunkImages = [queries(:).junk];
@@ -269,18 +260,18 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 
         % Pick random samples from the images based on the class settings
         goodImages = ...
-          obj.sampleArray(allGoodImages,obj.Opts.liteGoodImagesNum);
+          obj.sampleArray(allGoodImages,obj.Opts.goodImagesNum);
         okImages = ...
-          obj.sampleArray(allOkImages,obj.Opts.liteOkImagesNum);
+          obj.sampleArray(allOkImages,obj.Opts.okImagesNum);
         junkImages = ...
-          obj.sampleArray(allJunkImages,obj.Opts.liteJunkImagesNum);
+          obj.sampleArray(allJunkImages,obj.Opts.junkImagesNum);
         badImages = ...
-          obj.sampleArray(allBadImages,obj.Opts.liteBadImagesNum);
+          obj.sampleArray(allBadImages,obj.Opts.badImagesNum);
 
         pickedImages = [allQueriesImages, goodImages, okImages, ...
           junkImages, badImages];
         pickedImages = unique(pickedImages);
-        obj.debug('Number of Lite images: %d',numel(pickedImages));
+        obj.debug('Size of the images subset: %d',numel(pickedImages));
         
         % Change the queries for the picked image subset
         map = zeros(1,numImages);

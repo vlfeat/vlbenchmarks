@@ -27,6 +27,7 @@ classdef DataCache
   %     data = getData(key) - Get data from the cache indexed by string
   %       key. If the data has not been found, returns [];
   %     storeData(data,key) - Store data identified by key.
+  %     hasData(key) - Check whether data are cached
   %     removeData(key) - Remove data from the cache.
   %     clearCache() - Check the overall size of the cached data and delete
   %       last recently used data if exceedes.
@@ -51,8 +52,8 @@ classdef DataCache
 
   methods (Static)
     function data = getData(key)
-      % data = GETDATA(key) Get data from the cache indexed by string key.
-      %   If the data has not been found, returns [];
+      % DATA = getData(KEY) Get DATA from the cache indexed by string KEY.
+      %   If the data has not been found, returns DATA = [];
       import helpers.DataCache;
       if DataCache.disabled, data = []; return; end
       dataFile = DataCache.buildDataFileName(key);
@@ -79,8 +80,18 @@ classdef DataCache
       end
     end
 
+    function res = hasData(key)
+      % DATA = hasData(KEY) Check whether data cached with KEY are present
+      %   in the cache. Does not load the data from cache
+      import helpers.DataCache;
+      if DataCache.disabled, data = []; return; end
+      dataFile = DataCache.buildDataFileName(key);
+
+      res = exist(dataFile,'file');
+    end
+
     function storeData(data, key)
-      % STOREDATA(DATA,KEY) - Store data DATA identified by key KEY.
+      % storeData(DATA,KEY) - Store data DATA identified by key KEY.
       import helpers.DataCache;
       import helpers.*;
       dataFile = DataCache.buildDataFileName(key);
@@ -100,7 +111,7 @@ classdef DataCache
     end
 
     function removeData(key)
-      % REMOVEDATA(KEY) - Remove data defined by KEY from the cache.
+      % removeData(KEY) - Remove data defined by KEY from the cache.
       import helpers.DataCache;
       dataFile = DataCache.buildDataFileName(key);
       if exist(dataFile,'file')
@@ -112,7 +123,7 @@ classdef DataCache
     end
 
     function clearCache()
-      %CLEACACHE() - Check the overall size of the cached data and delete
+      %clearCache() - Check the overall size of the cached data and delete
       %   last recently used data if it exceedes the allowed size 
       %   DataCache.maxDataSize.
       import helpers.DataCache;
@@ -141,14 +152,14 @@ classdef DataCache
     end
 
     function deleteAllCachedData()
-      % DELETEALLCACHEDDATA() Delete all cached data
+      % deleteAllCachedData() Delete all cached data
       import helpers.*;
       fprintf('Deleting all cached data...\n');
       delete(fullfile(DataCache.dataPath,'*.mat'));
     end
 
     function disableAutoClear()
-      % disableAutoClear Temporarly disable cache auto clear.
+      % disableAutoClear() Temporarly disable cache auto clear.
       %   If DataCache.autoClear = false, this function has no effect. This
       %   function cannot be called in parallel part of the code.
       import helpers.DataCache;
@@ -160,7 +171,7 @@ classdef DataCache
     end
 
     function enableAutoClear()
-      % enableAutoClear Enable auto clear after calling disableAutoClear.
+      % enableAutoClear() Enable auto clear after calling disableAutoClear.
       import helpers.DataCache;
       if exist(DataCache.LockFileName,'file')
         delete(DataCache.LockFileName); 
