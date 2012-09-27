@@ -72,7 +72,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       if status ~= 0
         error('VLFeat compilation was not succesfull.\n');
       end
-	  obj.setup();
+	    obj.setup();
     end
 
     function res = isCompiled(obj)
