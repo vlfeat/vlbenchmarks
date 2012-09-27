@@ -25,7 +25,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     rootInstallDir = fullfile('data','software','cmpBinHessian','');
     url = 'http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09';
     binName = 'haff_cvpr09';
-    SupportedImageFormats = {'.ppm','.pgm'};
+    SupportedImgFormats = {'.ppm','.pgm'};
   end
 
   methods
