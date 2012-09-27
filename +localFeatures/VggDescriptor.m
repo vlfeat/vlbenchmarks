@@ -46,6 +46,9 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
     DescrBinPath = fullfile(localFeatures.VggDescriptor.BinDir,'compute_descriptors.ln');
     DescUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/compute_descriptors.ln.gz'
     BuiltInMagnification = 3;
+    % This old binary tends to segfault sometimes, number of repetetive
+    % executions.
+    BinExecNumTrials = 5; 
   end
 
   methods
@@ -144,9 +147,17 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
       end
       descrCmd = [obj.DescrBinPath ' ' descrArgs];
       obj.info('Computing descriptors.');
-      obj.debug('Executing: %s',descrCmd);
       startTime = tic;
-      [status,msg] = system(descrCmd);
+      status = 1; numTrials = obj.BinExecNumTrials;
+      while status ~= 0 && numTrials > 0
+        obj.debug('Executing: %s',descrCmd);
+        [status,msg] = system(descrCmd);
+        if status == 130, break; end; % Handle Cntl-C
+        if status 
+          obj.warn('Command %s failed. Trying to rerun.',descrCmd);
+        end
+        numTrials = numTrials - 1;
+      end
       elapsedTime = toc(startTime);
       if status
         error('Computing descriptors failed.\nOffending command: %s\n%s',descrCmd, msg);
