@@ -53,7 +53,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       if obj.UseCache
         results = DataCache.getData(resultsKey);
         if ~isempty(results)
-          [mAP, queriesAp] = results{:};
+          [mAP, queriesAp, rankedLists, votes, numDescriptors]=results{:};
           obj.debug('Results loaded from cache.');
           return;
         end
