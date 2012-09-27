@@ -17,11 +17,15 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
   properties (SetAccess=public, GetAccess=public)
     VlCovdetArguments
+    Format
   end
 
   methods
     function obj = VlFeatCovdet(varargin)
       obj.Name = 'VLFeat Covdet';
+      conf.format = 'float' ;
+      [conf, varargin] = vl_argparse(conf, varargin) ;
+      obj.Format = conf.format ;
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.VlCovdetArguments = obj.checkInstall(varargin);
       obj.ExtractsDescriptors = true;
@@ -41,7 +45,12 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       else
         obj.info('Computing frames and descriptors of image %s.',...
                  getFileName(imagePath));
-        [frames descriptors] = vl_covdet(img, obj.VlCovdetArguments{:});
+        [frames descriptors] = vl_covdet(img, 'verbose', obj.VlCovdetArguments{:});
+        switch obj.Format
+          case 'float'
+          case 'uint8'
+            descriptors = uint8(512 * descriptors) ;
+        end
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
