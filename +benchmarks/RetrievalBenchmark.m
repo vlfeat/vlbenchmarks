@@ -128,7 +128,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
           obj.computeAp(allQKnns, allQKnnDists, numDescriptors, query);
         obj.info('Average precision of query %d: %f',q,queriesAp(q));
       end
-      
+
       mAP = mean(queriesAp);
       obj.debug('mAP computed in %fs.',toc(startTime));
       obj.info('Computed mAP is: %f',mAP);
@@ -145,7 +145,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       obj.info('Computing query descriptors.');
       numQueries = dataset.NumQueries;
       qDescriptors = cell(1,numQueries);
-      for q=1:numQueries
+      parfor q=1:numQueries
         query = dataset.getQuery(q);
         imgPath = dataset.getImagePath(query.imageId);
         [qFrames qDescriptors{q}] = detector.extractFeatures(imgPath);
