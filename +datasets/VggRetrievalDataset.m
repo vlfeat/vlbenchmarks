@@ -278,9 +278,15 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         map(pickedImages) = 1:numel(pickedImages);
         for i=1:numel(queries)
           queries(i).imageId = map([queries(i).imageId]);
+          if queries(i).imageId == 0
+            error('Query image must be a part of the dataset.')
+          end
           queries(i).good = map([queries(i).good]);
+          queries(i).good = queries(i).good(queries(i).good~=0);
           queries(i).ok = map([queries(i).ok]);
+          queries(i).ok = queries(i).ok(queries(i).ok~=0);
           queries(i).junk = map([queries(i).junk]);
+          queries(i).junk = queries(i).junk(queries(i).junk ~= 0);
         end
         images.id = 1:numel(pickedImages);
         images.names = images.names(pickedImages);

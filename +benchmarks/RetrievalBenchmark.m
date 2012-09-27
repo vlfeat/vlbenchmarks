@@ -2,16 +2,34 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
 %RETREIVALBENCHMARK
 %
+%   Object constructor accepts the following options:
+%
+%   K :: 50
+%     Number of descriptor nearest neighbours used for the retrieval.
+%
+%   DistMetric ::
+%     Distance metric used by the KNN algorithm.
+%
+%   MaxNumImagesPerSearch :: 1000
+%     Maimal number of images which descriptors are in the database. If the
+%     number of images in dataset is bigger, it is divided into several
+%     chunks.
+%     Decrease this number if your computer is runing out of memory.
+%
+%
 % REFERENCES
-% [1] H. Jegou, M. Douze and C. Schmid,
-%     Exploiting descriptor distances for precise image search,
-%     Research report, INRIA 2011
-%     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
+%   [1] H. Jegou, M. Douze and C. Schmid,
+%       Exploiting descriptor distances for precise image search,
+%       Research report, INRIA 2011
+%       http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
+%
+%   [2] J. Philbin, O. Chum, M. Isard, J. Sivic and A. Zisserman.
+%       Object retrieval with large vocabularies and fast spatial 
+%       matching CVPR, 2007
 
 % Authors: Karel Lenc, Relja Arandjelovic
 
 % AUTORIGHTS
-
   properties
     Opts = struct(...
       'k', 50,...
@@ -152,7 +170,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       votes = votes./sqrt(max(numDescriptors',1));
       [votes, rankedList]= sort(votes, 'descend'); 
 
-      ap = obj.philbinComputeAp(query, rankedList);
+      ap = obj.rankedListAp(query, rankedList);
     end
 
     function [queriesKnns, queriesKnnDists numDescriptors] = ...
@@ -313,16 +331,14 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
   end
 
   methods(Static)
-    function [precision recall info] = calcPR(query, scores)
-      y = - ones(1, numel(scores)) ;
-      y(query.good) = 1 ;
-      y(query.ok) = 1 ;
-      y(query.junk) = 0 ;
-      y(query.imageId) = 0 ;
-      [precision recall info] = vl_pr(y, scores);
-    end
-    
-    function ap = philbinComputeAp(query, rankedList)
+    function ap = rankedListAp(query, rankedList)
+    % rankedListAp Calculate average precision of retrieved images
+    % AP = rankedListAp(QUERY, RANKED_LIST) Compute average precision of
+    %   retrieved images (their ids) by QUERY, sorted by their relevancy in
+    %   RANKED_LIST. Average precision is calculated as area under the
+    %   precision/recall curve.
+    %   This code is recoded method from [2]:
+    %   http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/compute_ap.cpp
       oldRecall = 0.0;
       oldPrecision = 1.0;
       ap = 0.0;
