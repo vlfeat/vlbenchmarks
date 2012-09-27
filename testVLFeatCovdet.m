@@ -5,92 +5,161 @@ function testVLFeatCovdet(testDescriptors)
 
 % AUTORIGHTS
 
-import localFeatures.*;
+  import localFeatures.*;
+  import datasets.*;
+  import benchmarks.*;
 
-import datasets.*;
-import benchmarks.*;
+  helpers.DataCache.autoClear = false
 
-dataset = VggAffineDataset('category','graf');
-
-if nargin < 1
-  testDescriptors = false ;
-end
-
-repBenchmark = RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,...
-  'MatchFramesDescriptors',testDescriptors,...
-  'CropFrames',true,...
-  'NormaliseFrames',true,...
-  'OverlapError',0.4);
-
-detectors{1} = VlFeatCovdet('method', 'hessianlaplace', ...
-                            'estimateaffineshape', true, ...
-                            'peakThreshold', 0.002, ...
-                            'edgeThreshold', 10, ...
-                            'estimateorientation', testDescriptors, ...
-                            'doubleImage', false);
-detectors{2} = VlFeatSift() ;
-
-% VGG + SIFT descriptor
-descDet = VggAffine('CropFrames',true,'Magnification',3);
-detectors{3} = DescriptorAdapter(...
-VggAffine('Detector','hesaff','Threshold',500), descDet);
-detectors{4} = DescriptorAdapter(...
-VggAffine('Detector','haraff','Threshold',1000), descDet);
-
-if 0
-  switch 2
-    case 1
-      imagePath = dataset.getImagePath(1) ;
-      im = imread(imagePath) ;
-      im = im(end-150:end,1:150,:) ;
-      imagePath = '/tmp/blobs1.png' ;
-      imwrite(im, imagePath) ;
-    case 2
-      imagePath = '/tmp/blobs1.png' ;
-      im = vl_impattern('threedotssquare') ;
-      imwrite(im, imagePath) ;
+  % good setting for repeatability
+  detectors = {} ;
+  detectorNames = {} ;
+  if 0
+    detectors{end+1} = VlFeatCovdet('method', 'hessianlaplace', ...
+                                    'estimateaffineshape', true, ...
+                                    'peakThreshold', 0.002, ...
+                                    'edgeThreshold', 10, ...
+                                    'estimateorientation', true, ...
+                                    'doubleImage', false);
+    detectorNames{end+1} = 'VLFeat Covdet ori' ;
   end
-  fa = detectors{1}.extractFeatures(imagePath);
-  fb = detectors{3}.extractFeatures(imagePath);
 
-  figure(1) ;clf;
-  imagesc(imread(imagePath)) ;hold on;
-  vl_plotframe(fa,'b') ;
-  vl_plotframe(fb,'c') ;
-  vl_printsize(3) ;
-  colormap gray ;
-  axis image ;
-  print('-dpdf', '~/a.pdf') ;
-  return ;
-end
-
-
-% Print and plot the results
-repeatability = [] ;
-numCorresp = [] ;
-for d = 1:numel(detectors)
-  for i = 2:dataset.NumImages
-    [repeatability(d,i) numCorresp(d,i)] = ...
-      repBenchmark.testDetector(detectors{d}, ...
-                                dataset.getTransformation(i), ...
-                                dataset.getImagePath(1), ...
-                                dataset.getImagePath(i)) ;
+  for dbl = [false true]
+  for det = {'DoG', 'Hessian', 'HessianLaplace', 'HarrisLaplace'}
+  %for det = {'HessianLaplace'}
+    detectors{end+1} = VlFeatCovdet('method', char(det), ...
+                                    'estimateaffineshape', true, ...
+                                    'estimateorientation', false, ...
+                                    'doubleImage', dbl, ...
+                                    'format', 'uint8');
+    detectorNames{end+1} = sprintf('VL %s', char(det), 'dbl:%d', dbl) ;
   end
+  end
+
+  if 1
+    detectors{end+1} = VlFeatSift() ;
+    detectorNames{end+1} = 'VLFeat SIFT' ;
+  end
+
+  % VGG + SIFT descriptor
+  if 1
+    descDet = VggDescriptor('CropFrames',true,'Magnification',3);
+
+    detectors{end+1} = DescriptorAdapter(...
+      VggAffine('Detector','hesaff','Threshold',500), descDet);
+    detectorNames{end+1} = 'VGG hes' ;
+
+    detectors{end+1} = DescriptorAdapter(...
+      VggAffine('Detector','haraff','Threshold',1000), descDet);
+    detectorNames{end+1} = 'VGG har' ;
+  end
+
+  %repeatability(detectors,detectorNames, false) ;
+  retrieval(detectors,detectorNames, false) ;
 end
 
-% The scores can now be prented, as well as visualized in a
-% graph. This uses two simple functions defined below in this file.
 
-detectorNames = {'VLFeat Covdet', 'SIFT', 'VGG hes', 'VGG har'} ;
-printScores(detectorNames, 100 * repeatability, 'Repeatability');
-printScores(detectorNames, numCorresp, 'Number of correspondences');
+% --------------------------------------------------------------------
+function retrieval(detectors, detectorNames, testDescriptors)
+% --------------------------------------------------------------------
 
-figure(2); clf;
-subplot(1,2,1);
-plotScores(detectorNames, dataset, 100 * repeatability, 'Repeatability');
-subplot(1,2,2);
-plotScores(detectorNames, dataset, numCorresp, 'Number of correspondences');
+  import localFeatures.*;
+  import datasets.*;
+  import benchmarks.*;
+
+  dataset = VggRetrievalDataset('Category','oxbuild','Lite',false);
+
+  retBenchmark = RetrievalBenchmark();
+
+  helpers.DataCache.autoClear = false
+
+  mAP = zeros(numel(detectors),1);
+  queryAPs = zeros(numel(detectors),dataset.NumQueries);
+
+  for d=1:numel(detectors)
+    [mAP(d) queryAPs(d,:)] = retBenchmark.evalDetector(detectors{d}, dataset);
+  end
+
+  printScores(detectorNames, 100 * mAP, 'mAP');
+end
+
+% --------------------------------------------------------------------
+function repeatability(detectors, detectorNames, testDescriptors)
+% --------------------------------------------------------------------
+
+  import localFeatures.*;
+  import datasets.*;
+  import benchmarks.*;
+
+  helpers.DataCache.autoClear = false
+
+  if nargin < 3
+    testDescriptors = false ;
+  end
+
+  dataset = VggAffineDataset('category','graf');
+
+  repBenchmark = RepeatabilityBenchmark(...
+    'MatchFramesGeometry',true,...
+    'MatchFramesDescriptors',testDescriptors,...
+    'CropFrames',true,...
+    'NormaliseFrames',true,...
+    'OverlapError',0.4);
+
+
+  if 0
+    switch 2
+      case 1
+        imagePath = dataset.getImagePath(1) ;
+        im = imread(imagePath) ;
+        im = im(end-150:end,1:150,:) ;
+        imagePath = '/tmp/blobs1.png' ;
+        imwrite(im, imagePath) ;
+      case 2
+        imagePath = '/tmp/blobs1.png' ;
+        im = vl_impattern('threedotssquare') ;
+        imwrite(im, imagePath) ;
+    end
+    fa = detectors{1}.extractFeatures(imagePath);
+    fb = detectors{3}.extractFeatures(imagePath);
+
+    figure(1) ;clf;
+    imagesc(imread(imagePath)) ;hold on;
+    vl_plotframe(fa,'b') ;
+    vl_plotframe(fb,'c') ;
+    vl_printsize(3) ;
+    colormap gray ;
+    axis image ;
+    print('-dpdf', '~/a.pdf') ;
+    return ;
+  end
+
+
+  % Print and plot the results
+  repeatability = [] ;
+  numCorresp = [] ;
+  for d = 1:numel(detectors)
+    for i = 2:dataset.NumImages
+      [repeatability(d,i) numCorresp(d,i)] = ...
+          repBenchmark.testDetector(detectors{d}, ...
+                                    dataset.getTransformation(i), ...
+                                    dataset.getImagePath(1), ...
+                                    dataset.getImagePath(i)) ;
+    end
+  end
+
+  % The scores can now be prented, as well as visualized in a
+  % graph. This uses two simple functions defined below in this file.
+
+  printScores(detectorNames, 100 * repeatability, 'Repeatability');
+  printScores(detectorNames, numCorresp, 'Number of correspondences');
+
+  figure(2); clf;
+  subplot(1,2,1);
+  plotScores(detectorNames, dataset, 100 * repeatability, 'Repeatability');
+  subplot(1,2,2);
+  plotScores(detectorNames, dataset, numCorresp, 'Number of correspondences');
+end
 
 % --------------------------------------------------------------------
 % Helper functions
@@ -105,13 +174,13 @@ function printScores(detectorNames, scores, name)
   fprintf(['\n', name,':\n']);
   formatString = ['%' sprintf('%d',maxNameLen) 's:'];
   fprintf(formatString,'Method name');
-  for k = 2:size(scores,2)
+  for k = 1:size(scores,2)
     fprintf('\tImg#%02d',k);
   end
   fprintf('\n');
   for k = 1:numDetectors
     fprintf(formatString,detectorNames{k});
-    for l = 2:size(scores,2)
+    for l = 1:size(scores,2)
       fprintf('\t%6s',sprintf('%.2f',scores(k,l)));
     end
     fprintf('\n');
@@ -139,6 +208,4 @@ function plotScores(detectorNames, dataset, score, titleText)
   legend(detectorNames,'Location',legendLocation);
   grid on ;
   axis([xstart xend 0 maxScore]);
-end
-
 end
