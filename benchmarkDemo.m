@@ -285,8 +285,8 @@ end
 function plotScores(detectorNames, dataset, score, titleText)
   xstart = max([find(sum(score,1) == 0, 1) + 1 1]);
   xend = size(score,2);
-  xLabel = dataset.imageNamesLabel;
-  xTicks = dataset.imageNames;
+  xLabel = dataset.ImageNamesLabel;
+  xTicks = dataset.ImageNames;
   plot(xstart:xend,score(:,xstart:xend)','+-','linewidth', 2); hold on ;
   ylabel(titleText) ;
   xlabel(xLabel);
