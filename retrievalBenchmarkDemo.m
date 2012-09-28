@@ -47,7 +47,7 @@ ylabel('Number of descriptors in the database');
 
 %% Draw the query and its results
 
-queryNum = 40;
+queryNum = 15;
 detNum = 1;
 query = dataset.getQuery(queryNum);
 queryVotes = votes{detNum}(:,queryNum);
@@ -87,4 +87,14 @@ function category = getImageCategory(query, imgId)
     category = 'bad';
   end
 end
+
+% Plot the PR curve
+labels = - ones(1, numel(queryVotes)) ;
+labels(query.good) = 1 ;
+labels(query.ok(query.ok~=0)) = 1 ;
+labels(query.junk(query.junk~=0)) = 0 ;
+labels(query.imageId) = 1 ;
+figure(7);
+unsortedVotes(rankedList) = queryVotes;
+vl_pr(labels, unsortedVotes);
 end

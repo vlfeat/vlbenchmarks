@@ -110,13 +110,13 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     function obj = VggRetrievalDataset(varargin)
       import datasets.*;
       import helpers.*;
-      [obj.Opts varargin] = helpers.vl_argparse(obj.Opts,varargin);
+      obj.DatasetName = 'VggRetrievalDataset';
+      varargin = obj.configureLogger(obj.DatasetName, varargin);
+      varargin = obj.checkInstall(varargin);
+      obj.Opts = helpers.vl_argparse(obj.Opts,varargin);
       assert(ismember(obj.Opts.category,obj.AllCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
              obj.Opts.category));
-      obj.DatasetName = ['VggRetrievalDataset-' obj.Opts.category];
-      varargin = obj.configureLogger(obj.DatasetName, varargin);
-      obj.checkInstall(varargin);
       obj.ImagesDir = fullfile(obj.RootInstallDir,obj.Opts.category,'');
       obj.GtDir = fullfile(obj.RootInstallDir,...
         [obj.Opts.category '_gt'],'');
