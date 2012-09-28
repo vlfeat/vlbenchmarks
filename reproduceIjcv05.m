@@ -39,9 +39,9 @@ detectors{1} = DescriptorAdapter(...
   VggAffine('Detector','haraff','Threshold',1000), descDet);
 detectors{2} = DescriptorAdapter(...
   VggAffine('Detector','hesaff','Threshold',500), descDet);
-detectors{1} = DescriptorAdapter(VggMser('es',1),descDet);
-%detectors{4} = DescriptorAdapter(Ibr('ScaleFactor',1),descDet);
-%detectors{5} = DescriptorAdapter(Ebr(),descDet);
+detectors{3} = DescriptorAdapter(VggMser('es',1),descDet);
+detectors{4} = DescriptorAdapter(Ibr('ScaleFactor',1),descDet);
+detectors{5} = DescriptorAdapter(Ebr(),descDet);
 
 detNames = {'Harris-Affine','Hessian-Affine','MSER','IBR','EBR'};
 numDetectors = numel(detectors);
