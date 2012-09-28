@@ -306,12 +306,19 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
           % Frames are ommited as score is computed from descs. only
           [frames descriptorsStore{id}] = ...
             detector.extractFeatures(imagePath);
+          descriptorsStore{id} = single(descriptorsStore{id});
         end
         helpers.DataCache.enableAutoClear();
         obj.debug('Features computed in %fs.',toc(featStartTime));
         % Put descriptors in a single array
-        descriptors = single(cell2mat(descriptorsStore));
         numDescriptors = cellfun(@(c) size(c,2),descriptorsStore);
+        % Handle cases when no descriptors detected
+        descriptorSizes = cellfun(@(c) size(c,1),descriptorsStore);
+        if descriptorSizes==0
+          descriptorsStore{descriptorSizes==0} =...
+            single(zeros(max(descriptorSizes),0));
+        end
+        descriptors = cell2mat(descriptorsStore);
         imageIdxs = arrayfun(@(v,n) repmat(v,1,n),firstImageNo:lastImageNo, ...
           numDescriptors,'UniformOutput',false);
         imageIdxs = [imageIdxs{:}];
