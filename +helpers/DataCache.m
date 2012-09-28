@@ -190,9 +190,9 @@ classdef DataCache
       helpers.touch(fileName);
     end
 
-    function locked = autoClearEnabled()
+    function doClear = autoClearEnabled()
       import helpers.DataCache;
-      locked = DataCache.autoClear && ~exist(DataCache.LockFileName,'file');
+      doClear = DataCache.autoClear && ~exist(DataCache.LockFileName,'file');
     end
   end
 end

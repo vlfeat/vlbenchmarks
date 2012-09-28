@@ -38,10 +38,10 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
   end
 
   properties (Constant, Hidden)
-    ResultsKeyPrefix = 'retreivalResults~';
-    QueryKnnsKeyPrefix = 'retreivalQueryKnns~';
-    DatasetFeaturesKeyPrefix = 'datasetAllFeatures~';
-    DatasetChunkInfoPrefix = 'datasetChunkInfo~';
+    ResultsKeyPrefix = 'retreivalResults';
+    QueryKnnsKeyPrefix = 'retreivalQueryKnns';
+    DatasetFeaturesKeyPrefix = 'datasetAllFeatures';
+    DatasetChunkInfoPrefix = 'datasetChunkInfo';
   end
 
   methods
