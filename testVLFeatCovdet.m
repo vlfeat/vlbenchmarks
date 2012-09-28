@@ -25,15 +25,15 @@ function testVLFeatCovdet(testDescriptors)
   end
 
   for dbl = [false true]
-  for det = {'DoG', 'Hessian', 'HessianLaplace', 'HarrisLaplace'}
-  %for det = {'HessianLaplace'}
-    detectors{end+1} = VlFeatCovdet('method', char(det), ...
-                                    'estimateaffineshape', true, ...
-                                    'estimateorientation', false, ...
-                                    'doubleImage', dbl, ...
-                                    'format', 'uint8');
-    detectorNames{end+1} = sprintf('VL %s', char(det), 'dbl:%d', dbl) ;
-  end
+    for det = {'DoG', 'Hessian', 'HessianLaplace', 'HarrisLaplace'}
+      %for det = {'HessianLaplace'}
+      detectors{end+1} = VlFeatCovdet('method', char(det), ...
+                                      'estimateaffineshape', true, ...
+                                      'estimateorientation', false, ...
+                                      'doubleImage', dbl, ...
+                                      'format', 'uint8');
+      detectorNames{end+1} = sprintf('VL %s dbl:%d', char(det), dbl) ;
+    end
   end
 
   if 1
@@ -56,8 +56,7 @@ function testVLFeatCovdet(testDescriptors)
 
   %repeatability(detectors,detectorNames, false) ;
   retrieval(detectors,detectorNames, false) ;
-end
-
+en
 
 % --------------------------------------------------------------------
 function retrieval(detectors, detectorNames, testDescriptors)
@@ -69,7 +68,7 @@ function retrieval(detectors, detectorNames, testDescriptors)
 
   dataset = VggRetrievalDataset('Category','oxbuild','Lite',false);
 
-  retBenchmark = RetrievalBenchmark();
+  retBenchmark = RetrievalBenchmark('maxNumImagesPerSearch',200);
 
   helpers.DataCache.autoClear = false
 
