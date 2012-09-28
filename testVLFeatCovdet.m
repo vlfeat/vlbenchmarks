@@ -56,7 +56,7 @@ function testVLFeatCovdet(testDescriptors)
 
   %repeatability(detectors,detectorNames, false) ;
   retrieval(detectors,detectorNames, false) ;
-en
+end
 
 % --------------------------------------------------------------------
 function retrieval(detectors, detectorNames, testDescriptors)
