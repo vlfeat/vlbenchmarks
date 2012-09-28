@@ -228,17 +228,23 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
       % Compute the KNNs
       helpers.DataCache.disableAutoClear();
-      parfor q = nonCachedQueries
+      queriesKnnDistsTmp = cell(1,numel(nonCachedQueries)) ;
+      queriesKnnsTmp = cell(1,numel(nonCachedQueries)) ;
+      parfor qi = 1:numel(nonCachedQueries)
+        q = nonCachedQueries(qi) ;
         obj.info('Imgs %d:%d - Computing KNNs for query %d/%d.',...
           firstImageNo,lastImageNo,q,numQueries);
-        [knnDescIds, queriesKnnDists{q}] = ...
+        [knnDescIds, queriesKnnDistsTmp{qi}] = ...
           obj.computeKnn(descriptors, qDescriptors{q});
-        queriesKnns{q} = imageIdxs(knnDescIds);
+        queriesKnnsTmp{qi} = imageIdxs(knnDescIds);
         if cacheResults
-          DataCache.storeData({queriesKnns{q}, queriesKnnDists{q}},...
+          DataCache.storeData({queriesKnnsTmp{qi}, queriesKnnDistsTmp{qi}},...
             knnsResKeys{q});
         end
       end
+      queriesKnnDists(nonCachedQueries) = queriesKnnDistsTmp ;
+      queriesKnns(nonCachedQueries) = queriesKnnsTmp ;
+      clear queriesKnnDistsTmp queriesKnnsTmp ;
       helpers.DataCache.enableAutoClear();
       obj.debug('All %d-NN for %d images computed in %gs.',...
         k, numImages, toc(startTime));
