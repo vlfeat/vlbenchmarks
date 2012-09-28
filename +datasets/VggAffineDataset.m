@@ -58,7 +58,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       [2 3 4 5 6]...% leuven
       };
     % Root url for dataset tarballs
-    rootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
+    RootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
   end
 
   methods
@@ -108,7 +108,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       import datasets.*;
       installDir = VggAffineDataset.RootInstallDir;
       dstPaths = {fullfile(installDir,obj.Category)};
-      urls = {[VggAffineDataset.rootUrl obj.Category '.tar.gz']};
+      urls = {[VggAffineDataset.RootUrl obj.Category '.tar.gz']};
     end
   end
 end

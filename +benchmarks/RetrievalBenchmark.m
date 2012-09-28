@@ -1,6 +1,10 @@
 classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
-%RETREIVALBENCHMARK
+% benchmarks.RetrievalBenchmark KNN Retrieval benchmark
+%   benchmarks.RetrievalBenchmark('OptionName',optionValue,...)
+%   constructs an object to compute the feature extractor performance in a 
+%   simple image retrieval system setting [1] based on K-Nearest Neighbours
+%   (KNN).
 %
 %   Object constructor accepts the following options:
 %
@@ -31,6 +35,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
 % AUTORIGHTS
   properties
+    % Object options
     Opts = struct(...
       'k', 50,...
       'distMetric', 'L2',...
@@ -38,9 +43,13 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
   end
 
   properties (Constant, Hidden)
+    % Key prefix for final results
     ResultsKeyPrefix = 'retreivalResults';
+    % Key prefix for KNN computation results (most time consuming)
     QueryKnnsKeyPrefix = 'retreivalQueryKnns';
+    % Key prefix for bunch of all detector features.
     DatasetFeaturesKeyPrefix = 'datasetAllFeatures';
+    % Key prefix for additional information about the detector features
     DatasetChunkInfoPrefix = 'datasetChunkInfo';
   end
 
@@ -53,16 +62,33 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function [mAP, queriesAp, rankedLists, votes, numDescriptors] = ...
-        evalDetector(obj, detector, dataset)
+        testFeatureExtractor(obj, featExtractor, dataset)
+      % testFeatureExtractor Test image feature extractor in a retrieval test
+      %   MAP = obj.testFeatureExtractor(FEAT_EXTRACTOR, DATASET) Compute 
+      %   mean average precision of a detector in the retrieval test.
+      %   FEAT_EXTRACTOR must be a subclass of
+      %   localFeatures.GenericLocalFeatureExtractor and must be able to
+      %   compute both feature frames and their descriptors. DATASET must
+      %   be an object of datasets.VggRetrievalDataset class.
+      %
+      %   [MAP QUERIES_AP RANKED_LIST VOTES NUM_DESCS] = ...
+      %   obj.testDetector(DETECTOR, DATASET) Returns also QUERIES_AP,
+      %   average precision of a detector per a single query, RANKED_LIST,
+      %   array of size [DATASET.NumImages, DATASET.NumQueries] where each
+      %   RANKED_LIST(:,QUERY_NUM) contain IDs of images from the dataset
+      %   ranked by the voting score which is stored in VOTES(:,QUERY_NUM).
+      %   Size of array VOTES is the same as of RANKED_LIST.
+      %   NUM_DESCS is an array of size [1 DATASET.NumImages] storing the
+      %   number of descriptors detected in a particular dataset image.
       import helpers.*;
       obj.info('Evaluating detector %s on dataset %s.',...
-        detector.Name, dataset.DatasetName);
+        featExtractor.Name, dataset.DatasetName);
       startTime = tic;
 
       % Try to load results from cache
       numImages = dataset.NumImages;
       testSignature = obj.getSignature;
-      detSignature = detector.getSignature;
+      detSignature = featExtractor.getSignature;
       obj.info('Computing signatures of %d images.',numImages);
       imagesSignature = dataset.getImagesSignature();
       queriesSignature = dataset.getQueriesSignature();
@@ -85,14 +111,14 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       obj.info('Dataset has to been divided into %d chunks.',numChunks);
 
       % Load query descriptors
-      qDescriptors = obj.gatherQueriesDescriptors(dataset, detector);
+      qDescriptors = obj.gatherQueriesDescriptors(dataset, featExtractor);
 
       % Compute KNNs for all image chunks
       for chNum = 1:numChunks
         firstImageNo = (chNum-1)*imgsPerChunk+1;
         lastImageNo = min(chNum*imgsPerChunk,numImages);
         [knns{chNum}, knnDists{chNum}, numDescriptors{chNum}] = ...
-          obj.computeKnns(dataset,detector,qDescriptors,...
+          obj.computeKnns(dataset,featExtractor,qDescriptors,...
           firstImageNo,lastImageNo);
       end
       % Compute the AP
@@ -138,8 +164,21 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
         DataCache.storeData(results, resultsKey);
       end
     end
-
-    function qDescriptors = gatherQueriesDescriptors(obj, dataset, detector)
+  
+    function signature = getSignature(obj)
+      signature = helpers.struct2str(obj.Opts);
+    end
+  end
+    
+  methods (Access=protected, Hidden)
+    function qDescriptors = gatherQueriesDescriptors(obj, dataset, ...
+        featExtractor)
+      % gatherQueriesDescriptors Compute queries descriptors
+      %   Q_DESCRIPTORS = obj.gatherQueriesDescriptors(DATASET,FEAT_EXTRACT)
+      %   computes Q_DESCRIPTORS, cell array of size 
+      %   [1, DATASET.NumQueries] where each cell contain descriptors from
+      %   the query bounding box computed in the query image using feature
+      %   extractor FEAT_EXTRACTOR.
       import benchmarks.*;
       % Gather query descriptors
       obj.info('Computing query descriptors.');
@@ -148,7 +187,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       for q=1:numQueries
         query = dataset.getQuery(q);
         imgPath = dataset.getImagePath(query.imageId);
-        [qFrames qDescriptors{q}] = detector.extractFeatures(imgPath);
+        [qFrames qDescriptors{q}] = featExtractor.extractFeatures(imgPath);
         % Pick only features in the query box
         qFrames = localFeatures.helpers.frameToEllipse(qFrames);
         visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
@@ -158,6 +197,19 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
     function [ap rankedList votes] = computeAp(obj, knnImgIds, knnDists,...
         numDescriptors, query)
+      % computeAp Compute average precision from KNN results
+      %   [AP RANKED_LIST VOTES] = obj.computeAp(KNN_IMG_IDS, KNN_DISTS,
+      %      NUM_DESCRIPTORS, QUERY) Compute average precision of the
+      %   results of K-nearest neighbours search. Result of this search is
+      %   set of K descriptors for each query descriptors.
+      %   Array KNN_IMG_IDS has size [K,QUERY_DESCRIPTORS_NUM] and value
+      %   KNN_IMG_IDS(N,I) is the ID of the image in which the
+      %   N-nearest neighbour desc. of the Ith query descriptor was found.
+      %   Array KNN_DISTS has size [K,QUERY_DESCRIPTORS_NUM] and value
+      %   KNN_DISTS(N,I) is the distance of the N-Nearest descriptor to the
+      %   Ith query descriptor.
+      %   Array NUM_DESCRIPTORS of size [1, NUM_IMAGES_IN_DB] contains the
+      %   number of descriptors extracted from the database images.
       import helpers.*;
 
       k = obj.Opts.k;
@@ -174,8 +226,30 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function [queriesKnns, queriesKnnDists numDescriptors] = ...
-        computeKnns(obj, dataset, detector, qDescriptors, firstImageNo,...
+        computeKnns(obj, dataset, featExtractor, qDescriptors, firstImageNo,...
         lastImageNo)
+      % computeKnns Compute the K-nearest neighbours of query descriptors
+      %   [QUERIES_KNNS KNNS_DISTS, NUM_DESCRIPTORS] = computeKnns(DATASET,
+      %     FEAT_EXTRACTOR, QUERIES_DESCRIPTORS, FIRST_IMG_NO, LAST_IMG_NO)
+      %   computes KNN of all query descriptors in the database from all
+      %   descriptors extracted from images [FIRST_IMG_NO, LAST_IMG_NO].
+      %
+      %   QUERIES_DESCRIPTORS is a cell array of size [1, DATASET.NumQueries]
+      %   Array QUERIES_DESCRIPTORS{QID} contain all the descriptors 
+      %   QID_DESCRIPTORS extracted by FEAT_EXTRACTOR in the query QID 
+      %   bounding box. This array size is [DESC_SIZE,QID_DESCRIPTORS_NUM].
+      %
+      %   QUERIES_KNNS and KNNS_DISTS are cell arrays of size 
+      %   [1, DATASET.NumQueries].
+      %   Array QUERIES_KNNS{QID} has size [K,QID_DESCRIPTORS_NUM] and value
+      %   QUERIES_KNNS{QID}(N,I) is the ID of the image in which the
+      %   N-nearest neighbour desc. of the Ith query QID descriptor was found.
+      %   Array KNN_DISTS has size [K,QUERY_DESCRIPTORS_NUM] and value
+      %   KNN_DISTS(N,I) is the distance of the N-Nearest descriptor to the
+      %   Ith query descriptor.
+      %
+      %   Array NUM_DESCRIPTORS of size [1, NUM_IMAGES_IN_DB] contains the
+      %   number of descriptors extracted from the database images.
       import helpers.*;
       startTime = tic;
       numQueries = dataset.NumQueries;
@@ -185,7 +259,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       queriesKnnDists = cell(1,numQueries);
 
       testSignature = obj.getSignature;
-      detSignature = detector.getSignature;
+      detSignature = featExtractor.getSignature;
       imagesSignature = dataset.getImagesSignature(firstImageNo:lastImageNo);
 
       % Try to load already computed queries
@@ -194,7 +268,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       knnsResKeys = cell(1,numQueries);
       imgsInfoKey = strcat(obj.DatasetChunkInfoPrefix, testSignature,...
           detSignature, imagesSignature);
-      cacheResults = detector.UseCache && obj.UseCache;
+      cacheResults = featExtractor.UseCache && obj.UseCache;
       if cacheResults
         for q = 1:numQueries
           querySignature = dataset.getQuerySignature(q);
@@ -220,7 +294,8 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
       % Retreive features of the images
       [descriptors imageIdxs numDescriptors] = ...
-        obj.getDatasetFeatures(dataset,detector,firstImageNo, lastImageNo);
+        obj.getDatasetFeatures(dataset,featExtractor,firstImageNo,...
+        lastImageNo);
 
       if cacheResults
         DataCache.storeData(imgsInfoKey,numDescriptors);
@@ -250,7 +325,18 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
         k, numImages, toc(startTime));
     end
 
-    function [knnDescIds, knnDists] = computeKnn(obj, descriptors, qDescriptors)
+    function [knnDescIds, knnDists] = computeKnn(obj, descriptors, ...
+        qDescriptors)
+      % computeKnn Compute KNN of descriptors
+      %   [KNNS_DESC_IDS KNN_DISTS] = computeKnn(DESC_DBASE, Q_DESCS)
+      %   computes obj.Opts.K nearest neighbours of each descriptor
+      %   Q_DESCS(:,QDID) in the database of extracted descriptors
+      %   DESC_DBASE.
+      %
+      %   KNNS_DESC_IDS is an array of size [K,size(Q_DESCS,2)] where each
+      %   value DID = KNNS_DESC_IDS(N,QDID) means that descriptor
+      %   DESC_DBASE(:,DID) is the N-Nearest neighbour of descriptor
+      %   Q_DESCS(:,QDID) in the database.
       import helpers.*;
       import benchmarks.*;
 
@@ -273,23 +359,30 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       obj.debug('KNN calculated in %fs.',toc(startTime));
     end
 
-    function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.Opts);
-    end
-
     function [descriptors imageIdxs numDescriptors] = ...
-        getDatasetFeatures(obj, dataset,detector, firstImageNo, lastImageNo)
+        getDatasetFeatures(obj, dataset, featExtractor, firstImageNo, lastImageNo)
+      % getDatasetFeatures Get all extr. features from the dataset
+      %   [DESCS IMAGE_IDXS NUM_DESCS] = obj.getDatasetFeatures(DATASET,
+      %   FEAT_EXTRACTOR,FIRST_IMG_NO, LAST_IMG_NO) Retrieves all
+      %   extracted descriptors DESCS from images [FIRST_IMG_NO,LAST_IMG_NO]
+      %   from the DATASET with FEAT_EXTRACTOR. 
+      %   size(DESCS) = [DESC_SIZE,NUM_DESCRIPTORS].
+      %
+      %   Array IMAGE_IDXS of size(NUM_DESCRIPTORS,1) contain the id of the
+      %   image in which the descriptor was calculated. The value
+      %   NUM_DESCRIPTORS(1,IMAGE_ID) only gathers the number of extracted
+      %   descriptor in an image.
       import helpers.*;
       numImages = lastImageNo - firstImageNo + 1;
 
       % Retreive features of all images
-      detSignature = detector.getSignature;
+      detSignature = featExtractor.getSignature;
       obj.info('Computing signatures of %d images.',numImages);
       imagesSignature = dataset.getImagesSignature(firstImageNo:lastImageNo);
       featKeyPrefix = obj.DatasetFeaturesKeyPrefix;
       featuresKey = strcat(featKeyPrefix,detSignature,imagesSignature);
       features = [];
-      if detector.UseCache && DataCache.hasData(featuresKey)
+      if featExtractor.UseCache && DataCache.hasData(featuresKey)
         obj.info('Loading descriptors of %d images from cache.',numImages);
         features = DataCache.getData(featuresKey);
       end;
@@ -305,7 +398,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
           imagePath = dataset.getImagePath(imgNo);
           % Frames are ommited as score is computed from descs. only
           [frames descriptorsStore{id}] = ...
-            detector.extractFeatures(imagePath);
+            featExtractor.extractFeatures(imagePath);
           descriptorsStore{id} = single(descriptorsStore{id});
         end
         helpers.DataCache.enableAutoClear();
@@ -319,11 +412,11 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
             single(zeros(max(descriptorSizes),0));
         end
         descriptors = cell2mat(descriptorsStore);
-        imageIdxs = arrayfun(@(v,n) repmat(v,1,n),firstImageNo:lastImageNo, ...
+        imageIdxs = arrayfun(@(v,n) repmat(v,1,n),firstImageNo:lastImageNo,...
           numDescriptors,'UniformOutput',false);
         imageIdxs = [imageIdxs{:}];
         
-        if detector.UseCache
+        if featExtractor.UseCache
           features = {descriptors, imageIdxs, numDescriptors};
           obj.debug('Saving %d descriptors to cache.',size(descriptors,2));
           DataCache.storeData(features,featuresKey);
