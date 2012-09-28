@@ -6,13 +6,92 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 %   simple image retrieval system setting [1] based on K-Nearest Neighbours
 %   (KNN).
 %
+%   This class implements simple retrieval system based on [1] and then
+%   tests its performance when features extracted by a certain algorithm
+%   are used. The main performance measure is Mean Average Precision (mAP)
+%   introduced in [2] computed over their image dataset which is wrapped
+%   in class datasets.VggRetrievalDataset.
+%
+%   RETRIEVAL SYSTEM
+%
+%   Descriptor database contain IM_NUM images where each image IMID (image 
+%   id, number of the image in the dataset) is described by 
+%   IM_DESCS_NUM(IMID) descriptors. The whole database of descriptors 
+%   DDBASE is of size [DESC_SIZE, DESCS_NUM]. The image in which the
+%   descriptor DESC_DBASE(:,DESC_ID) was detected is denoted as
+%   DESC_IMG_ID(DESC_ID). Its reverse mapping, i.e. IDs of descriptors
+%   detected in an image is denoted as IMG_DESC_IDS(IMG_ID).
+%
+%   For each query Q_ID from the dataset we obtain the set of query 
+%   descriptors Q_DESCS which were detected in the query bounding box.
+%   For each query descriptor Q_DESC = Q_DESCS(:,Q_DESC_ID) we look for 
+%   K-nearest  neighbours (see option 'K' for setting this parameter) 
+%   Q_KNN such that Q_KNN(N,Q_DESC_ID) = DESC_ID means that
+%   descriptor DESC = DDBASE(:,DESC_ID) is the N-th closest neighbour to
+%   the query descriptor Q_DESC. The distance between those descriptors is
+%   noted as Q_KNN_DISTS(N,Q_DESC_ID) = dist(Q_DESC,DESC). 
+%   Distance metric can be adjusted with option 'DistMetric'.
+%
+%   In [1] it was observed that there is some regularity in the descriptor
+%   distances. Therefore a simple voting criterion expressed as 'how much
+%   closer the Nth descriptor is to the query descriptor than the Kth
+%   descriptor'. It can be expressed as
+%
+%   DIST_DIFF(N,Q_DESC_ID) = Q_KNN_DISTS(N,Q_DESC_ID) - Q_KNN_DISTS(N,Q_DESC_ID);
+%
+%   Then each retrieved descriptor DESC votes to its image where it
+%   originates with a vote equal to its DIST_DIFF value. The voting score
+%   of each dataset image IMG_ID is then computed as:
+%
+%   IS_IMG_DESC = ismember(Q_KNN,IMG_DESC_IDS(IMG_ID)); 
+%   RAW_VOTES(IMG_ID) = sum(sum(DIST_DIFF(IS_IMG_ID_DESC)));
+%
+%   These votes are also further normalised by number of descriptors in
+%   image IMG_DESCS_NUM = NUM_DESCRIPTORS(IMG_ID) and also by the number 
+%   of query descriptors Q_DESCS_NUM = size(Q_DESCS,2):
+%
+%   VOTES(IMG_ID) = RAW_VOTES(IMG_ID)/sqrt(IMG_DESCS_NUM)/sqrt(Q_DESCS_NUM)
+%
+%   Based on those votes ranked list RANKED_LIST of the retrieved image is
+%   created as image ids sorted by their (descending) score.
+%
+%   PERFORMANCE EVALUATION
+%
+%   For the feature extraction algorithm evaluation, mean average precision
+%   of its retrieval system is computed as an area under the
+%   precision-recall curve.
+%
+%   For each query the images in the dataset are divided into three subsets,
+%   relevant images (containing images from 'Good' and 'Ok' query subset),
+%   ignored images ('Junk' subset) and irrelevant (wrong) images which
+%   contain the rest of the images from the dataset.
+%
+%   Going through the RANKED_LIST of the retrieved images, precision of the
+%   retrieval system which would return only first N images is calculated
+%   as:
+%
+%   NUM_REL = Num relevant images in RANKED_LIST(1:N)
+%
+%                       Precision(N) = NUM_REL/N
+%
+%   I.e. how precise this limited retrieval system is. And recall is 
+%   calculated as:
+%
+%                Recall(N) = NUM_REL/Num relevant images
+%
+%   I.e. what fraction of the searched images it had really found.
+%
+%   The area under the precision/recall curve is calculated using
+%   trapezoidal rule.
+%
 %   Object constructor accepts the following options:
 %
 %   K :: 50
 %     Number of descriptor nearest neighbours used for the retrieval.
 %
-%   DistMetric ::
-%     Distance metric used by the KNN algorithm.
+%   DistMetric :: 'L2'
+%     Distance metric used by the KNN algorithm expressed as its string
+%.     name. See helpers.YaelInstaller for available options.
 %
 %   MaxNumImagesPerSearch :: 1000
 %     Maimal number of images which descriptors are in the database. If the
@@ -30,6 +109,8 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 %   [2] J. Philbin, O. Chum, M. Isard, J. Sivic and A. Zisserman.
 %       Object retrieval with large vocabularies and fast spatial 
 %       matching CVPR, 2007
+%
+% See also: helpers.YaelInstaller
 
 % Authors: Karel Lenc, Relja Arandjelovic
 
@@ -219,7 +300,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       votes= vl_binsum( single(zeros(numImages,1)),...
         repmat( knnDists(end,:), min(k,qNumDescriptors), 1 ) - knnDists,...
         knnImgIds );
-      votes = votes./sqrt(max(numDescriptors',1));
+      votes = votes./sqrt(max(numDescriptors',1))./sqrt(max(qNumDescriptors,1));
       [votes, rankedList]= sort(votes, 'descend'); 
 
       ap = obj.rankedListAp(query, rankedList);
