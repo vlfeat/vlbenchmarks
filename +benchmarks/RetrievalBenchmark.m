@@ -84,6 +84,9 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 %   The area under the precision/recall curve is calculated using
 %   trapezoidal rule.
 %
+%   The mean average precision is calculated as a mean of all dataset 
+%   queries average precision.
+%
 %   Object constructor accepts the following options:
 %
 %   K :: 50
@@ -96,8 +99,8 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 %   MaxNumImagesPerSearch :: 1000
 %     Maimal number of images which descriptors are in the database. If the
 %     number of images in dataset is bigger, it is divided into several
-%     chunks.
-%     Decrease this number if your computer is runing out of memory.
+%     chunks. Decrease this number if your computer is runing out of 
+%     memory. Set to inf to disable division of the dataset into chunks.
 %
 %
 % REFERENCES
