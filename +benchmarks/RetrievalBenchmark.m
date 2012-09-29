@@ -156,7 +156,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       %   be an object of datasets.VggRetrievalDataset class.
       %
       %   [MAP QUERIES_AP RANKED_LIST VOTES NUM_DESCS] = ...
-      %   obj.testDetector(DETECTOR, DATASET) Returns also QUERIES_AP,
+      %   obj.testFeatureExtractor(DETECTOR, DATASET) Returns also QUERIES_AP,
       %   average precision of a detector per a single query, RANKED_LIST,
       %   array of size [DATASET.NumImages, DATASET.NumQueries] where each
       %   RANKED_LIST(:,QUERY_NUM) contain IDs of images from the dataset

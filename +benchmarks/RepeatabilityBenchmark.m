@@ -1,37 +1,35 @@
 classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
 % benchmarks.RepeatabilityBenchmark Image features repeatability
-%   benchmarks.RepeatabilityBenchmark('OptionName',optionValue,...)
-%   constructs an object to compute the detector repeatability and the
-%   descriptor matching scores as given in [1].
+%   benchmarks.RepeatabilityBenchmark('OptionName',optionValue,...) constructs
+%   an object to compute the detector repeatability and the descriptor
+%   matching scores as given in [1].
 %
-%   Using this class is a two step process. First, create an instance
-%   of the class specifying any parameter needed in the constructor.
-%   Then, use obj.testFeatures() to evaluate the scores given a pair
-%   of images, the detected features (and optionally their
-%   descriptors), and the homography between the two images.
+%   Using this class is a two step process. First, create an instance of the
+%   class specifying any parameter needed in the constructor. Then, use
+%   obj.testFeatures() to evaluate the scores given a pair of images, the
+%   detected features (and optionally their descriptors), and the homography
+%   between the two images.
 %
-%   Use obj.testDetector() to evaluate the test for a given detector
-%   and pair of images and being able to cache the results of the
-%   test.
+%   Use obj.testFeatureExtractor() to evaluate the test for a given detector
+%   and pair of images and being able to cache the results of the test.
 %
 %   DETAILS ON THE REPEATABILITY AND MATCHING SCORES
 %
-%   The detector repeatability is calculated for two sets of feature
-%   frames FRAMESA and FRAMESB detected in a reference image IMAGEA
-%   and a second image IMAGEB. The two images are assumed to be
-%   related by a known homography H mapping pixels in the domain of
-%   IMAGEA to pixels in the domain of IMAGEB (e.g. static camera, no
-%   parallax, or moving camera looking at a flat scene). The
-%   homography assumes image coordinates with origin in (0,0).
+%   The detector repeatability is calculated for two sets of feature frames
+%   FRAMESA and FRAMESB detected in a reference image IMAGEA and a second
+%   image IMAGEB. The two images are assumed to be related by a known
+%   homography H mapping pixels in the domain of IMAGEA to pixels in the
+%   domain of IMAGEB (e.g. static camera, no parallax, or moving camera
+%   looking at a flat scene). The homography assumes image coordinates with
+%   origin in (0,0).
 %
-%   A perfect co-variant detector would detect the same features in
-%   both images regardless of a change in viewpoint (for the features
-%   that are visible in both cases). A good detector will also be
-%   robust to noise and other distortion. Repeatability is the
-%   percentage of detected features that survive a viewpoint change or
-%   some other transformation or disturbance in going from IMAGEA to
-%   IMAGEB.
+%   A perfect co-variant detector would detect the same features in both
+%   images regardless of a change in viewpoint (for the features that are
+%   visible in both cases). A good detector will also be robust to noise and
+%   other distortion. Repeatability is the percentage of detected features
+%   that survive a viewpoint change or some other transformation or
+%   disturbance in going from IMAGEA to IMAGEB.
 %
 %   More in detail, repeatability is by default computed as follows:
 %
@@ -176,19 +174,21 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function [score numMatches bestMatches reprojFrames] = ...
-                testDetector(obj, detector, tf, imageAPath, imageBPath)
-      % testDetector Image feature extractor repeatability
-      %   REPEATABILITY = obj.testDetector(DETECTOR, TF, IMAGEAPATH,
-      %   IMAGEBPATH) computes the repeatability REP of a detector
-      %   DETECTOR and its frames extracted from images defined by
-      %   their path IMAGEAPATH and IMAGEBPATH whose geometry is
-      %   related by the homography transformation TF.
+        testFeatureExtractor(obj, featExtractor, tf, imageAPath, imageBPath)
+      % testFeatureExtractor Image feature extractor repeatability
+      %   REPEATABILITY = obj.testFeatureExtractor(FEAT_EXTRACTOR, TF,
+      %   IMAGEAPATH, IMAGEBPATH) computes the repeatability REP of a image
+      %   feature extractor FEAT_EXTRACTOR and its frames extracted from
+      %   images defined by their path IMAGEAPATH and IMAGEBPATH whose
+      %   geometry is related by the homography transformation TF.
+      %   FEAT_EXTRACTOR must be a subclass of
+      %   localFeatures.GenericLocalFeatureExtractor.
       %
-      %   [REPEATABILITY, NUMMATCHES] = obj.testDetector(...) returns
-      %   also the total number of feature matches found.
+      %   [REPEATABILITY, NUMMATCHES] = obj.testFeatureExtractor(...) 
+      %   returns also the total number of feature matches found.
       %
       %   [REP, NUMMATCHES, REPR_FRAMES, MATCHES] =
-      %   obj.testDetector(...) returns cell array REPR_FRAMES which
+      %   obj.testFeatureExtractor(...) returns cell array REPR_FRAMES which
       %   contains reprojected and eventually cropped frames in
       %   format:
       %
@@ -211,7 +211,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       import helpers.*;
 
       obj.info('Comparing frames from det. %s and images %s and %s.',...
-          detector.Name,getFileName(imageAPath),...
+          featExtractor.Name,getFileName(imageAPath),...
           getFileName(imageBPath));
 
       imageASign = helpers.fileSignature(imageAPath);
@@ -219,24 +219,24 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       imageASize = helpers.imageSize(imageAPath);
       imageBSize = helpers.imageSize(imageBPath);
       resultsKey = cell2str({obj.KeyPrefix, obj.getSignature(), ...
-        detector.getSignature(), imageASign, imageBSign});
+        featExtractor.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
 
       % When detector does not cache results, do not use the cached data
-      if isempty(cachedResults) || ~detector.UseCache
+      if isempty(cachedResults) || ~featExtractor.UseCache
         if obj.ModesOpts(obj.Opts.mode).matchDescs
-          [framesA descriptorsA] = detector.extractFeatures(imageAPath);
-          [framesB descriptorsB] = detector.extractFeatures(imageBPath);
+          [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
+          [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
           [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
             tf, imageASize, imageBSize, framesA, framesB,...
             descriptorsA, descriptorsB);
         else
-          [framesA] = detector.extractFeatures(imageAPath);
-          [framesB] = detector.extractFeatures(imageBPath);
+          [framesA] = featExtractor.extractFeatures(imageAPath);
+          [framesB] = featExtractor.extractFeatures(imageBPath);
           [score numMatches bestMatches reprojFrames] = ...
             obj.testFeatures(tf,imageASize, imageBSize,framesA, framesB);
         end
-        if detector.UseCache
+        if featExtractor.UseCache
           results = {score numMatches bestMatches reprojFrames};
           obj.storeResults(results, resultsKey);
         end
@@ -248,8 +248,8 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     end
 
     function [score numMatches matches reprojFrames] = ...
-                testFeatures(obj, tf, imageASize, imageBSize, ...
-                framesA, framesB, descriptorsA, descriptorsB)
+        testFeatures(obj, tf, imageASize, imageBSize, framesA, framesB, ...
+        descriptorsA, descriptorsB)
       % testFeatures Compute repeatability of given image features
       %   [SCORE NUM_MATCHES] = obj.testFeatures(TF, IMAGE_A_SIZE,
       %   IMAGE_B_SIZE, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute

@@ -76,7 +76,7 @@ for oei = 1:numel(overlapErrValues)
   parfor detectorIdx = 1:numDetectors
     detector = detectors{detectorIdx};
     [oeScores(detectorIdx,oei) tmp] = ...
-      rBenchm.testDetector(detector, H, imageAPath,imageBPath);
+      rBenchm.testFeatureExtractor(detector, H, imageAPath,imageBPath);
   end
 end
 
@@ -102,7 +102,7 @@ for nrsi = 1:numel(normRegSizes)
   parfor detectorIdx = 1:numDetectors
     detector = detectors{detectorIdx};
     nrsScores(detectorIdx,nrsi) = ...
-      rBenchm.testDetector(detector, H, imageAPath,imageBPath);
+      rBenchm.testFeatureExtractor(detector, H, imageAPath,imageBPath);
   end
 end
 saveResults(oeScores, fullfile(opts.resultsDir,'rep_vs_norm_reg_size'));
@@ -196,7 +196,7 @@ for mf = 1:numel(magFactors)
     descrExtr = VggDescriptor('Magnification',magFactor);
     detector = DescriptorAdapter(detectors{detectorIdx},descrExtr);
     magnifScores(detectorIdx,mf) = ...
-      matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+      matchBenchmark.testFeatureExtractor(detector, H, imageAPath,imageBPath);
   end
 end
 saveResults(magnifScores, fullfile(opts.resultsDir,'matching_vs_mag'));
@@ -275,9 +275,9 @@ for category=categories
       imageBPath = dataset.getImagePath(imageIdx);
       H = dataset.getTransformation(imageIdx);
       [repeatability(di,imageIdx) numCorresp(di,imageIdx)] = ...
-        repBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+        repBenchmark.testFeatureExtractor(detector, H, imageAPath,imageBPath);
       [matchingScore(di,imageIdx) numMatches(di,imageIdx)] = ...
-        matchBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+        matchBenchmark.testFeatureExtractor(detector, H, imageAPath,imageBPath);
     end
   end
 
@@ -326,9 +326,9 @@ for category=categories
         % compare it with the previous results as the number of frames when
         % computed with and without descriptors differs.
         [repeatability(di,imageIdx) numCorresp(di,imageIdx)] = ...
-          kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+          kmBenchmark.testFeatureExtractor(detector, H, imageAPath,imageBPath);
         [tmp tmp2 matchingScore(di,imageIdx) numMatches(di,imageIdx)] = ...
-          kmBenchmark.testDetector(detector, H, imageAPath,imageBPath);
+          kmBenchmark.testFeatureExtractor(detector, H, imageAPath,imageBPath);
       end
     end
 

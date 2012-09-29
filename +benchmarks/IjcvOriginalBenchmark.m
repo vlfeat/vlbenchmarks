@@ -1,10 +1,9 @@
 classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
 % benchmarks.IjcvOriginalBenchmark IJCV05 affine detectors test 
-%   benchmarks.IjcvOriginalBenchmark('OptionName',OptionValue,...)
-%   Constructs an object which wraps around Kristian's testing script
-%   of affine covariant image regions (frames). Calls directly
-%   'repeatability.m' script.
+%   benchmarks.IjcvOriginalBenchmark('OptionName',OptionValue,...) Constructs
+%   an object which wraps around Kristian's testing script of affine covariant
+%   image regions (frames). Calls directly 'repeatability.m' script.
 %
 %   Script used is available on:
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/repeatability.tar.gz
@@ -68,51 +67,51 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     end
     
     function [repScore, numCorresp, matchScore, numMatches] = ...
-                testDetector(obj, detector, tf, imageAPath, imageBPath)
-      % TestDetector Compute repeatability and matching score.      
-      %   [REP NUM_CORR MATCHING NUM_MATCHES] =
-      %   obj.testDetector(DETECTOR, TF, IMAGEA_PATH, IMAGEB_PATH)
-      %   Compute repeatability REP and matching score MATCHING of
-      %   detector DETECTOR and its frames and descriptors extracted
-      %   from images defined by their path IMAGEA_PATH and
-      %   IMAGEB_PATH whose geometry is related by homography TF.
-      %   NUM_CORR is number of found correspondences and NUM_MATHCES
-      %   number of matching detected features. This function caches
-      %   results.
+        testFeatureExtractor(obj, featExtractor, tf, imageAPath, imageBPath)
+      % testFeatureExtractor Compute repeatability and matching score.
+      %   [REP NUM_CORR MATCHING NUM_MATCHES] = obj.testFeatureExtractor(
+      %   FEAT_EXTRACTOR, TF, IMAGEA_PATH, IMAGEB_PATH) Compute repeatability
+      %   REP and matching score MATCHING of feature extractor FEAT_EXTRACTOR
+      %   and its frames and descriptors extracted from images defined by
+      %   their path IMAGEA_PATH and IMAGEB_PATH whose geometry is related by
+      %   homography TF. NUM_CORR is number of found correspondences and
+      %   NUM_MATHCES number of matching detected features. This function
+      %   caches results. FEAT_EXTRACTOR must be a subclass of
+      %   localFeatures.GenericLocalFeatureExtractor.
       %
-      %   [REP NUM_CORR] = testDetector(DETECTOR, TF, IMAGEA_PATH,
-      %   IMAGEB_PATH) Compute only repeatability of the detector
-      %   based only on detected frames.
+      %   [REP NUM_CORR] = obj.testFeatureExtractor(FEAT_EXTRACTOR, TF, 
+      %     IMAGEA_PATH, IMAGEB_PATH) Compute only repeatability of the 
+      %   image features extractor based only on detected frames.
       import helpers.*;
       import benchmarks.*;
       
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
       resultsKey = cell2str({obj.KeyPrefix, nargout, obj.getSignature(),...
-        detector.getSignature(), imageASign, imageBSign});
+        featExtractor.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
       
       % When detector does not cache results, do not use the cached data
-      if isempty(cachedResults) || ~detector.UseCache
+      if isempty(cachedResults) || ~featExtractor.UseCache
         if nargout == 4
           obj.info('Comparing frames and descriptors from det. %s and images %s and %s.',...
-            detector.Name,getFileName(imageAPath),getFileName(imageBPath));
-          [framesA descriptorsA] = detector.extractFeatures(imageAPath);
-          [framesB descriptorsB] = detector.extractFeatures(imageBPath);
+            featExtractor.Name,getFileName(imageAPath),getFileName(imageBPath));
+          [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
+          [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
           [repScore, numCorresp, matchScore, numMatches] = ...
             obj.testFeatures(tf, imageAPath, imageBPath, ...
                              framesA, framesB, descriptorsA, descriptorsB);
         else
           obj.info('Comparing frames from det. %s and images %s and %s.',...
-            detector.Name,getFileName(imageAPath),getFileName(imageBPath));
-          [framesA] = detector.extractFeatures(imageAPath);
-          [framesB] = detector.extractFeatures(imageBPath);
+            featExtractor.Name,getFileName(imageAPath),getFileName(imageBPath));
+          [framesA] = featExtractor.extractFeatures(imageAPath);
+          [framesB] = featExtractor.extractFeatures(imageBPath);
           [repScore, numCorresp] = ...
             obj.testFeatures(tf, imageAPath, imageBPath, framesA, framesB);
           matchScore = -1;
           numMatches = -1;
         end
-        if detector.UseCache
+        if featExtractor.UseCache
           results = {repScore numCorresp matchScore numMatches};
           obj.storeResults(results, resultsKey);
         end
@@ -126,14 +125,13 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     function [repScore numCorresp matchScore numMatches] = ... 
                testFeatures(obj, tf, imageAPath, imageBPath, ...
                  framesA, framesB, descriptorsA, descriptorsB)
-      % TestFeatures Compute scores of image features      
+      % TestFeatures Compute scores of image features
       %   [REP NUM_CORR MATCHING NUM_MATCHES] = obj.testFeatures(TF,
       %   IMAGEA_PATH, IMAGEB_PATH, FRAMES_A, FRAMES_B, DESCRIPTORS_A,
-      %   DESCRIPTORS_B) Compute repeatability REP and matching
-      %   MATHICNG score between FRAMES_A and FRAMES_B which are
-      %   related by homography TF and their descriptors DESCRIPTORS_A
-      %   and DESCRIPTORS_B which were extracted from images IMAGE_A
-      %   and IMAGE_B.
+      %   DESCRIPTORS_B) Compute repeatability REP and matching MATHICNG score
+      %   between FRAMES_A and FRAMES_B which are related by homography TF and
+      %   their descriptors DESCRIPTORS_A and DESCRIPTORS_B which were
+      %   extracted from images IMAGE_A and IMAGE_B.
       %
       %   [REP NUM_CORR] = obj.testFeatures(TF, IMAGEA_PATH,
       %   IMAGEB_PATH, FRAMES_A, FRAMES_B) Compute only repeatability

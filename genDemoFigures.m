@@ -36,7 +36,7 @@ for detIdx = 1:numel(detectors)
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [rep(detIdx,imgIdx) numCorr(detIdx,imgIdx)] = ...
-      repBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+      repBenchmark.testFeatureExtractor(detector, tf, imageAPath,imageBPath);
   end
 end
 
@@ -54,7 +54,7 @@ imgBIdx = 3;
 imageBPath = dataset.getImagePath(imgBIdx);
 tf = dataset.getTransformation(imgBIdx);
 [r nc siftCorresps siftReprojFrames] = ...
-  repBenchmark.testDetector(sift, tf, imageAPath,imageBPath);
+  repBenchmark.testFeatureExtractor(sift, tf, imageAPath,imageBPath);
 
 clf;
 imshow(imread(imageBPath));
@@ -76,7 +76,7 @@ for detIdx = 1:numel(detectors)
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [matching(detIdx,imgIdx) numMatches(detIdx,imgIdx)] = ...
-      matchingBenchmark.testDetector(detector, tf, imageAPath,imageBPath);
+      matchingBenchmark.testFeatureExtractor(detector, tf, imageAPath,imageBPath);
   end
 end
 
@@ -94,7 +94,7 @@ imgBIdx = 3;
 imageBPath = dataset.getImagePath(imgBIdx);
 tf = dataset.getTransformation(imgBIdx);
 [r nc siftCorresps siftReprojFrames] = ...
-  matchingBenchmark.testDetector(sift, tf, imageAPath,imageBPath);
+  matchingBenchmark.testFeatureExtractor(sift, tf, imageAPath,imageBPath);
 
 clf;
 imshow(imread(imageBPath));

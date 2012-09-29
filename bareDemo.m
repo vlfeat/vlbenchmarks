@@ -53,16 +53,16 @@ for detIdx = 1:numel(detectors)
 
     % Run the repeatability and matching benchmark
     [repeatability(detIdx,imageIdx) numCorresp(detIdx,imageIdx)] = ...
-      repeatabilityTest.testDetector(detectors{detIdx}, tf, imageAPath,imageBPath);
+      repeatabilityTest.testFeatureExtractor(detectors{detIdx}, tf, imageAPath,imageBPath);
     [matchingScore(detIdx,imageIdx) numMatches(detIdx,imageIdx)] = ...
-      matchingTest.testDetector(detectors{detIdx}, tf, imageAPath,imageBPath);
+      matchingTest.testFeatureExtractor(detectors{detIdx}, tf, imageAPath,imageBPath);
   end
 end
 
 
 %% Show scores
 
-scoreLineNames = {'VLFB res.','IJCV res.','asdf'};
+scoreLineNames = {'VLFB res.','IJCV res.'};
 
 printScores(repeatability, scoreLineNames ,'Repeatability');
 printScores(numCorresp, scoreLineNames, 'Number of correspondences');
@@ -88,7 +88,7 @@ function printScores(scores, scoreLineNames, name)
   for k = 1:numScores
     fprintf(formatString,scoreLineNames{k});
     for l = 2:size(scores,2)
-      fprintf('\t%6s',sprintf('%.2f',scores(k,l)));
+       fprintf('\t%6s',sprintf('%.2f',scores(k,l)));
     end
     fprintf('\n');
   end
