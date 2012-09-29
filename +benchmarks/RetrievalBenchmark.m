@@ -184,12 +184,12 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
         end
       end
       % Divide the dataset into chunks
-      imgsPerChunk = obj.Opts.maxNumImagesPerSearch;
+      imgsPerChunk = min(obj.Opts.maxNumImagesPerSearch,numImages);
       numChunks = ceil(numImages/imgsPerChunk);
       knns = cell(numChunks,1); % as image indexes
       knnDists = cell(numChunks,1);
       numDescriptors = cell(1,numChunks);
-      obj.info('Dataset has to been divided into %d chunks.',numChunks);
+      obj.info('Dataset has been divided into %d chunks.',numChunks);
 
       % Load query descriptors
       qDescriptors = obj.gatherQueriesDescriptors(dataset, featExtractor);
