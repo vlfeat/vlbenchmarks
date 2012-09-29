@@ -21,9 +21,9 @@ img_tgt := $(jpg_tgt)
 
 all: html/index.html assets $(pub_thumbs)
 
-deep: all ../genDemoFigures.m
+deep: all ../repeatabilityDemo.m
 	cd .. ; \
-	$(MATLAB_EXE) -$(ARCH) -nodesktop -r "clear mex;genDemoFigures;exit"
+	$(MATLAB_EXE) -$(ARCH) -nodesktop -r "clear mex;repeatabilityDemo(fullfile(pwd,'doc','demo'));exit"
 	cd .. ;
 
 html/index.html: vlbenchmarks.xml \
