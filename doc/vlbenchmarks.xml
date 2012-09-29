@@ -83,9 +83,31 @@
    <pagescript src="%pathto:root;assets/hidebib.js"/>
    <pagescript src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"/>
    <include src="index.html"/>
+
    <page id="vlbenchmarks.license" name="license" title="License">
      <pre><include src="../LICENSE" type="text"/></pre>
    </page>
+ </page>
+
+ <dir name="overview">
+  <page id="tut" name="tut" title="Tutorials">
+   <include src="tutorials.html"/>
+   <page id="tut.repeatability" name="repeatability" title="Repeatability">
+    <pagescript src="%pathto:root;assets/hidebib.js"/>
+    <pagescript src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"/>
+    <include src="repeatability.html"/>
+   </page>
+   <page id="tut.retrieval" name="retrieval" title="Retrieval">
+    <pagescript src="%pathto:root;assets/hidebib.js"/>
+    <pagescript src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"/>
+    <include src="retrieval.html"/>
+   </page>
+  </page>
+ </dir>
+ <page id="doc" name="doc" title="Documentation">
+  <pagescript src="%pathto:root;assets/hidebib.js"/>
+  <pagescript src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"/>
+  <include src="documentation.html"/>
  </page>
 
  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

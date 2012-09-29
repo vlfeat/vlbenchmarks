@@ -1,0 +1,124 @@
+<!DOCTYPE group PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<group>
+
+<h1> Documentation </h1>
+
+<ul>
+  <li><a href="%pathto:doc.structure;">Framework structure</a>
+  <ul>
+    <li><a href="%pathto:doc.extractors;">Image feature extractors</a></li>
+    <li><a href="%pathto:doc.datasets;">Datasets</a></li>
+    <li><a href="%pathto:doc.datasets;">Benchmarks</a></li>
+  </ul>
+  </li>
+  <li><a href="%pathto:doc.caching;">Caching</a></li>
+  <li><a href="%pathto:doc.logging;">Logging</a></li>
+</ul>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="doc.structure">Framework structure</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>
+<b>doc</b> is is organised into four parts, corresponding to
+an equal number of MATLAB packages (namespaces):</p>
+
+<ul>
+
+<li><a href="%pathto:doc.extractors;">Image feature extractors</a>
+(<strong><code>localFeatures</code></strong>). This package contains
+wrapper for features detectors and descriptors. Add your own wrapper
+here to evaluate your features.</li>
+
+<li><a href="%pathto:doc.datasets;">Datasets</a>
+(<strong><code>datasets</code></strong>) This package contains code
+that manages (downloads and reads) benchmark data. The most common use
+is to adopt one of the supported standard benchmarks, but you may want
+to add a wrapper to your own dataset here.</li>
+
+<li><a href="%pathto:doc.benchmarks;">Feature benchmarks.</a>
+(<strong><code>benchmarks</code></strong>). This package contains the
+benchmarking code.</li>
+
+<li>Supporting functions and classes
+(<strong><code>helpers</code></strong>). </li>
+</ul>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h3 id="doc.extractors">Feature objects</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<h2 id="doc.benchmarkowndet">Benchmarking your own feature extractor</h2>
+
+<p> This framework is easily extensible with your own image feature extraction
+algorithm as only two methods has to be implemented. To start you need to
+inherit from the <code>localFeatures.GenericLocalFeaturesExtractor</code> and
+implement methods <code>extractFeatures(imgPath)</code> and
+<code>extractDescriptors(imgPath, frames)</code>. </p>
+
+<precode type="matlab">
+classdef MyFeatureExtractor &lt; localFeatures.GenericLocalFeatureExtractor
+  methods
+    function obj = MyFeatureExtractor(varargin)
+    % Object construction
+    end
+
+    function [frames descriptors] = extractFeatures(obj, imagePath)
+       % Implementation of frames of frames with descriptors extraction
+    end
+
+    function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
+       % Implementation of extraction of descriptors of given frames
+    end
+  end
+end
+</precode>
+
+
+<p>
+Method <code>extractFeatures(imgPath)</code> can be called with one
+output argument when only feature frames need to be detected. When
+called with two output arguments, it extracts feature frames
+descriptors as well. This may seem to be dual to
+the <code>extractDescriptors()</code> method however some detectors
+does not support computation of descriptors of given frames.
+</p>
+
+<p>
+If you want to use caching, you can use <code>loadFeatures()</code>
+or <code>storeFeatures()</code> methods which implements access to the
+cache. However with that you will need to implement
+method <code>getSignature()</code> which generates unique string
+signature of the detector properties.
+</p>
+ 
+<p>
+To see details about the logging, class options and installation
+framework, see
+the <code>localFeatures.ExampleLocalFeatureExtractor</code> class
+which implements simple feature detector together with descriptor
+extractor.
+</p>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h3 id="doc.datasets">Datasets</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h3 id="doc.benchmarks">Benchmarks</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="doc.caching">Caching</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="doc.logging">Logging</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+ <script language="JavaScript">
+   hideallbibs();
+ </script>
+</group>

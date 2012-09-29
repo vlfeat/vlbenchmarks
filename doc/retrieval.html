@@ -1,0 +1,59 @@
+<!DOCTYPE group PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<group>
+
+<h1> Retrieval benchmark </h1>
+
+<p>
+Retrieval benchmark tests feature detectors in a simple retrieval
+system setting. Changing the detector and measuring the performance of
+the system can comparatively asses feature detector
+performance. Implemented retrieval system is based on [2] which uses
+K-Nearest Neighbours in the whole descriptors database together with a
+simple voting criterion.
+</p>
+
+<p>
+Retrieval dataset contains set of images and a set of queries,
+i.e. images which we want to look for in the database. Based on the
+query ground truth data the Average Precision (area under the
+precision-recall curve) is calculated and averaged over all queries to
+get the Mean Average Precision of the detector.
+</p>
+
+<p>
+The interface to the retrieval benchmark is similar to the
+repeatability benchmark as can be seen from the example which
+calculates the Mean Average Precision of the retrieval system for the
+SIFT detector and descriptor.
+</p>
+
+<precode type="matlab">
+detector = localFeatures.VlFeatSift();
+dataset = dataset.VggRetrievalDataset('Category','oxbuild','Lite',true);
+retBenchmark = benchmarks.RetrievalBenchmark();
+[mAP queriesAP] = retBenchmark.testFeatureExtractor(detector, dataset);
+</precode>
+
+<p>
+This benchmark uses parfor loop for both computing the features from
+the dataset images and for evaluating the queries. As the lite version
+of the oxbuild dataset contains 660 images it can improve the
+evaluation time significantly.
+</p>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+ <h2 id="vlbenchmarks.refs">References</h2>
+ <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+ <ol>
+  <li id="vlbenchmarks.ref2">H. J&eamp;egou, M. Douze, and
+  C. Schmid. Exploiting descriptor distances for precise image
+  search. Technical Report 7656, INRIA, 2011.
+  </li>
+ </ol>
+
+ <script language="JavaScript">
+   hideallbibs();
+ </script>
+</group>
