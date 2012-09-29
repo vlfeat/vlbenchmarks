@@ -12,7 +12,7 @@ classdef GenericBenchmark< handle
   end
 
   properties(GetAccess=public, SetAccess = protected)
-    UseCache = true; % Cache results
+    UseCache = true; % Do cache results
   end
 
   methods (Abstract)

@@ -2,7 +2,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
 % benchmarks.RepeatabilityBenchmark Image features repeatability
 %   benchmarks.RepeatabilityBenchmark('OptionName',optionValue,...)
-%   constructs an object to compute the detector repeatabiliy and the
+%   constructs an object to compute the detector repeatability and the
 %   descriptor matching scores as given in [1].
 %
 %   Using this class is a two step process. First, create an instance

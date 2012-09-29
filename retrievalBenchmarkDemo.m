@@ -5,11 +5,12 @@ import datasets.*;
 import benchmarks.*;
 
 %% Define Local features detectors
-detectors{1} = DescriptorAdapter(VggAffine('Detector','haraff'),VggDescriptor());
-detectors{2} = DescriptorAdapter(VggMser(),VggDescriptor());
-%detectors{3} = CmpBinHessian();
+featExtractors{1} = DescriptorAdapter(VggAffine('Detector','haraff'),...
+  VggDescriptor());
+featExtractors{2} = DescriptorAdapter(VggMser(),VggDescriptor());
+featExtractors{3} = CmpBinHessian();
 % For MSERs use VGG SIFT as descriptors
-%detectors{4} = DescriptorAdapter(VggMser(),VggDescriptor());
+featExtractors{4} = DescriptorAdapter(VggMser(),VggDescriptor());
 
 %% Define dataset
 dataset = VggRetrievalDataset('Category','oxbuild','BadImagesNum',0,'JunkImagesNum',0,'OkImagesNum',0);
@@ -17,19 +18,19 @@ dataset = VggRetrievalDataset('Category','oxbuild','BadImagesNum',0,'JunkImagesN
 %% Run the benchmark
 retBenchmark = RetrievalBenchmark('k',50);
 
-mAP = zeros(numel(detectors),1);
-queryAPs = zeros(numel(detectors),dataset.NumQueries);
-rankedLists = cell(1,numel(detectors));
-votes = cell(1,numel(detectors));
-numDescriptors = cell(1,numel(detectors));
+mAP = zeros(numel(featExtractors),1);
+queryAPs = zeros(numel(featExtractors),dataset.NumQueries);
+rankedLists = cell(1,numel(featExtractors));
+votes = cell(1,numel(featExtractors));
+numDescriptors = cell(1,numel(featExtractors));
 
-for d=1:numel(detectors)
+for d=1:numel(featExtractors)
   [mAP(d) queryAPs(d,:) rankedLists{d} votes{d} numDescriptors{d}] =...
-    retBenchmark.evalDetector(detectors{d}, dataset);
+    retBenchmark.testFeatureExtractor(featExtractors{d}, dataset);
 end
 
 %% Plot the results
-detNames = cellfun(@(a) a.Name,detectors,'UniformOutput',false);
+detNames = cellfun(@(a) a.Name,featExtractors,'UniformOutput',false);
 
 figure(1); clf;
 bar(mAP); set(gca,'XTickLabel',detNames); ylabel('Mean average precision');
@@ -88,7 +89,7 @@ function category = getImageCategory(query, imgId)
   end
 end
 
-% Plot the PR curve
+%% Plot the PR curve
 labels = - ones(1, numel(queryVotes)) ;
 labels(query.good) = 1 ;
 labels(query.ok(query.ok~=0)) = 1 ;
@@ -97,4 +98,5 @@ labels(query.imageId) = 1 ;
 figure(7);
 unsortedVotes(rankedList) = queryVotes;
 vl_pr(labels, unsortedVotes);
+
 end
