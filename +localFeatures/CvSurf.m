@@ -46,8 +46,8 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
         [frames descriptors] = mex.cvSurf(img,obj.CvsurfArguments{:});
       end
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
+      obj.debug('%d Frames of image %s computed in %gs',...
+        size(frames,2), getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 

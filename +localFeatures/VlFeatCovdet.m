@@ -45,8 +45,8 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
         [frames descriptors] = vl_covdet(img, obj.VlCovdetArguments{:});
       end
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
-                getFileName(imagePath),timeElapsed);
+      obj.debug('%d Frames from image %s computed in %gs',...
+                size(frames,2),getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 

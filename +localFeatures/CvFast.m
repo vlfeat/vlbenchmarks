@@ -38,8 +38,8 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
       img = uint8(img); % If not already in uint8, then convert
       [frames] = localFeatures.mex.cvFast(img,obj.CvFastArguments{:});
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);      
+      obj.debug('%d Frames of image %s computed in %gs',...
+        size(frames,2), getFileName(imagePath),timeElapsed);      
       obj.storeFeatures(imagePath, frames, []);
     end
 

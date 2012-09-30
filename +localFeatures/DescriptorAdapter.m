@@ -73,8 +73,8 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
         if imIsTmp, delete(valImagePath); end;
       end
       timeElapsed = toc(startTime);
-      obj.debug('Features of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
+      obj.debug('%d Features of image %s computed in %gs',...
+        size(frames,2), getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, descriptors);
     end
 

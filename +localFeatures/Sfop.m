@@ -70,8 +70,8 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
       frames = [frames(1:2,:) ; sqrt(frames(3,:))];
       delete(outFile);
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
+      obj.debug('%d Frames from image %s computed in %gs',...
+        size(frames,2), getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, []);
     end
 

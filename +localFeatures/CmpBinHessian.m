@@ -76,8 +76,8 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       delete(featFile);
       if imIsTmp, delete(imagePath); end;
       timeElapsed = toc(startTime);
-      obj.debug(sprintf('Frames of image %s computed in %gs',...
-        getFileName(origImagePath),timeElapsed));
+      obj.debug(sprintf('%d Frames of image %s computed in %gs',...
+        size(frames,2),getFileName(origImagePath),timeElapsed));
       obj.storeFeatures(origImagePath, frames, descriptors);
     end
 

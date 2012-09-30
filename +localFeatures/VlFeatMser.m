@@ -46,8 +46,8 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
       sel = frames(3,:).*frames(5,:) - frames(4,:).^2 >= 1 ;
       frames = frames(:, sel) ;
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
+      obj.debug('%d Frames from image %s computed in %gs',...
+        size(frames,2),getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, []);
     end
 

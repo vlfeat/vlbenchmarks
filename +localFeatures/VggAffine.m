@@ -83,8 +83,8 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
       frames = helpers.readFramesFile(framesFile);
       delete(framesFile);
       if imIsTmp, delete(imagePath); end;
-      obj.debug('Image %s processed in %gs',...
-        getFileName(origImagePath),timeElapsed);
+      obj.debug('%d Features from image %s computed in %gs',...
+        size(frames,2),getFileName(origImagePath),timeElapsed);
       obj.storeFeatures(origImagePath, frames, descriptors);
     end
 

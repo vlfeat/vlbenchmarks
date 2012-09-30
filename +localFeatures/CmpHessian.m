@@ -72,8 +72,8 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       delete(featFile); delete(imgFile);
       
       timeElapsed = toc(startTime);
-      obj.debug(sprintf('Features from image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed));
+      obj.debug(sprintf('%d Features from image %s computed in %gs',...
+        size(frames,2),getFileName(imagePath),timeElapsed));
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

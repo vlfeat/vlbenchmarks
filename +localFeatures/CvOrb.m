@@ -52,8 +52,8 @@ classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
         [frames descriptors] = mex.cvOrb(img,obj.CvOrbArguments{:});
       end
       timeElapsed = toc(startTime);
-      obj.debug('Frames of image %s computed in %gs',...
-        getFileName(imagePath),timeElapsed);
+      obj.debug('%d Frames of image %s computed in %gs',...
+        size(frames,2), getFileName(imagePath),timeElapsed);
       obj.storeFeatures(imagePath, frames, descriptors);
     end
     
