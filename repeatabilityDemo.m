@@ -1,4 +1,4 @@
-function repeatabilityDemo(saveResultsPath)
+function repeatabilityDemo(resultsPath)
 % REPEATABILITYDEMO Demonstrates how to run the repatability benchmark
 %   REPEATABILITYDEMO() Runs the repeatability demo.
 %
@@ -9,11 +9,15 @@ function repeatabilityDemo(saveResultsPath)
 
 % AUTORIGHTS
 
-if nargin < 1, saveResultsPath = ''; end;
+if nargin < 1, resultsPath = ''; end;
 
 % --------------------------------------------------------------------
 % PART 1: Image feature detectors
 % --------------------------------------------------------------------
+
+import datasets.*;
+import benchmarks.*;
+import localFeatures.*;
 
 % The feature detector/descriptor code is encapsualted in a corresponding
 % class. For example, VLFeatSift() encapslate the SIFT implementation in
@@ -24,9 +28,8 @@ if nargin < 1, saveResultsPath = ''; end;
 % cornerness threshold). In order to compare different parameter
 % settings, one simply creates multiple instances of these objects.
 
-figure(1); clf;
-siftDetector = localFeatures.VlFeatSift();
-thrSiftDetector = localFeatures.VlFeatSift('PeakThresh',11);
+siftDetector = VlFeatSift();
+thrSiftDetector = VlFeatSift('PeakThresh',11);
 
 % VLBenchmarks enables a simple access to a number of public
 % benchmakrs. It also provides simple facilities to generate test data
@@ -50,14 +53,15 @@ imwrite(ellBlobs,ellBlobsPath);
 % disableCaching() method in each detector to prevent it from caching.
 
 siftFrames = siftDetector.extractFeatures(ellBlobsPath);
-bigScaleSiftFrames = thrSiftDetector.extractFeatures(ellBlobsPath);
+thrSiftFrames = thrSiftDetector.extractFeatures(ellBlobsPath);
 
 % Now show the frames
+figure(1); clf;
 imshow(ellBlobs);
-sfH = vl_plotframe(siftFrames,'g');
-bssfH = vl_plotframe(bigScaleSiftFrames,'r','LineWidth',1);
-legend([sfH bssfH],'SIFT','SIFT PT=10','Location','SE');
-helpers.printFigure(saveResultsPath,'siftFrames',0.9);
+siftHandle = vl_plotframe(siftFrames,'g');
+thrSiftHandle = vl_plotframe(thrSiftFrames,'r','LineWidth',1);
+legend([siftHandle thrSiftHandle],'SIFT','SIFT PT=10','Location','SE');
+helpers.printFigure(resultsPath,'siftFrames',0.9);
 
 % --------------------------------------------------------------------
 % PART 2: Detector repeatability
@@ -73,13 +77,13 @@ dataset = datasets.VggAffineDataset('Category','graf');
 % parameters. The defaults correspond to the seetting in the original
 % publication (IJCV05).
 
-repBenchmark = benchmarks.RepeatabilityBenchmark('Mode','Repeatability');
+repBenchmark = RepeatabilityBenchmark('Mode','Repeatability');
 
 % Prepare three detectors, the two from PART 1 and a third one that
 % detects MSER image features.
 
-mser = localFeatures.VlFeatMser();
-detectors = {siftDetector, thrSiftDetector, mser};
+mser = VlFeatMser();
+featExtractors = {siftDetector, thrSiftDetector, mser};
 
 % Now we are ready to run the repeatability test. We do this by fixing
 % a reference image A and looping through other images B in the
@@ -102,10 +106,10 @@ repeatability = [];
 numCorresp = [];
 
 imageAPath = dataset.getImagePath(1);
-for d = 1:numel(detectors)
+for d = 1:numel(featExtractors)
   for i = 2:dataset.NumImages
     [repeatability(d,i) numCorresp(d,i)] = ...
-      repBenchmark.testFeatureExtractor(detectors{d}, ...
+      repBenchmark.testFeatureExtractor(featExtractors{d}, ...
                                 dataset.getTransformation(i), ...
                                 dataset.getImagePath(1), ...
                                 dataset.getImagePath(i));
@@ -121,11 +125,11 @@ printScores(detectorNames, numCorresp, 'Number of correspondences');
 
 figure(2); clf; 
 plotScores(detectorNames, dataset, 100 * repeatability, 'Repeatability');
-helpers.printFigure(saveResultsPath,'repeatability',0.6);
+helpers.printFigure(resultsPath,'repeatability',0.6);
 
 figure(3); clf; 
 plotScores(detectorNames, dataset, numCorresp, 'Number of correspondences');
-helpers.printFigure(saveResultsPath,'numCorresp',0.6);
+helpers.printFigure(resultsPath,'numCorresp',0.6);
 
 % Optionally, we can also see the matched frames itself. In this
 % example we examine the matches between the reference and fourth
@@ -151,7 +155,7 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,...
                                     'IsReferenceImage',false,...
                                     'PlotMatchLine',false,...
                                     'PlotUnmatched',false);
-helpers.printFigure(saveResultsPath,'correspondences',0.75);
+helpers.printFigure(resultsPath,'correspondences',0.75);
 
 % --------------------------------------------------------------------
 % PART 3: Detector matching score
@@ -166,21 +170,21 @@ helpers.printFigure(saveResultsPath,'correspondences',0.75);
 % In this particular example, the object encapsulating the SIFT
 % detector is used as descriptor form MSER.
 
-mserWithSift = localFeatures.DescriptorAdapter(mser, siftDetector);
-detectors = {siftDetector, thrSiftDetector, mserWithSift};
+mserWithSift = DescriptorAdapter(mser, siftDetector);
+featExtractors = {siftDetector, thrSiftDetector, mserWithSift};
 
 % We create a benchmark object and run the tests as before, but in
 % this case we request that descriptor-based matched should be tested.
 
-matchingBenchmark = benchmarks.RepeatabilityBenchmark('Mode','MatchingScore');
+matchingBenchmark = RepeatabilityBenchmark('Mode','MatchingScore');
 
 matchScore = [];
 numMatches = [];
 
-for d = 1:numel(detectors)
+for d = 1:numel(featExtractors)
   for i = 2:dataset.NumImages
     [matchScore(d,i) numMatches(d,i)] = ...
-      matchingBenchmark.testFeatureExtractor(detectors{d}, ...
+      matchingBenchmark.testFeatureExtractor(featExtractors{d}, ...
                                 dataset.getTransformation(i), ...
                                 dataset.getImagePath(1), ...
                                 dataset.getImagePath(i));
@@ -196,11 +200,11 @@ printScores(detectorNames, numMatches, 'Number of matches') ;
 
 figure(5); clf; 
 plotScores(detectorNames, dataset, matchScore*100,'Matching Score');
-helpers.printFigure(saveResultsPath,'matchingScore',0.6);
+helpers.printFigure(resultsPath,'matchingScore',0.6);
 
 figure(6); clf; 
 plotScores(detectorNames, dataset, numMatches,'Number of matches');
-helpers.printFigure(saveResultsPath,'numMatches',0.6);
+helpers.printFigure(resultsPath,'numMatches',0.6);
 
 % Same as with the correspondences, we can plot the matches based on
 % feature frame descriptors. The code is nearly identical.
@@ -219,7 +223,7 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,...
                                     'IsReferenceImage',false,...
                                     'PlotMatchLine',false,...
                                     'PlotUnmatched',false);
-helpers.printFigure(saveResultsPath,'matches',0.75);
+helpers.printFigure(resultsPath,'matches',0.75);
 
 % --------------------------------------------------------------------
 % Helper functions
