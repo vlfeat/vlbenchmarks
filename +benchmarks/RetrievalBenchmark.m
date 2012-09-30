@@ -143,7 +143,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       obj.checkInstall(varargin);
     end
 
-    function [mAP, queriesAp, rankedLists, votes, numDescriptors] = ...
+    function [mAP, info] = ...
         testFeatureExtractor(obj, featExtractor, dataset)
       % testFeatureExtractor Test image feature extractor in a retrieval test
       %   MAP = obj.testFeatureExtractor(FEAT_EXTRACTOR, DATASET) Compute 
@@ -153,15 +153,30 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       %   compute both feature frames and their descriptors. DATASET must
       %   be an object of datasets.VggRetrievalDataset class.
       %
-      %   [MAP QUERIES_AP RANKED_LIST VOTES NUM_DESCS] = ...
-      %   obj.testFeatureExtractor(DETECTOR, DATASET) Returns also QUERIES_AP,
-      %   average precision of a detector per a single query, RANKED_LIST,
-      %   array of size [DATASET.NumImages, DATASET.NumQueries] where each
-      %   RANKED_LIST(:,QUERY_NUM) contain IDs of images from the dataset
-      %   ranked by the voting score which is stored in VOTES(:,QUERY_NUM).
-      %   Size of array VOTES is the same as of RANKED_LIST.
-      %   NUM_DESCS is an array of size [1 DATASET.NumImages] storing the
-      %   number of descriptors detected in a particular dataset image.
+      %   [MAP INFO] = obj.testFeatureExtractor(DETECTOR, DATASET) 
+      %   returns an additiona structure INFO with the following members:
+      %
+      %   info.queriesAp::
+      %     average precision of a detector per a single query
+      %
+      %   info.rankedList::
+      %     array of size [DATASET.NumImages, DATASET.NumQueries] where
+      %     each info.rankedList(:,QUERY_NUM) contain IDs of images from 
+      %     the dataset retrieved with query QUERY_NUM and ranked by the 
+      %     voting score which is stored in info.votes(:,QUERY_NUM).
+      %
+      %   info.votes::
+      %     voting score for each image in info.rankedList.
+      %
+      %   info.numDescriptors::
+      %     array of size [1 DATASET.NumImages] storing the number of 
+      %     descriptors per each dataset image.
+      %
+      %   info.numQueryDescriptors
+      %     array of size [q DATASET.NumQueries] storing the number of
+      %     descriptors per query.
+      %
+      %   See also: datasets.VggRetrievalDataset
       import helpers.*;
       obj.info('Evaluating detector %s on dataset %s.',...
         featExtractor.Name, dataset.DatasetName);
@@ -179,7 +194,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       if obj.UseCache
         results = DataCache.getData(resultsKey);
         if ~isempty(results)
-          [mAP, queriesAp, rankedLists, votes, numDescriptors]=results{:};
+          [mAP, info]=results{:};
           obj.debug('Results loaded from cache.');
           return;
         end
@@ -193,14 +208,15 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       obj.info('Dataset has been divided into %d chunks.',numChunks);
 
       % Load query descriptors
-      qDescriptors = obj.gatherQueriesDescriptors(dataset, featExtractor);
+      queryDescriptors = obj.gatherQueriesDescriptors(dataset, featExtractor);
+      numQueryDescriptors = cellfun(@(a) size(a,2),queryDescriptors);
 
       % Compute KNNs for all image chunks
       for chNum = 1:numChunks
         firstImageNo = (chNum-1)*imgsPerChunk+1;
         lastImageNo = min(chNum*imgsPerChunk,numImages);
         [knns{chNum}, knnDists{chNum}, numDescriptors{chNum}] = ...
-          obj.computeKnns(dataset,featExtractor,qDescriptors,...
+          obj.computeKnns(dataset,featExtractor,queryDescriptors,...
           firstImageNo,lastImageNo);
       end
       % Compute the AP
@@ -236,22 +252,26 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
           obj.computeAp(allQKnns, allQKnnDists, numDescriptors, query);
         obj.info('Average precision of query %d: %f',q,queriesAp(q));
       end
-      
+
       mAP = mean(queriesAp);
       obj.debug('mAP computed in %fs.',toc(startTime));
       obj.info('Computed mAP is: %f',mAP);
 
-      results = {mAP, queriesAp, rankedLists, votes, numDescriptors};
+      info = struct('queriesAp',queriesAp,'rankedList',rankedLists,...
+        'votes',votes, 'numDescriptors',numDescriptors,...
+        'numQueryDescriptors',numQueryDescriptors);
+
+      results = {mAP, info};
       if obj.UseCache
         DataCache.storeData(results, resultsKey);
       end
     end
-  
+
     function signature = getSignature(obj)
       signature = helpers.struct2str(obj.Opts);
     end
   end
-    
+
   methods (Access=protected, Hidden)
     function qDescriptors = gatherQueriesDescriptors(obj, dataset, ...
         featExtractor)
@@ -293,6 +313,12 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       %   Array NUM_DESCRIPTORS of size [1, NUM_IMAGES_IN_DB] contains the
       %   number of descriptors extracted from the database images.
       import helpers.*;
+
+      if isempty(knnImgIds)
+        numImages = numel(numDescriptors);
+        ap = 0; rankedList = zeros(numImages,1); 
+        votes = zeros(numImages,1); return;
+      end
 
       k = obj.Opts.k;
       numImages = numel(numDescriptors);
@@ -429,6 +455,8 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
       if qNumDescriptors == 0
         obj.info('No descriptors detected in the query box.');
+        knnDescIds = zeros(k,0);
+        knnDists = zeros(k,0);
         return;
       end
 
@@ -496,35 +524,26 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
   end
 
   methods(Static)
-    function ap = rankedListAp(query, rankedList)
-    % rankedListAp Calculate average precision of retrieved images
-    % AP = rankedListAp(QUERY, RANKED_LIST) Compute average precision of
-    %   retrieved images (their ids) by QUERY, sorted by their relevancy in
-    %   RANKED_LIST. Average precision is calculated as area under the
-    %   precision/recall curve.
-    %   This code is recoded method from [2]:
-    %   http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/compute_ap.cpp
-      oldRecall = 0.0;
-      oldPrecision = 1.0;
-      ap = 0.0;
-      ambiguous = query.junk;
-      positive = [query.good query.ok];
-      intersectSize = 0;
-      j = 0;
-      for i = 1:numel(rankedList)
-        if ismember(rankedList(i),ambiguous)
-          continue; 
-        end
-        if ismember(rankedList(i),positive)
-          intersectSize = intersectSize + 1;
-        end
-        recall = intersectSize / numel(positive);
-        precision = intersectSize / (j + 1.0);
-        ap = ap + (recall - oldRecall)*((oldPrecision + precision)/2.0);
-        oldRecall = recall;
-        oldPrecision = precision;
-        j = j + 1;
-      end
+    function [ap recall precision] = rankedListAp(query, rankedList)
+      % rankedListAp Calculate average precision of retrieved images
+      %   AP = rankedListAp(QUERY, RANKED_LIST) Compute average precision 
+      %   of retrieved images (their ids) by QUERY, sorted by their 
+      %   relevancy in RANKED_LIST. Average precision is calculated as 
+      %   area under the precision/recall curve.
+      %
+      %   [AP RECALL PRECISION] = rankedListAp(...) Return also precision
+      %   recall values.
+
+      numImages = numel(rankedList);
+      labels = - ones(1, numImages);
+      labels(query.good) = 1;
+      labels(query.ok) = 1;
+      labels(query.junk) = 0;
+      labels(query.imageId) = 1;
+      rankedLabels = labels(rankedList);
+
+      [recall precision info] = vl_pr(rankedLabels, numImages:-1:1);
+      ap = info.auc;
     end
   end  
 end
