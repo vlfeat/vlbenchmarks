@@ -2,37 +2,35 @@
 
 <group>
 
-<h1>Repeatability benchmark</h1> 
+<h1 id="tut.rep;">Repeatability benchmark tutorial</h1> 
 
-Repeatability benchmark, as it has been
+<p>Repeatability benchmark, as it has been
 introduced in [1], defines two measurements. First measurement is detector
 repeatability which measures to what extent do detected regions overlap
 exactly the same scene by comparing detected frames in two images in the same
 scene. As repeatability is based only on the feature geometry, matching score
 includes also regions descriptors which helps to asses detected regions
-distinctiveness.
+distinctiveness.</p>
 
-In this tutorial it is shown how to compute both of these measurements together with visualisation of the results which helps to understand these scores.
+<p>In this tutorial it is shown how to compute both of these measurements together with visualisation of the results which helps to understand these scores.</p>
 
 <ul>
-  <li>
-    <a href="%pathto:tut.repeatability.features;">Image features detection</a>
-  </li>
-  <li>
-    <a href="%pathto:tut.repeatability.repeatability;">Repeatability test</a>
-    <ul>
-      <li>
-        <a href="%pathto:tut.repeatability.correspondences;">Displaying the correspondences</a>
-      </li>
-    </ul>
-  </li>
-  <li>
-    <a href="%pathto:tut.repeatability.matching;">Matching score</a>
-  </li>
+  <li><a href="%pathto:tut.rep.features;">Image features detection</a></li>
+  <li><a href="%pathto:tut.rep.repeatability">Repeatability test</a></li>
+  <li><a href="%pathto:tut.rep.correspondences">Displaying the correspondences</a></li>
+  <li><a href="%pathto:tut.rep.matching">Matching score</a></li>
+  <li><a href="%pathto:tut.rep.refs">References</a></li>
 </ul>
 
+
+<p> The whole source code of this tutorial is available in 
+<code>retrievalDemo.m</code> function as this text shows only 
+selected parts of the code.
+</p>
+
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h2 id="tut.repeatability.features">Image features detection</h2>
+<h2 id="tut.rep.features">Image features detection</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <p>
 The benchmarks distribution contains a few built-in image feature
@@ -106,7 +104,7 @@ method <code>disableCaching()</code>.
 </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h2 id="tut.repeatability.repeatability">Repeatability test</h2>
+<h2 id="tut.rep.repeatability">Repeatability test</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <p>
@@ -210,7 +208,7 @@ axis([2 6 0 max(numCorr(:))]); set(gca,'XTick',2:6); grid on;
 </div>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h3 id="tut.repeatability.correspondences">Displaying the correspondences</h3>
+<h2 id="tut.rep.correspondences">Displaying the correspondences</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <p>
 It is sometimes useful to see the feature frame correspondences
@@ -251,7 +249,7 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,siftReprojFrames,...
 </div>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h2 id="tut.repeatability.matching">Matching score</h2>
+<h2 id="tut.rep.matching">Matching score</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <p>
 Matching score differs to repeatability that the one-to-one
@@ -337,7 +335,7 @@ As for repeatability we can also show the matched frames itself.
 </div>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
- <h2 id="repeatability.refs">References</h2>
+ <h2 id="rep.refs">References</h2>
  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
  <ol>
@@ -346,7 +344,4 @@ As for repeatability we can also show the matched frames itself.
   L. Van Gool. A comparison of affine region detectors. IJCV,
   1(65):43–72, 2005.</li>
  </ol>
- <script language="JavaScript">
-   hideallbibs();
- </script>
 </group>

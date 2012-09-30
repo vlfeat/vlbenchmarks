@@ -2,7 +2,28 @@
 
 <group>
 
-<h1> Retrieval benchmark </h1>
+<h1 id="tut.ret;"> Retrieval benchmark tutorial</h1>
+
+<ul>
+  <li><a href="%pathto:tut.ret.retrieval;">Retrieval benchmark</a></li>
+  <li><a href="%pathto:tut.ret.compare;">Comparing image features algorithms</a></li>
+  <li><a href="%pathto:tut.ret.ap">Average precisions</a></li>
+  <li><a href="%pathto:tut.ret.ap">Precision recall curves</a></li>
+  <li><a href="%pathto:tut.ret.images">Retrieved images</a></li>
+  <li><a href="%pathto:tut.ret.refs">References</a></li>
+</ul>
+
+<p> The whole source code of this tutorial is available in 
+<code>retrievalDemo.m</code> function as this text shows only 
+selected parts of the code.
+</p>
+
+<p>In the current implementation, this benchmark is not supported
+on Microsoft Windows platforms.</p>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="tut.ret.retrieval"> Retrieval benchmark</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <p>
 Retrieval benchmark tests feature detectors in a simple retrieval
@@ -23,37 +44,301 @@ get the Mean Average Precision of the detector.
 
 <p>
 The interface to the retrieval benchmark is similar to the
-repeatability benchmark as can be seen from the example which
-calculates the Mean Average Precision of the retrieval system for the
-SIFT detector and descriptor.
+repeatability benchmark as can be seen from the minimal example which
+calculates the Mean Average Precision of the retrieval system 
+which uses the SIFT detector and descriptor for image feature extraction.
 </p>
 
 <precode type="matlab">
 detector = localFeatures.VlFeatSift();
-dataset = dataset.VggRetrievalDataset('Category','oxbuild','Lite',true);
+dataset = dataset.VggRetrievalDataset('Category','oxbuild');
 retBenchmark = benchmarks.RetrievalBenchmark();
 [mAP queriesAP] = retBenchmark.testFeatureExtractor(detector, dataset);
 </precode>
 
-<p>
-This benchmark uses parfor loop for both computing the features from
-the dataset images and for evaluating the queries. As the lite version
-of the oxbuild dataset contains 660 images it can improve the
-evaluation time significantly.
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="tut.ret.compare">Comparing image features algorithms</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<p>Main purpose of this benchmark is to compare feature extraction algorithms.
+For this tutorial we have picked those three as they are part of the 
+VLFeat library:</p>
+
+<precode type="matlab">
+featExtractors{1} = VlFeatCovdet('method', 'hessianlaplace', ...
+                                 'estimateaffineshape', true, ...
+                                 'estimateorientation', false, ...
+                                 'peakthreshold',0.0035,...
+                                 'doubleImage', false);
+featExtractors{2} = VlFeatCovdet('method', 'harrislaplace', ...
+                                 'estimateaffineshape', true, ...
+                                 'estimateorientation', false, ...
+                                 'peakthreshold',0.0000004,...
+                                 'doubleImage', false);
+featExtractors{3} = VlFeatSift('PeakThresh',4);
+</precode>
+
+<p> The first two image feature extractors are affine covariant whereas the 
+third one is just similarity invariant and is closely similar to Lowe's 
+original SIFT detector.</p>
+
+<p> In order to be able to perform the retrieval test we need set of images.
+For this purpose we create a subset of the original 'The Oxford Buildings'
+dataset in order to be able to compute the results in a reasonable time.
+</p>
+
+<precode type="matlab">
+dataset = VggRetrievalDataset('Category','oxbuild',...
+                              'OkImagesNum',inf,...
+                              'JunkImagesNum',100,...
+                              'BadImagesNum',100);
+</precode>
+
+<p> The created dataset now contains only 748 images as only a part of the 
+'Bad' images is included (images which does not contain anything from the 
+queries). The whole dataset has got 5062 images.</p>
+
+<p> Now create a benchmark class which will be used for the testing itself.
+The parameter <code>'MaxNumImagesPerSearch'</code> sets how many images are 
+processed at once. Because each image usually contain around 2000 features
+where each feature is described with 128 bytes long descriptor it easily 
+take care of you computer memory. The fact that the used KNN algorithm 
+is able to work only with <code>single</code> (4 Byte) values does not 
+help the situation.</p>
+
+<precode type="matlab">
+  retBenchmark = RetrievalBenchmark('MaxNumImagesPerSearch',100);
+</precode>
+
+<p>With this setting we can optimistically expect the following memory demand:</p>
+
+<precode> 100 * 2000 * 128 * 4 ~ 100MB of memory </precode> 
+
+<p>Now running the benchmark is an easy task. However even having a subset
+we would suggest to execute it and go for a coffee :).
+</p>
+
+<precode type="matlab">
+for d=1:numel(featExtractors)
+  [mAP(d) info(d)] =...
+    retBenchmark.testFeatureExtractor(featExtractors{d}, dataset);
+end
+</precode>
+
+<p>Only feature extraction from one image takes several seconds so overall just 
+this would take: </p>
+
+<precode> 3 × 748 × 3 = 6732s ~ 2h </precode>
+
+<p> So maybe lunch would do it as well. Fortunately if you have Matlab 
+Parallel Computing Toolbox and working <code>matlabpool</code> you
+can run feature extraction and KNN computation in parallel. 
+</p>
+
+<p> As with other parts of this project, both the features and partial
+KNN search results are stored in the cache so the computation can be 
+interrupted and continued any time.</p>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="tut.ret.ap">Average precisions</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>When the results are successfully computed it can viewed in several depths.
+The most general result is the Mean average precision which is a single 
+value per a detector. For example we can visualise them in a bar graph:</p>
+
+<precode type="matlab">
+detNames = {'VLF-heslap', 'VLF-harlap', 'VLFeat-SIFT'};
+bar(mAP);
+</precode>
+
+<div class="figure">
+ <img src="%pathto:root;demo/map.jpg"/>
+ <div class="caption">
+  <span class="content">
+   Mean average precision of the selected detectors.
+  </span>
+ </div>
+</div>
+
+<precode>
+     VLF-heslap  VLF-harlap VLFeat-SIFT
+mAP       0.740       0.781       0.732
+</precode>
+
+<p> Please note that these values are computed only over small part of
+the whole dataset therefore are not directly comparable to other retrieval 
+systems. The purpose of this benchmark is only to compare image features.</p>
+
+<p>In order to be able properly compare the algorithms, important measure is 
+a number of descriptors which the algorithm produced for each image and query:</p>
+
+<precode type="matlab">
+numDescriptors = cat(1,info(:).numDescriptors);
+numQueryDescriptors = cat(1,info(:).numQueryDescriptors);
+avgDescsNum(1,:) = mean(numDescriptors,2);
+avgDescsNum(2,:) = mean(numQueryDescriptors,2);
+</precode>
+
+<p>And it can be seen that detectors produce similar number 
+of features:</p>
+<precode>
+                       VLF-heslap  VLF-harlap VLFeat-SIFT
+      Avg. #Descs.     1326.957    1217.566    1273.594
+Avg. #Query Descs.      646.218     623.491     636.745
+</precode>
+
+<p>We can also plot the Average precisions per a query. These values are also
+contained in the <code>info</code> structure. In order to be able to be able
+to plot it in this tutorial we have selected only first 15 queries.</p>
+
+<precode type="matlab">
+queriesAp = cat(1,info(:).queriesAp); % Values from struct to single array
+selectedQAps = queriesAp(:,1:15);     % Pick only first 15 queries
+bar(selectedQAps');
+</precode>
+
+<div class="figure">
+ <img src="%pathto:root;demo/queriesAp.jpg"/>
+ <div class="caption">
+  <span class="content">
+   Average precisions of the detectors over the first 15 queries.
+  </span>
+ </div>
+</div>
+
+<p>As you can see there are big differences between each query. So let's 
+investigate some of that query more. For example query number 8 as it is the
+only query where Harris Laplace detector is worse than Harris Laplace.
+In the first step we can show the precision recall curves.
 </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
- <h2 id="vlbenchmarks.refs">References</h2>
- <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="tut.ret.ap">Precision recall curves</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>Precision-recall values are not directly part of the results but they 
+can be easily calculated using the static method 
+<code>RetrievalBenchmark.rankedListAp(query, rankedList)</code>.</p>
+
+<precode type="matlab">
+queryNum = 8;
+query = dataset.getQuery(queryNum);
+
+for d=1:numel(featExtractors)
+  % AP is calculated only based on the ranked list of retrieved images
+  rankedList = rankedLists{d}(:,queryNum);
+  [ap recall(:,d) precision(:,d)] = ...
+    retBenchmark.rankedListAp(query, rankedList);
+end
+
+% Plot the curves
+plot(recall, precision,'LineWidth',2); 
+</precode>
+
+<div class="figure">
+ <img src="%pathto:root;demo/prc.jpg"/>
+ <div class="caption">
+  <span class="content">
+   8th query precision-recall curves of the tested detectors.
+  </span>
+ </div>
+</div>
+
+<p>From this graph it can be seen that a Harris Laplace got so bad AP score
+because one of the first retrieved images was wrong, therefore the precision
+of the detector sunk to 0.5 decreasing significantly the area under the 
+curve.</p>
+
+<p>We can make sure about that by showing the retrieved images.</p>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="tut.ret.images">Retrieved images</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>Retrieved images are stored in <code>info.rankedList</code> field. This
+field contains indexes of all dataset images sorted by the voting score
+for each image. For details how voting is done, see help string of the
+retrieval benchmark class.</p>
+
+<p>But to be able to asses the performance of the detector, let's show the
+query first.</p>
+
+<precode type="matlab">
+image(imread(dataset.getImagePath(query.imageId)));
+% Convert query rectangle [xmin ymin xmax ymax] to [x y w h]
+box = [query.box(1:2);query.box(3:4) - query.box(1:2)];
+rectangle('Position',box,'LineWidth',2,'EdgeColor','y');
+</precode>
+
+<div class="figure">
+ <img src="%pathto:root;demo/query.jpg"/>
+ <div class="caption">
+  <span class="content">
+   Query image of the 8th query with the query bounding box.
+  </span>
+ </div>
+</div>
+
+<p>Having the ranked list we can show the retrieved images for all detectors.</p>
+
+<precode type="matlab">
+rankedLists = {info(:).rankedList}; % Ranked list of the retrieved images
+numViewedImages = 20;
+for ri = 1:numViewedImages
+  % The first image is the query image itself
+  imgId = rankedList(ri+1);
+  imgPath = dataset.getImagePath(imgId);
+  subplot(5,numViewedImages/5,ri); 
+  subimage(imread(imgPath));
+end
+</precode>
+
+<p>Image retrieved with VLFeat Hessian Laplace:</p>
+
+<div class="figure">
+ <img src="%pathto:root;demo/retrieved-VLF-heslap.jpg"/>
+ <div class="caption">
+  <span class="content">
+   First 20 retrieved images by VLFeat Hessian Laplace detector.
+  </span>
+ </div>
+</div>
+
+<p>From the results of Harris Laplace detector it can be seen that immediately
+the first retrieved image was wrong, consequently it gets so low AP.</p>
+
+<p>Image retrieved with VLFeat Harris Laplace:</p>
+
+<div class="figure">
+ <img src="%pathto:root;demo/retrieved-VLF-harlap.jpg"/>
+ <div class="caption">
+  <span class="content">
+   First 20 retrieved images by VLFeat Harris Laplace detector.
+  </span>
+ </div>
+</div>
+
+<p>And for the last algorithm, images retrieved with VLFeat SIFT:</p>
+
+<div class="figure">
+ <img src="%pathto:root;demo/retrieved-VLF-SIFT.jpg"/>
+ <div class="caption">
+  <span class="content">
+   First 20 retrieved images by VLFeat SIFT detector.
+  </span>
+ </div>
+</div>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="tut.ret.refs">References</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
  <ol>
-  <li id="vlbenchmarks.ref2">H. J&eamp;egou, M. Douze, and
+  <li id="tut.ret.ref2">H. J&eamp;egou, M. Douze, and
   C. Schmid. Exploiting descriptor distances for precise image
   search. Technical Report 7656, INRIA, 2011.
   </li>
  </ol>
-
- <script language="JavaScript">
-   hideallbibs();
- </script>
 </group>
