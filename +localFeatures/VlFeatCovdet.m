@@ -21,6 +21,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
   methods
     function obj = VlFeatCovdet(varargin)
+      import helpers.*;
       obj.Name = 'VLFeat Covdet';
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.VlCovdetArguments = obj.checkInstall(varargin);
