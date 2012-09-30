@@ -25,7 +25,6 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     rootInstallDir = fullfile('data','software','cmpBinHessian','');
     url = 'http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09';
     binName = 'haff_cvpr09';
-    supportedImageFormats = {'.ppm','.pgm'};
   end
 
   methods
@@ -34,8 +33,6 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     function obj = CmpBinHessian(varargin)
       import localFeatures.*;
       obj.Name = 'CMP Hessian Affine (bin)';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = 'CMP SIFT (bin)';
       % Check platform dependence
       machineType = computer();
       switch(machineType)
@@ -48,6 +45,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       end
       varargin = obj.checkInstall(varargin);
       obj.configureLogger(obj.Name,varargin);
+      obj.SupportedImgFormats = {'.ppm','.pgm'};
     end
 
     function [frames descriptors] = extractFeatures(obj, origImagePath)
@@ -63,8 +61,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
           getFileName(origImagePath));
       end
       % Write image in correct format
-      [imagePath imIsTmp] = helpers.ensureImageFormat(origImagePath, ...
-        obj.supportedImageFormats);
+      [imagePath imIsTmp] = obj.ensureImageFormat(origImagePath);
       if imIsTmp, obj.debug('Input image converted to %s',imagePath); end
       featFile = [imagePath '.hesaff.sift'];
       args = sprintf(' "%s" ',imagePath);

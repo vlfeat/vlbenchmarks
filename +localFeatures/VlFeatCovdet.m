@@ -16,19 +16,18 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 % AUTORIGHTS
 
   properties (SetAccess=public, GetAccess=public)
-    Opts
     VlCovdetArguments
-    BinPath
+    Format
   end
 
   methods
     function obj = VlFeatCovdet(varargin)
       obj.Name = 'VLFeat Covdet';
-      obj.DetectorName = 'VLFeat Covdet';
-      obj.DescriptorName = 'VLFeat Covdet';
+      conf.format = 'float' ;
+      [conf, varargin] = vl_argparse(conf, varargin) ;
+      obj.Format = conf.format ;
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.VlCovdetArguments = obj.checkInstall(varargin);
-      obj.BinPath = {which('vl_covdet') which('libvl.so')};
       obj.ExtractsDescriptors = true;
     end
 
@@ -42,11 +41,16 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       startTime = tic;
       if nargout == 1
         obj.info('Computing frames of image %s.',getFileName(imagePath));
-        frames = vl_covdet(img, 'verbose', obj.VlCovdetArguments{:});
+        frames = vl_covdet(img, obj.VlCovdetArguments{:});
       else
         obj.info('Computing frames and descriptors of image %s.',...
                  getFileName(imagePath));
         [frames descriptors] = vl_covdet(img, 'verbose', obj.VlCovdetArguments{:});
+        switch obj.Format
+          case 'float'
+          case 'uint8'
+            descriptors = uint8(512 * descriptors) ;
+        end
       end
       timeElapsed = toc(startTime);
       obj.debug('Frames of image %s computed in %gs',...
@@ -55,20 +59,9 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-      numValues = size(frames,1);
-      if numValues < 3 || numValues > 6
-        error('Invalid frames format');
-      end
-      hasAffineShape = numValues > 4;
-      hasOrientation = numValues == 4 || numValues == 6;
-      if nargin >= 3
-        if obj.Opts.forceOrientation
-          hasOrientation = true; % force calculating orientations
-        end
-      end
       image = imread(imagePath);
       if(size(image,3)>1), image = rgb2gray(image); end
-      image = single(image); % If not already in uint8, then convert
+      image = im2single(image); % If not already in uint8, then convert
       obj.info('Computing descriptors of %d frames.',size(frames,2));
       startTime = tic;
       [frames descriptors] = vl_covdet(image, ...
@@ -81,7 +74,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+      sign = [helpers.VlFeatInstaller.getBinSignature('vl_covdet'),...
               helpers.cell2str(obj.VlCovdetArguments)];
     end
   end

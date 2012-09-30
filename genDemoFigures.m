@@ -19,12 +19,7 @@ bssfH = vl_plotframe(bigScaleSiftFrames,'r','LineWidth',1);
 legend([sfH bssfH],'SIFT','SIFT PT=10','Location','SE');
 printFigure('siftFrames',0.9);
 
-repBenchmark = benchmarks.RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,... % Do create one-to-one matches from overlaps
-  'MatchFramesDescriptors',false,... % Do not use descriptors for matching
-  'CropFrames',true,... % Crop the frames out of overlap regions
-  'NormaliseFrames',true,... % Normalise frame scale
-  'OverlapError',0.4); % Maximal overlap error for frame match
+repBenchmark = benchmarks.RepeatabilityBenchmark('Mode','Repeatability');
 dataset = datasets.VggAffineDataset('Category','graf');
 
 mser = localFeatures.VlFeatMser();
@@ -67,12 +62,7 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,siftReprojFrames,...
   'IsReferenceImage',false,'PlotMatchLine',false,'PlotUnmatched',false);
 printFigure('correspondences',0.75);
 
-matchingBenchmark = benchmarks.RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,...
-  'MatchFramesDescriptors',true,... % Match the descriptors
-  'CropFrames',true,...
-  'NormaliseFrames',true,...
-  'OverlapError',0.4);
+matchingBenchmark = benchmarks.RepeatabilityBenchmark('Mode','MatchingScore');
 
 mserWithSift = localFeatures.DescriptorAdapter(mser, sift);
 detectors = {sift, thrSift, mserWithSift};

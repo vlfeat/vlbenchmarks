@@ -68,12 +68,11 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %                        min(|framesA|, |framesB|)
 %
 %   RepeatabilityBenchmark can compute the descriptor matching score
-%   too (see the 'MatchFramesGeometry' and 'MatchFramesDescriptors'
-%   options). To define this, a second set of matches M_d is obtained
-%   similarly to the previous method, except that the descriptors
-%   distances are used in place of the overlap, no threshold is
-%   involved in the genration of canidate matches, and these are
-%   selected by increasing descriptor distance rather than by
+%   too (see the 'Mode' option). To define this, a second set of 
+%   matches M_d is obtained similarly to the previous method, except 
+%   that the descriptors distances are used in place of the overlap, 
+%   no threshold is involved in the genration of canidate matches, and 
+%   these are selected by increasing descriptor distance rather than by
 %   decreasing overlap during greedy bipartite matching. Then the
 %   descriptor matching score is defined as:
 %
@@ -83,12 +82,20 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %
 %   The test behaviour can be adjusted by modifying the following options:
 %
-%   MatchFramesGeometry:: true
-%     Calculate one to one matches based on frames geometry (overlaps).
+%   Mode:: 'Repeatability'
+%     Type of score to be calculated. Changes the criteria which are used
+%     for finding one-to-one matches between image features.
 %
-%   MatchFramesDescriptors:: false
-%     Create one to one matches based on distances of the image
-%     descirptors of frames.
+%     'Repeatability'
+%       Match frames geometry only. 
+%       Corresponds to detector repeatability measure in [1].
+%
+%     'MatchingScore'
+%       Match frames geometry and frame descriptors.
+%       Corresponds to detector matching score in [1].
+%
+%     'DescMatchingScore'
+%        Match frames only based on their descriptors.
 %
 %   OverlapError:: 0.4
 %     Maximal overlap error of frames to be considered as
@@ -111,10 +118,10 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %     applied to the input frames. Usually is equal to magnification
 %     factor used for descriptor calculation.
 %
-%   WarpMethod:: 'standard'
+%   WarpMethod:: 'linearise'
 %     Numerical method used for warping ellipses. Available mathods are
-%     'standard' and 'km' for precise reproduction of IJCV2005 benchmark
-%     results.
+%     'standard' and 'linearise' for precise reproduction of IJCV2005 
+%     benchmark results.
 %
 %   DescriptorsDistanceMetric:: 'L2'
 %     Distance metric used for matching the descriptors. See
@@ -137,15 +144,20 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       'normaliseFrames', true,...
       'cropFrames', true,...
       'magnification', 3,...
-      'warpMethod', 'standard',...
-      'matchFramesGeometry', true,...
-      'matchFramesDescriptors', false,...
+      'warpMethod', 'linearise',...
+      'mode', 'repeatability',...
       'descriptorsDistanceMetric', 'L2',...
       'normalisedScale', 30);
   end
 
-  properties(Constant)
+  properties(Constant, Hidden)
     KeyPrefix = 'repeatability';
+    %
+    Modes = {'Repeatability','MatchingScore','DescMatchingScore'};
+    ModesOpts = containers.Map(benchmarks.RepeatabilityBenchmark.Modes,...
+      {struct('matchGeometry',true,'matchDescs',false),...
+      struct('matchGeometry',true,'matchDescs',true),...
+      struct('matchGeometry',false,'matchDescs',true)});
   end
 
   methods
@@ -155,12 +167,12 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       obj.BenchmarkName = 'repeatability';
       if numel(varargin) > 0
         [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
+        if ~ismember(obj.Opts.mode, obj.Modes)
+          error('Invalid mode %s.',obj.Opts.mode);
+        end
       end
       varargin = obj.configureLogger(obj.BenchmarkName,varargin);
       obj.checkInstall(varargin);
-      if ~obj.Opts.matchFramesGeometry && ~obj.Opts.matchFramesDescriptors
-        obj.error('Invalid options - no way how to match frames.');
-      end
     end
 
     function [score numMatches bestMatches reprojFrames] = ...
@@ -199,7 +211,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       import helpers.*;
 
       obj.info('Comparing frames from det. %s and images %s and %s.',...
-          detector.DetectorName,getFileName(imageAPath),...
+          detector.Name,getFileName(imageAPath),...
           getFileName(imageBPath));
 
       imageASign = helpers.fileSignature(imageAPath);
@@ -212,7 +224,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       % When detector does not cache results, do not use the cached data
       if isempty(cachedResults) || ~detector.UseCache
-        if obj.Opts.matchFramesDescriptors
+        if obj.ModesOpts(obj.Opts.mode).matchDescs
           [framesA descriptorsA] = detector.extractFeatures(imageAPath);
           [framesB descriptorsB] = detector.extractFeatures(imageBPath);
           [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
@@ -267,16 +279,24 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       obj.info('Computing score between %d/%d frames.',...
           size(framesA,2),size(framesB,2));
+      matchGeometry = obj.ModesOpts(obj.Opts.mode).matchGeometry;
+      matchDescriptors = obj.ModesOpts(obj.Opts.mode).matchDescs;
 
+      if isempty(framesA) || isempty(framesB)
+        matches = zeros(size(framesA,2)); reprojFrames = {};
+        obj.info('Nothing to compute.');
+        return;
+      end
       if exist('descriptorsA','var') && exist('descriptorsB','var')
         if size(framesA,2) ~= size(descriptorsA,2) ...
             || size(framesB,2) ~= size(descriptorsB,2)
           obj.error('Number of frames and descriptors must be the same.');
         end
-      elseif obj.Opts.matchFramesDescriptors
+      elseif matchDescriptors
         obj.error('Unable to match descriptors without descriptors.');
       end
 
+      score = 0; numMatches = 0;
       startTime = tic;
       normFrames = obj.Opts.normaliseFrames;
       overlapError = obj.Opts.overlapError;
@@ -311,8 +331,12 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         reprojFramesA = reprojFramesA(:,visibleFramesA);
         framesB = framesB(:,visibleFramesB);
         reprojFramesB = reprojFramesB(:,visibleFramesB);
+        if isempty(framesA) || isempty(framesB)
+          matches = zeros(size(framesA,2)); reprojFrames = {};
+          return;
+        end
 
-        if obj.Opts.matchFramesDescriptors
+        if matchDescriptors
           descriptorsA = descriptorsA(:,visibleFramesA);
           descriptorsB = descriptorsB(:,visibleFramesB);
         end
@@ -337,7 +361,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       matches = [];
 
-      if obj.Opts.matchFramesGeometry
+      if matchGeometry
         % Create an edge between each feature in A and in B
         % weighted by the overlap. Each edge is a candidate match.
         corresp = cell(1,numFramesA);
@@ -372,7 +396,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         matches = [matches ; geometryMatches];
       end
 
-      if obj.Opts.matchFramesDescriptors
+      if matchDescriptors
         obj.info('Computing cross distances between all descriptors');
         dists = vl_alldist2(single(descriptorsA),single(descriptorsB),...
           obj.Opts.descriptorsDistanceMetric);

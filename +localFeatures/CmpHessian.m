@@ -29,8 +29,6 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     function obj = CmpHessian(varargin)
       import localFeatures.*;
       obj.Name = 'CMP Hessian Affine';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = 'CMP SIFT';
       % Check platform dependence
       machineType = computer();
       switch(machineType)

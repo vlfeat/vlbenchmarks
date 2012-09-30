@@ -2,27 +2,46 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     & helpers.GenericInstaller & helpers.Logger
 %RETREIVALBENCHMARK
 %
+%   Object constructor accepts the following options:
+%
+%   K :: 50
+%     Number of descriptor nearest neighbours used for the retrieval.
+%
+%   DistMetric ::
+%     Distance metric used by the KNN algorithm.
+%
+%   MaxNumImagesPerSearch :: 1000
+%     Maimal number of images which descriptors are in the database. If the
+%     number of images in dataset is bigger, it is divided into several
+%     chunks.
+%     Decrease this number if your computer is runing out of memory.
+%
+%
 % REFERENCES
-% [1] H. Jegou, M. Douze and C. Schmid,
-%     Exploiting descriptor distances for precise image search,
-%     Research report, INRIA 2011
-%     http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
+%   [1] H. Jegou, M. Douze and C. Schmid,
+%       Exploiting descriptor distances for precise image search,
+%       Research report, INRIA 2011
+%       http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
+%
+%   [2] J. Philbin, O. Chum, M. Isard, J. Sivic and A. Zisserman.
+%       Object retrieval with large vocabularies and fast spatial 
+%       matching CVPR, 2007
 
 % Authors: Karel Lenc, Relja Arandjelovic
 
 % AUTORIGHTS
-
   properties
     Opts = struct(...
       'k', 50,...
       'distMetric', 'L2',...
-      'maxNumQueries',inf);
+      'maxNumImagesPerSearch',1000);
   end
 
   properties (Constant, Hidden)
     ResultsKeyPrefix = 'retreivalResults';
-    QueryResKeyPrefix = 'retreivalQueryResults';
-    DatasetFeaturesKeyPrefix = 'datasetFeatures';
+    QueryKnnsKeyPrefix = 'retreivalQueryKnns';
+    DatasetFeaturesKeyPrefix = 'datasetAllFeatures';
+    DatasetChunkInfoPrefix = 'datasetChunkInfo';
   end
 
   methods
@@ -33,151 +52,278 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       obj.checkInstall(varargin);
     end
 
-    function [mAP queriesAp ] = evalDetector(obj, detector, dataset)
+    function [mAP, queriesAp, rankedLists, votes, numDescriptors] = ...
+        evalDetector(obj, detector, dataset)
       import helpers.*;
-
       obj.info('Evaluating detector %s on dataset %s.',...
-        detector.DetectorName, dataset.DatasetName);
+        detector.Name, dataset.DatasetName);
       startTime = tic;
 
-      % Try to load data from cache
+      % Try to load results from cache
+      numImages = dataset.NumImages;
       testSignature = obj.getSignature;
       detSignature = detector.getSignature;
+      obj.info('Computing signatures of %d images.',numImages);
       imagesSignature = dataset.getImagesSignature();
       queriesSignature = dataset.getQueriesSignature();
       resultsKey = strcat(obj.ResultsKeyPrefix, testSignature, ...
         detSignature, imagesSignature, queriesSignature);
-      results = DataCache.getData(resultsKey);
-      if ~isempty(results)
-        [mAP, queriesAp] = results{:};
-        obj.debug('Results loaded from cache.');
-        return;
-      end
-
-      % Try to load already computed queries
-      numQueries = min([dataset.NumQueries obj.Opts.maxNumQueries]);
-      queriesAp = zeros(numQueries,1);
-      cachedQueries = [];
-      queryResKeys = cell(1,numQueries);
-      cacheResults = detector.UseCache && obj.UseCache;
-      if cacheResults
-        for q = 1:numQueries
-          querySignature = dataset.getQuerySignature(q);
-          queryResKeys{q} = strcat(obj.QueryResKeyPrefix, testSignature,...
-            detSignature, imagesSignature, querySignature);
-          qResults = DataCache.getData(queryResKeys{q});
-          if ~isempty(qResults);
-            cachedQueries = [cachedQueries q];
-            queriesAp(q) = qResults;
-            obj.debug('Query AP %d loaded from cache.',q);
-          end
+      if obj.UseCache
+        results = DataCache.getData(resultsKey);
+        if ~isempty(results)
+          [mAP, queriesAp, rankedLists, votes, numDescriptors]=results{:};
+          obj.debug('Results loaded from cache.');
+          return;
         end
       end
-      nonComputedQueries = setdiff(1:numQueries,cachedQueries);
+      % Divide the dataset into chunks
+      imgsPerChunk = obj.Opts.maxNumImagesPerSearch;
+      numChunks = ceil(numImages/imgsPerChunk);
+      knns = cell(numChunks,1); % as image indexes
+      knnDists = cell(numChunks,1);
+      numDescriptors = cell(1,numChunks);
+      obj.info('Dataset has to been divided into %d chunks.',numChunks);
 
-      % Retreive features of all images
-      [frames descriptors] = obj.getAllDatasetFeatures(dataset, detector);
+      % Load query descriptors
+      qDescriptors = obj.gatherQueriesDescriptors(dataset, detector);
 
-      % Compute average precisions
-      parfor q = nonComputedQueries
-        obj.info('Computing query %d/%d.',q,numQueries);
+      % Compute KNNs for all image chunks
+      for chNum = 1:numChunks
+        firstImageNo = (chNum-1)*imgsPerChunk+1;
+        lastImageNo = min(chNum*imgsPerChunk,numImages);
+        [knns{chNum}, knnDists{chNum}, numDescriptors{chNum}] = ...
+          obj.computeKnns(dataset,detector,qDescriptors,...
+          firstImageNo,lastImageNo);
+      end
+      % Compute the AP
+      numDescriptors = cell2mat(numDescriptors);
+      numQueries = dataset.NumQueries;
+      obj.info('Computing the average precisions.');
+      queriesAp = zeros(1,numQueries);
+      rankedLists = zeros(numImages,numQueries);
+      votes = zeros(numImages,numQueries);
+      for q=1:numQueries
+        % Combine knns of all descriptors from all chunks
+        allQKnns = cell(numChunks,1);
+        allQKnnDists = cell(numChunks,1);
+        for ch = 1:numChunks
+          allQKnns{ch} = knns{ch}{q};
+          allQKnnDists{ch} = knnDists{ch}{q};
+        end
+        allQKnns = cell2mat(allQKnns(~cellfun('isempty',allQKnns)));
+        allQKnnDists = cell2mat(allQKnnDists(~cellfun('isempty',allQKnnDists)));
+
+        % Sort them by the distance to the query descriptors
+        [allQKnnDists ind] = sort(allQKnnDists,1,'ascend');
+        for qd = 1:size(allQKnnDists,2)
+           allQKnns(:,qd) = allQKnns(ind(:,qd),qd);
+        end
+        % Pick the upper k
+        fk = min(obj.Opts.k,size(allQKnns,2));
+        allQKnns = allQKnns(1:fk,:);
+        allQKnnDists = allQKnnDists(1:fk,:);
+
         query = dataset.getQuery(q);
-        queriesAp(q) = obj.evalQuery(frames, descriptors, query);
-        if cacheResults
-          DataCache.storeData(queriesAp(q), queryResKeys{q});
-        end
+        [queriesAp(q) rankedLists(:,q) votes(:,q)] = ...
+          obj.computeAp(allQKnns, allQKnnDists, numDescriptors, query);
+        obj.info('Average precision of query %d: %f',q,queriesAp(q));
       end
 
       mAP = mean(queriesAp);
       obj.debug('mAP computed in %fs.',toc(startTime));
       obj.info('Computed mAP is: %f',mAP);
 
-      results = {mAP, queriesAp};
-      DataCache.storeData(results, resultsKey);
+      results = {mAP, queriesAp, rankedLists, votes, numDescriptors};
+      if obj.UseCache
+        DataCache.storeData(results, resultsKey);
+      end
     end
 
-    function [ap rankedList] = evalQuery(obj, frames, descriptors, query)
+    function qDescriptors = gatherQueriesDescriptors(obj, dataset, detector)
+      import benchmarks.*;
+      % Gather query descriptors
+      obj.info('Computing query descriptors.');
+      numQueries = dataset.NumQueries;
+      qDescriptors = cell(1,numQueries);
+      parfor q=1:numQueries
+        query = dataset.getQuery(q);
+        imgPath = dataset.getImagePath(query.imageId);
+        [qFrames qDescriptors{q}] = detector.extractFeatures(imgPath);
+        % Pick only features in the query box
+        qFrames = localFeatures.helpers.frameToEllipse(qFrames);
+        visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
+        qDescriptors{q} = qDescriptors{q}(:,visibleFrames);
+      end
+    end
+
+    function [ap rankedList votes] = computeAp(obj, knnImgIds, knnDists,...
+        numDescriptors, query)
+      import helpers.*;
+
+      k = obj.Opts.k;
+      numImages = numel(numDescriptors);
+      qNumDescriptors = size(knnImgIds,2);
+
+      votes= vl_binsum( single(zeros(numImages,1)),...
+        repmat( knnDists(end,:), min(k,qNumDescriptors), 1 ) - knnDists,...
+        knnImgIds );
+      votes = votes./sqrt(max(numDescriptors',1));
+      [votes, rankedList]= sort(votes, 'descend'); 
+
+      ap = obj.rankedListAp(query, rankedList);
+    end
+
+    function [queriesKnns, queriesKnnDists numDescriptors] = ...
+        computeKnns(obj, dataset, detector, qDescriptors, firstImageNo,...
+        lastImageNo)
+      import helpers.*;
+      startTime = tic;
+      numQueries = dataset.NumQueries;
+      k = obj.Opts.k;
+      numImages = lastImageNo - firstImageNo + 1;
+      queriesKnns = cell(1,numQueries);
+      queriesKnnDists = cell(1,numQueries);
+
+      testSignature = obj.getSignature;
+      detSignature = detector.getSignature;
+      imagesSignature = dataset.getImagesSignature(firstImageNo:lastImageNo);
+
+      % Try to load already computed queries
+      isCachedQuery = false(1,numQueries);
+      nonCachedQueries = 1:numQueries;
+      knnsResKeys = cell(1,numQueries);
+      imgsInfoKey = strcat(obj.DatasetChunkInfoPrefix, testSignature,...
+          detSignature, imagesSignature);
+      cacheResults = detector.UseCache && obj.UseCache;
+      if cacheResults
+        for q = 1:numQueries
+          querySignature = dataset.getQuerySignature(q);
+          knnsResKeys{q} = strcat(obj.QueryKnnsKeyPrefix, testSignature,...
+            detSignature, imagesSignature, querySignature);
+          qKnnResults = DataCache.getData(knnsResKeys{q});
+          if ~isempty(qKnnResults);
+            isCachedQuery(q) = true;
+            [queriesKnns{q} queriesKnnDists{q}] = qKnnResults{:};
+            obj.debug('Query KNNs %d for images %d:%d loaded from cache.',...
+              q,firstImageNo, lastImageNo);
+          end
+        end
+        nonCachedQueries = find(~isCachedQuery);
+        % Try to avoid loading the features when all queries already 
+        % computed, what need to be loaded only is the number of 
+        % descriptors per image.
+        numDescriptors = DataCache.getData(imgsInfoKey);
+        if isempty(nonCachedQueries) && ~isempty(numDescriptors)
+          return; 
+        end;
+      end
+
+      % Retreive features of the images
+      [descriptors imageIdxs numDescriptors] = ...
+        obj.getDatasetFeatures(dataset,detector,firstImageNo, lastImageNo);
+
+      if cacheResults
+        DataCache.storeData(imgsInfoKey,numDescriptors);
+      end
+
+      % Compute the KNNs
+      helpers.DataCache.disableAutoClear();
+      queriesKnnDistsTmp = cell(1,numel(nonCachedQueries)) ;
+      queriesKnnsTmp = cell(1,numel(nonCachedQueries)) ;
+      parfor qi = 1:numel(nonCachedQueries)
+        q = nonCachedQueries(qi) ;
+        obj.info('Imgs %d:%d - Computing KNNs for query %d/%d.',...
+          firstImageNo,lastImageNo,q,numQueries);
+        [knnDescIds, queriesKnnDistsTmp{qi}] = ...
+          obj.computeKnn(descriptors, qDescriptors{q});
+        queriesKnnsTmp{qi} = imageIdxs(knnDescIds);
+        if cacheResults
+          DataCache.storeData({queriesKnnsTmp{qi}, queriesKnnDistsTmp{qi}},...
+            knnsResKeys{q});
+        end
+      end
+      queriesKnnDists(nonCachedQueries) = queriesKnnDistsTmp ;
+      queriesKnns(nonCachedQueries) = queriesKnnsTmp ;
+      clear queriesKnnDistsTmp queriesKnnsTmp ;
+      helpers.DataCache.enableAutoClear();
+      obj.debug('All %d-NN for %d images computed in %gs.',...
+        k, numImages, toc(startTime));
+    end
+
+    function [knnDescIds, knnDists] = computeKnn(obj, descriptors, qDescriptors)
       import helpers.*;
       import benchmarks.*;
 
       startTime = tic;
       k = obj.Opts.k;
 
-      qImgId = query.imageId;
-      % Pick only features in the query box
-      qFrames = localFeatures.helpers.frameToEllipse(frames{qImgId});
-      visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
-      qDescriptors = single(descriptors{qImgId}(:,visibleFrames));
       qNumDescriptors = size(qDescriptors,2);
-      allDescriptors = single([descriptors{:}]);
 
       if qNumDescriptors == 0
         obj.info('No descriptors detected in the query box.');
-        ap = 0; rankedList = []; pr = {[],[],[]};
         return;
       end
 
-      numImages = numel(descriptors);
-      numDescriptors = cellfun(@(c) size(c,2),descriptors);
-      imageIdxs = arrayfun(@(v,n) repmat(v,1,n),1:numImages, ...
-        numDescriptors','UniformOutput',false);
-      imageIdxs = [imageIdxs{:}];
-      
-      obj.info('Computing %d-nearest neighbours of %d descriptors.',...
-        k,qNumDescriptors);
-      distMetric = YaelInstaller.distMetricParamMap(obj.Opts.distMetric);
-      [indexes, dists] = yael_nn(single(allDescriptors), ...
+      obj.info('Computing %d-NN of %d descs in db of %d descs.',...
+        k,qNumDescriptors,size(descriptors,2));
+      distMetric = YaelInstaller.DistMetricParamMap(obj.Opts.distMetric);
+      [knnDescIds, knnDists] = yael_nn(single(descriptors), ...
         single(qDescriptors), min(k, size(qDescriptors,2)),distMetric);
 
-      nnImgIds = imageIdxs(indexes);
-
-      votes= vl_binsum( single(zeros(numImages,1)),...
-        repmat( dists(end,:), min(k,qNumDescriptors), 1 ) - dists,...
-        nnImgIds );
-      votes = votes./sqrt(numDescriptors);
-      [temp, rankedList]= sort(votes, 'descend'); 
-
-      ap = RetrievalBenchmark.philbinComputeAp(query, rankedList);
-
-      obj.debug('AP calculated in %fs.',toc(startTime));
-      obj.info('Computed average precision is: %f',ap);
+      obj.debug('KNN calculated in %fs.',toc(startTime));
     end
 
     function signature = getSignature(obj)
       signature = helpers.struct2str(obj.Opts);
     end
 
-    function [frames descriptors] = getAllDatasetFeatures(obj, dataset, detector)
+    function [descriptors imageIdxs numDescriptors] = ...
+        getDatasetFeatures(obj, dataset,detector, firstImageNo, lastImageNo)
       import helpers.*;
-      numImages = dataset.NumImages;
+      numImages = lastImageNo - firstImageNo + 1;
 
       % Retreive features of all images
       detSignature = detector.getSignature;
-      imagesSignature = dataset.getImagesSignature();
+      obj.info('Computing signatures of %d images.',numImages);
+      imagesSignature = dataset.getImagesSignature(firstImageNo:lastImageNo);
       featKeyPrefix = obj.DatasetFeaturesKeyPrefix;
-      featuresKey = strcat(featKeyPrefix, detSignature,imagesSignature);
+      featuresKey = strcat(featKeyPrefix,detSignature,imagesSignature);
       features = [];
-      if detector.UseCache
+      if detector.UseCache && DataCache.hasData(featuresKey)
+        obj.info('Loading descriptors of %d images from cache.',numImages);
         features = DataCache.getData(featuresKey);
       end;
       if isempty(features)
         % Compute the features
-        frames = cell(numImages,1);
-        descriptors = cell(numImages,1);
+        descriptorsStore = cell(1,numImages);
         featStartTime = tic;
-        parfor imgNo = 1:numImages
-          obj.info('Computing features of image %d/%d.',imgNo,numImages);
+        helpers.DataCache.disableAutoClear();
+        parfor id = 1:numImages
+          imgNo = firstImageNo + id - 1;
+          obj.info('Computing features of image %d (%d/%d).',...
+            imgNo,id,numImages);
           imagePath = dataset.getImagePath(imgNo);
-          [frames{imgNo} descriptors{imgNo}] = ...
+          % Frames are ommited as score is computed from descs. only
+          [frames descriptorsStore{id}] = ...
             detector.extractFeatures(imagePath);
         end
+        helpers.DataCache.enableAutoClear();
         obj.debug('Features computed in %fs.',toc(featStartTime));
+        % Put descriptors in a single array
+        descriptors = single(cell2mat(descriptorsStore));
+        numDescriptors = cellfun(@(c) size(c,2),descriptorsStore);
+        imageIdxs = arrayfun(@(v,n) repmat(v,1,n),firstImageNo:lastImageNo, ...
+          numDescriptors,'UniformOutput',false);
+        imageIdxs = [imageIdxs{:}];
+        
         if detector.UseCache
-          DataCache.storeData({frames, descriptors},featuresKey);
+          features = {descriptors, imageIdxs, numDescriptors};
+          obj.debug('Saving %d descriptors to cache.',size(descriptors,2));
+          DataCache.storeData(features,featuresKey);
         end
       else 
-        [frames descriptors] = features{:};
-        obj.debug('Features loaded from cache.');
+        [descriptors imageIdxs numDescriptors] = features{:};
+        obj.debug('%d features loaded from cache.',size(descriptors,2));
       end
     end
   end
@@ -191,16 +337,14 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
   end
 
   methods(Static)
-    function [precision recall info] = calcPR(query, scores)
-      y = - ones(1, numel(scores)) ;
-      y(query.good) = 1 ;
-      y(query.ok) = 1 ;
-      y(query.junk) = 0 ;
-      y(query.imageId) = 0 ;
-      [precision recall info] = vl_pr(y, scores);
-    end
-    
-    function ap = philbinComputeAp(query, rankedList)
+    function ap = rankedListAp(query, rankedList)
+    % rankedListAp Calculate average precision of retrieved images
+    % AP = rankedListAp(QUERY, RANKED_LIST) Compute average precision of
+    %   retrieved images (their ids) by QUERY, sorted by their relevancy in
+    %   RANKED_LIST. Average precision is calculated as area under the
+    %   precision/recall curve.
+    %   This code is recoded method from [2]:
+    %   http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/compute_ap.cpp
       oldRecall = 0.0;
       oldPrecision = 1.0;
       ap = 0.0;

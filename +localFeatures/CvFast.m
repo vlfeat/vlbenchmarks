@@ -20,7 +20,6 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
   methods
     function obj = CvFast(varargin)
       obj.Name = 'OpenCV FAST';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.CvFastArguments = obj.configureLogger(obj.Name,varargin);

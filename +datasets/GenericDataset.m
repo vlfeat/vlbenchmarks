@@ -11,6 +11,10 @@ classdef GenericDataset < handle
     NumImages = 0 % Number of images in the dataset
   end
 
+  properties (SetAccess=protected, GetAccess=protected, Hidden)
+    ImageSignatures = {}; % Image signatures
+  end
+
   methods(Abstract)
     imgPath = getImagePath(obj,imgNo)
     % getImagePath Get path of an image from the dataset    
@@ -19,20 +23,34 @@ classdef GenericDataset < handle
   end
 
   methods
-    function signature = getImagesSignature(obj)
+    function signatures = getImagesSignature(obj, imgs)
     % getImagesSignature Get signature of all images in the dataset
     %   SIGN = obj.getImagesSignature() Returns signature of all the
     %   images in the dataset. Signature consist from the dataset name
-    %   and MD5 of all images file signatures (see help
-    %   `getFileSignature`).
+    %   and MD5 of all images file signatures.
+    %
+    %   SIGN = obj.getImagesSignature(IMGS) Returns signatures of images 
+    %   with numbers IMGS.
+    %
+    %   Signatures are computed only once for an object and stored in a
+    %   memory.
+    %
+    % See also: helpers.fileSignature
       import helpers.*;
-      imgSignatures = '';
-      for imgNo = 1:obj.NumImages
-        imgPath = obj.getImagePath(imgNo);
-        sign = fileSignature(imgPath);
-        imgSignatures = strcat(imgSignatures, sign);
+      if nargin < 2, imgs = 1:obj.NumImages; end;
+      if max(imgs) > obj.NumImages || min(imgs) < 1
+        error('Invalid image numbers.');
       end
-      signature = ['dataset_' obj.DatasetName CalcMD5.CalcMD5(imgSignatures)];
+      if isempty(obj.ImageSignatures)
+        % Compute the signatures
+        obj.ImageSignatures = cell(1,obj.NumImages);
+        for imgNo = 1:obj.NumImages
+          imgPath = obj.getImagePath(imgNo);
+          obj.ImageSignatures{imgNo} = fileSignature(imgPath);
+        end
+      end
+      signatures = cell2str(obj.ImageSignatures(imgs));
+      signatures = helpers.CalcMD5.CalcMD5(signatures);
     end
   end
 end % -------- end of class ---------

@@ -15,12 +15,10 @@ classdef TemplateWrapper < localFeatures.GenericLocalFeatureExtractor
   end
 
   methods
-    function obj = ExampleLocalFeatureExtractor(varargin)
+    function obj = TemplateWrapper(varargin)
       % Set to true when extractDescriptors implemented
       obj.ExtractsDescriptors = true;
       obj.Name = ''; % Name of the wrapper
-      obj.DetectorName = ''; % Name of feature detection algorithm
-      obj.DescriptorName = ''; % Name of descriptor calc. algorithm
 
       % Parse class options
       obj.Opts = vl_argparse(obj.Opts,varargin);

@@ -362,12 +362,7 @@ the following configuration.
 </p>
 
 <precode type="matlab">
-repBenchmark = benchmarks.RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,... % Do create one-to-one matches from overlaps
-  'MatchFramesDescriptors',false,... % Do not use descriptors for matching
-  'CropFrames',true,... % Crop the frames out of overlap regions
-  'NormaliseFrames',true,... % Normalise frame scale
-  'OverlapError',0.4); % Maximal overlap error for frame match
+repBenchmark = benchmarks.RepeatabilityBenchmark('Mode','Repeatability');
 </precode>
 
 <p>
@@ -508,12 +503,7 @@ And now the matching benchmark object can be constrcuted.
 </p>
 
 <precode type="matlab">
-matchingBenchmark = benchmarks.RepeatabilityBenchmark(...
-  'MatchFramesGeometry',true,...
-  'MatchFramesDescriptors',true,... % Match the descriptors
-  'CropFrames',true,...
-  'NormaliseFrames',true,...
-  'OverlapError',0.4);
+matchingBenchmark = benchmarks.RepeatabilityBenchmark('Mode','MatchingScore');
 </precode>
 
 <p>

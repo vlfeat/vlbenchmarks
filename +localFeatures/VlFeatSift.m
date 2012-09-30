@@ -17,18 +17,14 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
   properties (SetAccess=public, GetAccess=public)
     Opts
     VlSiftArguments
-    BinPath
   end
 
   methods
     function obj = VlFeatSift(varargin)
       % def. arguments
       obj.Name = 'VLFeat SIFT';
-      obj.DetectorName = 'VLFeat DoG';
-      obj.DescriptorName = 'VLFeat SIFT';
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.VlSiftArguments = obj.checkInstall(varargin);
-      obj.BinPath = {which('vl_sift') which('libvl.so')};
       obj.ExtractsDescriptors = true;
     end
 
@@ -88,7 +84,7 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.fileSignature(obj.BinPath{:}) ';'...
+      sign = [helpers.VlFeatInstaller.getBinSignature('vl_sift'),...
               helpers.cell2str(obj.VlSiftArguments)];
     end
   end

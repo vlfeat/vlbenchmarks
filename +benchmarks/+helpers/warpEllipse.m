@@ -33,7 +33,7 @@ for i=1:size(ell,2)
 
     well(:,i) = [t_ ; S_([1;2;4])] ;
 
-    case 'km'
+    case 'linearise'
     % Kristian's Solution
     Mi1=[ell(3,i) ell(4,i);ell(4,i) ell(5,i)];
     x = ell(1,i); y = ell(2,i);

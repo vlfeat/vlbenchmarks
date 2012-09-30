@@ -84,8 +84,8 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       else
         error('Ivalid dataset image files.');
       end
-      obj.imageNames = obj.CategoryImageLabels{loc};
-      obj.imageNamesLabel = obj.CategoryImageNames{loc};
+      obj.ImageNames = obj.CategoryImageLabels{loc};
+      obj.ImageNamesLabel = obj.CategoryImageNames{loc};
     end
 
     function imgPath = getImagePath(obj,imgNo)

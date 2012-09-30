@@ -65,8 +65,6 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
       import localFeatures.*;
       import helpers.*;
       obj.Name = 'Random features';
-      obj.DetectorName = obj.Name;
-      obj.DescriptorName = obj.Name;
       obj.ExtractsDescriptors = true;
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.Opts = vl_argparse(obj.Opts,varargin);

@@ -38,7 +38,6 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
           error('Arch: %s not supported by EBR',machineType);
       end
       obj.Name = 'EBR';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       obj.configureLogger(obj.Name,varargin);
     end

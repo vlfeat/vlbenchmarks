@@ -61,7 +61,6 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
           error('Arch: %s not supported by VggMser',machineType);
       end
       obj.Name = 'VGG MSER';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       varargin = obj.configureLogger(obj.Name,varargin);
       % Parse the passed options

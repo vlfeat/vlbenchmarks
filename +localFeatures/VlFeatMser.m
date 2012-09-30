@@ -15,7 +15,6 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
   properties (SetAccess=private, GetAccess=public)
     % See help vl_mser for setting parameters for vl_mser
     vlMserArguments;
-    BinPath; % Path to the detector binaries.
   end
 
   methods
@@ -24,10 +23,8 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     % The varargin is passed directly to vl_mser
     function obj = VlFeatMser(varargin)
       obj.Name = 'VLFeat MSER';
-      obj.DetectorName = obj.Name;
       varargin = obj.checkInstall(varargin);
       obj.vlMserArguments = obj.configureLogger(obj.Name,varargin);
-      obj.BinPath = which('vl_mser');
     end
 
     function [frames] = extractFeatures(obj, imagePath)
@@ -55,7 +52,7 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      signList = {helpers.fileSignature(obj.BinPath), ...
+      signList = {helpers.VlFeatInstaller.getBinSignature('vl_mser'),...
                   helpers.cell2str(obj.vlMserArguments)};
       sign = helpers.cell2str(signList);
     end

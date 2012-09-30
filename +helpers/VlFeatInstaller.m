@@ -72,7 +72,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       if status ~= 0
         error('VLFeat compilation was not succesfull.\n');
       end
-	  obj.setup();
+	    obj.setup();
     end
 
     function res = isCompiled(obj)
@@ -100,6 +100,39 @@ classdef VlFeatInstaller < helpers.GenericInstaller
         otherwise
           warning('Architecture not supported yet.');
       end
+    end
+
+    function dllPath = getDynamicLibraryPath()
+      % getDynamicLibraryPath Get path of VLFeat library
+      %   DLL_PATH = getDynamicLibraryPath() returns DLL_PATH path to
+      %   VLFeat dynamic library based on the platform.
+      import helpers.*;
+      switch computer
+        case {'GLNXA64','GLNX86'}
+          vlDllFileName = 'libvl.so';
+        case {'PCWIN','PCWIN64'}
+          vlDllFileName = 'vl.dll';
+        case {'MACI64'}
+          vlDllFileName = 'libvl.dylib';
+        otherwise
+          error('Unknown architecture');
+      end
+      dllPath = fullfile(VlFeatInstaller.mexDir,vlDllFileName);
+    end
+
+    function signature = getBinSignature(vlFunctionName)
+      % getBinSignature Get a signature of VlFeat command binaries.
+      %   SIGNATURE = getBinSignature(VL_FUNCTION_NAME) Returns signature
+      %   mex file used for VL_FUNCTION_NAME and the VlFeat dynamic
+      %   library.
+      import helpers.*;
+      dllPath = VlFeatInstaller.getDynamicLibraryPath();
+      mexPath = fullfile(VlFeatInstaller.mexDir,...
+        [vlFunctionName '.' mexext]);
+      if ~exist(mexPath,'file')
+        error('Unknown function, mex %s does not exist.',mexPath);
+      end
+      signature = [fileSignature(dllPath),fileSignature(mexPath)];
     end
   end
 end

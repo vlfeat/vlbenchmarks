@@ -26,8 +26,6 @@ classdef CvOrb < localFeatures.GenericLocalFeatureExtractor & ...
       obj.Opts.scoreType = 'FAST';
       [obj.Opts, drop] = vl_argparse(obj.Opts, varargin);
       obj.Name = 'OpenCV ORB';
-      obj.DetectorName = [obj.Name,' ',obj.Opts.scoreType];
-      obj.DescriptorName = obj.Name;
       obj.ExtractsDescriptors = true;
       varargin = obj.checkInstall(varargin);
       varargin = obj.configureLogger(obj.Name,varargin);
