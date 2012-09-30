@@ -131,8 +131,6 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     ResultsKeyPrefix = 'retreivalResults';
     % Key prefix for KNN computation results (most time consuming)
     QueryKnnsKeyPrefix = 'retreivalQueryKnns';
-    % Key prefix for bunch of all detector features.
-    DatasetFeaturesKeyPrefix = 'datasetAllFeatures';
     % Key prefix for additional information about the detector features
     DatasetChunkInfoPrefix = 'datasetChunkInfo';
   end
@@ -458,57 +456,34 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       %   descriptor in an image.
       import helpers.*;
       numImages = lastImageNo - firstImageNo + 1;
-
-      % Retreive features of all images
-      detSignature = featExtractor.getSignature;
-      obj.info('Computing signatures of %d images.',numImages);
-      imagesSignature = dataset.getImagesSignature(firstImageNo:lastImageNo);
-      featKeyPrefix = obj.DatasetFeaturesKeyPrefix;
-      featuresKey = strcat(featKeyPrefix,detSignature,imagesSignature);
-      features = [];
-      if featExtractor.UseCache && DataCache.hasData(featuresKey)
-        obj.info('Loading descriptors of %d images from cache.',numImages);
-        features = DataCache.getData(featuresKey);
-      end;
-      if isempty(features)
-        % Compute the features
-        descriptorsStore = cell(1,numImages);
-        featStartTime = tic;
-        helpers.DataCache.disableAutoClear();
-        parfor id = 1:numImages
-          imgNo = firstImageNo + id - 1;
-          obj.info('Computing features of image %d (%d/%d).',...
-            imgNo,id,numImages);
-          imagePath = dataset.getImagePath(imgNo);
-          % Frames are ommited as score is computed from descs. only
-          [frames descriptorsStore{id}] = ...
-            featExtractor.extractFeatures(imagePath);
-          descriptorsStore{id} = single(descriptorsStore{id});
-        end
-        helpers.DataCache.enableAutoClear();
-        obj.debug('Features computed in %fs.',toc(featStartTime));
-        % Put descriptors in a single array
-        numDescriptors = cellfun(@(c) size(c,2),descriptorsStore);
-        % Handle cases when no descriptors detected
-        descriptorSizes = cellfun(@(c) size(c,1),descriptorsStore);
-        if descriptorSizes==0
-          descriptorsStore{descriptorSizes==0} =...
-            single(zeros(max(descriptorSizes),0));
-        end
-        descriptors = cell2mat(descriptorsStore);
-        imageIdxs = arrayfun(@(v,n) repmat(v,1,n),firstImageNo:lastImageNo,...
-          numDescriptors,'UniformOutput',false);
-        imageIdxs = [imageIdxs{:}];
-        
-        if featExtractor.UseCache
-          features = {descriptors, imageIdxs, numDescriptors};
-          obj.debug('Saving %d descriptors to cache.',size(descriptors,2));
-          DataCache.storeData(features,featuresKey);
-        end
-      else 
-        [descriptors imageIdxs numDescriptors] = features{:};
-        obj.debug('%d features loaded from cache.',size(descriptors,2));
+      % Compute the features
+      descriptorsStore = cell(1,numImages);
+      featStartTime = tic;
+      helpers.DataCache.disableAutoClear();
+      parfor id = 1:numImages
+        imgNo = firstImageNo + id - 1;
+        obj.info('Computing features of image %d (%d/%d).',...
+          imgNo,id,numImages);
+        imagePath = dataset.getImagePath(imgNo);
+        % Frames are ommited as score is computed from descs. only
+        [frames descriptorsStore{id}] = ...
+          featExtractor.extractFeatures(imagePath);
+        descriptorsStore{id} = single(descriptorsStore{id});
       end
+      helpers.DataCache.enableAutoClear();
+      obj.debug('Features computed in %fs.',toc(featStartTime));
+      % Put descriptors in a single array
+      numDescriptors = cellfun(@(c) size(c,2),descriptorsStore);
+      % Handle cases when no descriptors detected
+      descriptorSizes = cellfun(@(c) size(c,1),descriptorsStore);
+      if descriptorSizes==0
+        descriptorsStore{descriptorSizes==0} =...
+          single(zeros(max(descriptorSizes),0));
+      end
+      descriptors = cell2mat(descriptorsStore);
+      imageIdxs = arrayfun(@(v,n) repmat(v,1,n),firstImageNo:lastImageNo,...
+        numDescriptors,'UniformOutput',false);
+      imageIdxs = [imageIdxs{:}];
     end
   end
 
