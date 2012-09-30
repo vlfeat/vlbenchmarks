@@ -241,3 +241,28 @@ div.clear {
     margin: 0 ;
     padding: 0.1em 0.5em ;
 }
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                                                     table format */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+#content table {
+    border-collapse: collapse;
+    }
+
+#content th {
+    padding: 0 0.5em;
+    text-align: left;
+    }
+
+#content td {
+    padding: 0 0.5em;
+    }
+
+#content th.center {
+    text-align: center;
+    }
+
+#content td.center {
+    text-align: center;
+    }

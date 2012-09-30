@@ -42,20 +42,6 @@ precision-recall curve) is calculated and averaged over all queries to
 get the Mean Average Precision of the detector.
 </p>
 
-<p>
-The interface to the retrieval benchmark is similar to the
-repeatability benchmark as can be seen from the minimal example which
-calculates the Mean Average Precision of the retrieval system 
-which uses the SIFT detector and descriptor for image feature extraction.
-</p>
-
-<precode type="matlab">
-detector = localFeatures.VlFeatSift();
-dataset = dataset.VggRetrievalDataset('Category','oxbuild');
-retBenchmark = benchmarks.RetrievalBenchmark();
-[mAP queriesAP] = retBenchmark.testFeatureExtractor(detector, dataset);
-</precode>
-
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.ret.compare">Comparing image features algorithms</h2>
@@ -80,7 +66,8 @@ featExtractors{3} = VlFeatSift('PeakThresh',4);
 
 <p> The first two image feature extractors are affine covariant whereas the 
 third one is just similarity invariant and is closely similar to Lowe's 
-original SIFT detector.</p>
+original SIFT detector (DoG detector, in fact). 
+All of these algorithms uses SIFT for descriptors.</p>
 
 <p> In order to be able to perform the retrieval test we need set of images.
 For this purpose we create a subset of the original 'The Oxford Buildings'
@@ -208,8 +195,8 @@ bar(selectedQAps');
 </div>
 
 <p>As you can see there are big differences between each query. So let's 
-investigate some of that query more. For example query number 8 as it is the
-only query where Harris Laplace detector is worse than Harris Laplace.
+investigate some of that query more. For example query number 8 as it is a
+query where the SIFT feature extractor gets much worse than other algorithms.
 In the first step we can show the precision recall curves.
 </p>
 
@@ -245,9 +232,9 @@ plot(recall, precision,'LineWidth',2);
  </div>
 </div>
 
-<p>From this graph it can be seen that a Harris Laplace got so bad AP score
+<p>From this graph it can be seen that a SIFT got so bad AP score
 because one of the first retrieved images was wrong, therefore the precision
-of the detector sunk to 0.5 decreasing significantly the area under the 
+of the detector sunk decreasing significantly the area under the 
 curve.</p>
 
 <p>We can make sure about that by showing the retrieved images.</p>
@@ -306,9 +293,6 @@ end
  </div>
 </div>
 
-<p>From the results of Harris Laplace detector it can be seen that immediately
-the first retrieved image was wrong, consequently it gets so low AP.</p>
-
 <p>Image retrieved with VLFeat Harris Laplace:</p>
 
 <div class="figure">
@@ -330,6 +314,9 @@ the first retrieved image was wrong, consequently it gets so low AP.</p>
   </span>
  </div>
 </div>
+<p>From the results of the SIFT feature extractor it can be seen that 
+immediately the first retrieved image was wrong, consequently it gets so 
+low AP.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.ret.refs">References</h2>

@@ -12,6 +12,7 @@
     <li><a href="%pathto:doc.datasets;">Benchmarks</a></li>
   </ul>
   </li>
+  <li><a href="%pathto:doc.parallel;">Parallelisation</a></li>
   <li><a href="%pathto:doc.caching;">Caching</a></li>
   <li><a href="%pathto:doc.logging;">Logging</a></li>
 </ul>
@@ -45,31 +46,233 @@ benchmarking code.</li>
 (<strong><code>helpers</code></strong>). </li>
 </ul>
 
+<p>All classes and functions in this project which supports some optional 
+  parameters accept those in a similar manner as Matlab functions:</p>
+<precode type="matlab">
+  function(obligatoryParams,'OptionName',OptionValue,...)
+</precode>
+<p>Available options are listed in the help string of the function or class. 
+For classes, options are set in their constructor.</p>
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h3 id="doc.extractors">Feature objects</h3>
+<h2 id="doc.extractors">Feature objects</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<h2 id="doc.benchmarkowndet">Benchmarking your own feature extractor</h2>
+<p>All classes located in the package <code>localFeatures</code> are subclasses 
+of <code>lGenericLocalFeaturesExtractor</code>. The included image feature
+detectors are summarised in the following table:</p>
+
+<table border="1" width="600px">
+    <tr>
+        <th rowspan="2">Class name</th>
+        <th colspan="2" class="center">Extracts</th>
+        <th colspan="3" class="center">Supported platforms</th>
+        <th rowspan="2" class="center">Note</th>
+    </tr>
+    <tr>
+        <th class="center">Feat.</th>
+        <th class="center">Descr.</th>
+        <th class="center">WIN</th>
+        <th class="center">LNX</th>
+        <th class="center">OS X</th>
+    </tr>
+    <tr>
+        <td>VlFeatSift</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td>Built-in <a href="#doc.ref1">[1]</a>, DoG detector, SIFT descriptor</td>
+    </tr>
+    <tr>
+        <td>VlFeatCovdet</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td>Built-in, DoG, Hessian and Harris detectors and their variants.</td>
+    </tr>
+    <tr>
+        <td>VlFeatMser</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td class="center">Y</td>
+        <td>Built-in <a href="#doc.ref1">[1]</a></td>
+    </tr>
+    <tr>
+        <td>VggAffine</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td>Affine feature frame detection<a href="#doc.ref2">[2]</a></td>
+    </tr>
+    <tr>
+        <td>VggDescriptor</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td>Descriptor calculation from <a href="#doc.ref2">[2]</a></td>
+    </tr>
+    <tr>
+        <td>Ebr</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td>Edge based region detector <a href="#doc.ref2">[2]</a></td>
+    </tr>
+    <tr>
+        <td>Ibr</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td>Intensity based region detector <a href="#doc.ref2">[2]</a></td>
+    </tr>
+    <tr>
+        <td>CmpBinHessian</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td class="center">N</td>
+        <td class="center">Y</td>
+        <td class="center">N</td>
+        <td>Hessian affine <a href="#doc.ref3">[3]</a></td>
+    </tr>
+</table>
+
+
+<h3 id="doc.benchmarkowndet">Benchmarking your own feature extractor</h3>
 
 <p> This framework is easily extensible with your own image feature extraction
 algorithm as only two methods has to be implemented. To start you need to
-inherit from the <code>localFeatures.GenericLocalFeaturesExtractor</code> and
+inherit from the <code>GenericLocalFeaturesExtractor</code> and
 implement methods <code>extractFeatures(imgPath)</code> and
 <code>extractDescriptors(imgPath, frames)</code>. </p>
 
+<p>You can also use the existing infrastructure of the benchmarking suite.
+For example, by inheriting from <code>GenericLocalFeatureExtractor</code>
+you also inherit from the <code>helpers.Logger</code> class which implements
+simple logger. See <a href="%pathto:doc.logging;">Logging</a> for details.</p>
+
+<p>Another helper class used with the most of the built in detectors is 
+<code>helpers.GenericInstaller</code>. This class handles installation process
+and supports to define class dependencies on web-located archives, mex files
+and other classes.</p>
+
+<p>In the following example you can see more extensive feature extractor which
+supports both feature frame detection and descriptor calculation. Also this
+class, when constructed, downloads and compile the source code of the
+detector.</p>
+
 <precode type="matlab">
-classdef MyFeatureExtractor &lt; localFeatures.GenericLocalFeatureExtractor
+classdef ExtractorY &lt; localFeatures.GenericLocalFeatureExtractor &amp; ...
+  helpers.GenericInstaller
+% localFeatures.DetectorY Y feature frames detector.
+
+%   localFeatures.DetectorY('OptionName', optionValue) Construct new wrapper
+%   of Y image features extractor. This algorithm is able to both detect image
+%   features and compute their descriptors.
+%
+%   This class support caching and automatic installation. The sources are
+%   downloaded from:
+%
+%   http://supercoolstuff.com/dreamdetector.zip
+%
+% Options:
+%   DetOption:: 0
+%     Serious configuration stuff...
+%
+%   AutoInstall:: true
+%     Install dependencies during object construction.
+%
+%   This class accepts helpers.Logger options.
+%
+% See also: localFeatures.DetectorX helpers.Logger
+  properties (SetAccess=private, GetAccess=public)
+    Opts = struct('detOption',0); % Default option value
+  end
+  properties (Constant)
+    % Location of your code
+    Dir = fullfile('data','software','exy');
+    % URL with the source codes
+    Url = 'http://supercoolstuff.com/dreamdetector.zip';
+    % MEX files needed to be compiled for the detector
+    SrcFiles = {fullfile(localFeatures.ExtractorY.Dir,'y_algorithm.c')};
+    % MEX files needed to be compiled for the detector
+    MexFiles = ...
+      {fullfile(localFeatures.ExtractorY.Dir,['y_algorithm.',mexext])};
+  end
   methods
-    function obj = MyFeatureExtractor(varargin)
-    % Object construction
+    function obj = ExampleLocalFeatureExtractor(varargin)
+      obj.Name = 'Detector Y'; % Name of the wrapper
+      varargin = obj.configureLogger(obj.Name,varargin); % Configure logger
+      varargin = obj.checkInstall(varargin); % Check whether installed
+      obj.Opts = vl_argparse(obj.Opts,varargin); % Parse object options
+      obj.setup(); % Setup the paths
     end
 
+    function setup(obj)
+      % setup Setup extractorY paths.
+      addpath(obj.Dir);
+    end
+    
     function [frames descriptors] = extractFeatures(obj, imagePath)
-       % Implementation of frames of frames with descriptors extraction
+      % extractFeatures Extract features from an image
+      %   FRAMES = extractFeatures(IMG_PATH) Detect features in image IMG_PATH
+      %   using the Y algorithm.
+      %
+      %   [FRAMES DESCRIPTORS] = extractFeatures(IMG_PATH) Detect frames and
+      %   compute their descriptors using the Y algorithm.
+      frames = obj.loadFeatures(imagePath,nargout > 1); % Check cache
+      if numel(frames) > 0; return; end;
+      descriptors = [];
+      obj.info('Computing frames of image %s.',getFileName(imagePath));
+      if nargout == 1
+        frames = y_algorithm(imagePath, obj.Opts{:});
+        obj.debug('Frames computed in %gs',toc(startTime));
+      elseif nargout == 2
+        [frames descriptors] = y_algorithm(imagePath, obj.Opts{:});
+        obj.debug('Frames and descriptors computed in %gs',toc(startTime));
+      end
+      obj.storeFeatures(imagePath, frames, descriptors); % Cache the results
     end
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-       % Implementation of extraction of descriptors of given frames
+      % extractDescriptors Extract descriptors of given frames
+      startTime = tic;
+      obj.info('Computing descriptors of image %s.',getFileName(imagePath));
+      [frames, descriptors] = y_algorithm(imagePath,frames,obj.Opts{:});
+      obj.debug('Descriptors computed in %gs',toc(startTime));
+    end
+
+    function signature = getSignature(obj)
+      signature = [helpers.struct2str(obj.Opts),';',...
+        helpers.fileSignature(obj.MexFiles)]; % Detector unique signature
+    end
+  end
+  methods (Access=protected)
+    % Define which archives should be downloaded and where extracted
+    function [urls dstPaths] = getTarballsList(obj)
+      import localFeatures.*;
+      urls = {DetectorY.Url};
+      dstPaths = {DetectorY.Dir};
+    end
+    % Define which mex files should be compiled
+    function [srclist flags] = getMexSources(obj)
+      import helpers.*;
+      srclist = obj.SrcFiles;
+      % Flags passed to mex command
+      flags = {};
     end
   end
 end
@@ -86,39 +289,299 @@ does not support computation of descriptors of given frames.
 </p>
 
 <p>
-If you want to use caching, you can use <code>loadFeatures()</code>
-or <code>storeFeatures()</code> methods which implements access to the
+If you want to take advantage of caching, you can use <code>loadFeatures()</code>
+or <code>obj.storeFeatures()</code> methods which implements access to the
 cache. However with that you will need to implement
-method <code>getSignature()</code> which generates unique string
-signature of the detector properties.
+method <code>obj.getSignature()</code> which generates unique string
+signature of the detector properties. Caching can be enabled/disable with
+methods <code>obj.enableCaching()</code>, <code>obj.disableCaching()</code>
 </p>
  
 <p>
 To see details about the logging, class options and installation
 framework, see
 the <code>localFeatures.ExampleLocalFeatureExtractor</code> class
-which implements simple feature detector together with descriptor
-extractor.
+which implements simple feature detector together with simple descriptor.
 </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h3 id="doc.datasets">Datasets</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+<p>All datasets are subclasses of abstract <code>GenericDataset</code> which defines
+method <code type="matlab">getImagePath(imageNumber)</code>, method for accessing
+images. Number of images in the dataset can be obtained through object property
+<code type="matlab">obj.NumImages</code>.</p>
+
+<p>Another abstract class is <code>GenericTransfDataset</code> which adds
+another abstract method <code type="matlab">getTransformation(imageNumber)</code>
+which returns homography between dataset images and a reference image (first image).</p>
+
+<p>Dataset which is a direct subclass of <code>GenericTransfDataset</code> is
+<code>VggAffineDataset</code>. This code handles the datasets presented in 
+<a href="#doc.ref2">[2]</a> and is used mainly for the repeatability 
+benchmarks. Datasets are available at 
+<a href="http://www.robots.ox.ac.uk/~vgg/research/affine/">VGG website</a>.</p>
+
+<p>Available categories (accessible through option <code>'Category'</code>) are:</p>
+
+<table border="1" width="400px">
+    <tr>
+        <th class="center">Category Name</th>
+        <th class="center">'Category' option value</th>
+        <th class="center">Image transformation</th>
+    </tr>
+    <tr>
+        <td class="center">Wall</td>
+        <td class="center"><code>'wall'</code></td>
+        <td class="center">Viewpoint angle</td>
+    </tr>
+    <tr>
+        <td class="center">Boat</td>
+        <td class="center"><code>'boat'</code></td>
+        <td class="center">Scale changes</td>
+    </tr>
+    <tr>
+        <td class="center">Bark</td>
+        <td class="center"><code>'bark'</code></td>
+        <td class="center">Scale changes</td>
+    </tr>
+    <tr>
+        <td class="center">Bikes</td>
+        <td class="center"><code>'bikes'</code></td>
+        <td class="center">Increasing blur</td>
+    </tr>
+    <tr>
+        <td class="center">Trees</td>
+        <td class="center"><code>'trees'</code></td>
+        <td class="center">Increasing blur</td>
+    </tr>
+    <tr>
+        <td class="center">Leuven</td>
+        <td class="center"><code>'leuven'</code></td>
+        <td class="center">Decreasing light</td>
+    </tr>
+    <tr>
+        <td class="center">UBC</td>
+        <td class="center"><code>'ubc'</code></td>
+        <td class="center">JPEG compression</td>
+    </tr>
+</table>
+
+<p>For the retrieval benchmark <code>VggRetrievalDataset</code> wraps around 
+datasets introduced in <a href="#doc.ref4">[4]</a>, <a href="#doc.ref5">[5]</a>
+These datasets provide both a set of images and a set of queries. Each query
+consist from the query image and a query bounding box inside it and
+three subset of images:</p>
+
+<ul>
+  <li><strong>Good</strong> A nice, clear picture of the object/building</li>
+  <li><strong>Ok</strong> More than 25% of the object is clearly visible.</li>
+  <li><strong>Junk</strong> Less than 25% of the object is visible, or there are very high 
+    levels of occlusion or distortion.</li>
+  <li><strong>Bad</strong> Object not present.</li>
+</ul>
+
+<p>Each query is available through method <code>getQuery(queryNum)</code> which 
+returns query structure with the following format:</p>
+
+<precode type='matlab'>
+>> dst = datasets.VggRetrievalDataset();
+(INFO)  VggRetrievalDataset:  Loading dataset VggRetrievalDataset.
+(DEBUG) VggRetrievalDataset:  Size of the images subset: 945
+>> dst.getQuery(1)
+
+ans = 
+
+         name: 'all_souls_1'        % Query name
+    imageName: 'all_souls_000013'   % Name of the query image
+      imageId: 8                    % Query image id
+          box: [4x1 double]         % Query bounding box [xmin ymin xmax ymax]
+         good: [1x24 double]
+           ok: [1x54 double]
+         junk: [1x33 double]
+</precode>
+
+<p>Number of images in the dataset can be obtained through object property
+<code type="matlab">obj.NumQueries</code>.</p>
+
+<p>Currently, two dataset categories are available:</p>
+
+<table border="1" width="500px">
+    <tr>
+        <th class="center">Category Name</th>
+        <th class="center">'Category' option value</th>
+        <th class="center">Number of images</th>
+        <th class="center">Number of queries</th>
+        <th class="center">Source</th>
+    </tr>
+    <tr>
+        <td>The Oxford Buildings Dataset <a href="#doc.ref4">[4]</a></td>
+        <td class="center"><code>'oxbuild'</code></td>
+        <td class="center">5062</td>
+        <td class="center">55</td>
+        <td><a href="http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/">link</a></td>
+    </tr>
+    <tr>
+        <td>The Paris Dataset<a href="#doc.ref5">[5]</a></td>
+        <td class="center"><code>'paris'</code></td>
+        <td class="center">6412</td>
+        <td class="center">55</td>
+        <td><a href="http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/">link</a></td>
+    </tr>
+</table>
+
+<p>As the dataset contains thousands of images, it is possible to use only
+a subset of images by specifying sizes of the dataset subsets with the following 
+options:</p>
+
+<precode>
+    GoodImagesNum :: inf
+      Number of 'Good' images preserved in the databse. When inf, all
+      images preserved.
+ 
+    OkImagesNum :: inf
+      Number of 'ok' images preserved in the databse. When inf, all
+      images preserved.
+ 
+    JunkImagesNum :: inf
+      Number of 'junk' images preserved in the databse. When inf, all
+      images preserved.
+ 
+    BadImagesNum :: 100
+      Number of 'junk' images preserved in the databse. When inf, all
+      images preserved.
+ 
+    SamplingSeed :: 1
+      Seed of the random number generator used for sampling the image
+      dataset.
+</precode>
+
+Subsets are sampled used uniform random sampling and changing the seed 
+of random number generator more sampling of the same size can be generated.
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h3 id="doc.benchmarks">Benchmarks</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+<p>All benchmark classes are subclasses of abstract class 
+<code>GenericBenchmark</code>. 
+Currently in the project, three benchmarks are available.</p>
+
+<p><code>RepeatabilityBenchmark</code> is based on tests introduced in 
+<a href="#doc.ref2">[2]</a>. For details about this test see the 
+help string of the <code>RetrievalBenchmark</code> class or 
+<a href="%pathto:tut.repeatability;">repeatability tutorial</a>.
+Because this test is mostly reimplemented original test, wrapper of the
+original benchmark <code>IjcvOriginalBenchmark</code> is also available.
+</p>
+
+<p><code>RetrievalBenchmark</code> class implements simple retrieval 
+benchmark of image features detectors. For details see help string
+of the class or 
+<a href="%pathto:tut.retrieval;">retrieval tutorial</a>.
+</p>
+
+<p>In the current implementation, retrieval benchmark depends on the
+<a href="https://gforge.inria.fr/projects/yael">Yael</a> library and 
+unfortunately this library is not available for Microsoft Windows 
+platforms.</p>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="doc.parallel">Parallelisation</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<p>The parallelisation approach differs for the repeatability and retrieval 
+benchmark but both of them is possible to run in parallel using the 
+Parallel Computing Toolbox. For details, see its 
+<a href="http://www.mathworks.com/help/distcomp/index.html">documentation</a>.
+</p>
+
+<p> In the case of repeatability benchmark, parallelisation is 
+defined by user and can be run either over various detectors or over
+images of the dataset by simply replacing <code>for</code> with
+<code>parfor</code>, e.g.:</p>
+
+<precode type="matlab">
+for di = 1:numDetectors
+  % Extract features from the first image to avoid race condition
+  % as several processes may then try to write the same file.
+  % Features does not have to be stored in any variable as they
+  % cached.
+  detectors{di}.extractFeatures(dataset.getImagePath(1));
+  parfor imageIdx = 2:numImages
+    % Run the repeatability benchmark
+  end
+end
+</precode>
+
+<p>This is possible thanks to the fact that the cache system depends only on the 
+file system context and does not share any variables and generally, if the 
+loops are properly designed, each process works with different data.</p>
+
+<p>In the case of retrieval benchmark, the parallelisation is more complicated
+task so the class <code>RetrievalBenchmark</code> already has several
+parfor loops. Both features extraction and KNN search are run in parallel.</p>
+
+<p>In the case of KNN search you can advantage both from symmetric processing 
+and distributed computing as the Yael KNN uses OpenMP to run its algorithms
+in several threads.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="doc.caching">Caching</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+What is caching, the key value paradigm, what class is used for that.
+
+Where the cached files are stored. How they are looked for.
+
+Clearing the cache, LRU algorithm implementation, autoclear, 
+erasing the cache data. Other cache parameters.
+
+Disabling the cache - global and local way.
+
+Cache locking - only for the autoclear. No locks against overwriting the
+same data -> loosing the computed data.
+
+Limits of the cache.
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="doc.logging">Logging</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+What it is implemented in, possibilities of logging.
 
- <script language="JavaScript">
-   hideallbibs();
- </script>
+Verbose levels, for files for files.
+
+Global and local settings.
+
+Adjusting the logging output.
+
+Parallelisation issues. No possibility to distinguish the processes 
+(host name, actual date and time etc.).
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h2 id="vlbenchmarks.refs">References</h2>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+ <ol>
+  <li id="vlbenchmarks.ref1">A. Vedaldi and B. Fulkerson. 
+  <strong>VLFeat:</strong> An Open and Portable Library
+  of Computer Vision Algorithms, 
+  <a href="http://www.vlfeat.org/">vlfeat.org</a>, 2008.
+  </li>
+  <li id="vlbenchmarks.ref2"> K. Mikolajczyk, T. Tuytelaars,
+  C. Schmid, A. Zisserman, J. Matas, F. Schaffalitzky, T. Kadir, and
+  L. Van Gool. A comparison of affine region detectors. IJCV,
+  1(65):43–72, 2005.</li>
+  <li id="vlbenchmarks.ref3">Perdoch, M. and Chum, O. and Matas, J. 
+  Efficient Representation of Local Geometry for Large Scale Object 
+  Retrieval. In proceedings of CVPR09, 2009.
+  </li>
+  <li id="vlbenchmarks.ref4">J. Philbin, O. Chum, M. Isard, J. Sivic and 
+  A. Zisserman. Object retrieval with large vocabularies and fast spatial 
+  matching CVPR, 2007</li> 
+  <li id="vlbenchmarks.ref5">J. Philbin, O. Chum, M. Isard, J. Sivic and 
+  A. Zisserman., Lost in Quantization: Improving Particular Object Retrieval 
+  in Large Scale Image Databases (2008)</li>
+ </ol>
 </group>

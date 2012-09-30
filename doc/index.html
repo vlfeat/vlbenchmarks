@@ -138,13 +138,11 @@ dataset = datasets.VggAffineDataset('Category','graf'); % Test data
 repBenchmark = benchmarks.RepeatabilityBenchmark(); % Benchmark object
 sift = localFeatures.VlFeatSift(); % Tested detector
 
-testedImageNum = 2; % Test reference image to the second image
-refImage = dataset.getImagePath(1); % Path to reference image
-testImage = dataset.getImagePath(testedImageNum); % Path to tested image
-H = dataset.getTransformation(testedImageNum); % Homography between images
-
 [repeatability numCorresp] = ...
-  repBenchmark.testFeatureExtractor(sift, H, refImage, testImage);
+  repBenchmark.testFeatureExtractor(sift,...
+                                    dataset.getTransformation(2),...
+                                    dataset.getImagePath(1),...
+                                    dataset.getImagePath(2));
 </precode>
 
 <p>
@@ -156,14 +154,20 @@ repeatability = 0.6589       numCorresp = 825
 </precode>
 
 <p>
-Running this script once again you will get the results straight away as they are being loaded from cache.
-Now lets play with the descriptor parameters. For example we can test what would happen if we compute features of up-sampled images (by setting <code>vl_sift</code> parameter 'FirstOctave' to -1):
+Running this script once again you will get the results straight away as 
+they are being loaded from cache. Now lets play with the descriptor 
+parameters. For example we can test what would happen if we compute 
+features of up-sampled images (by setting <code>vl_sift</code> parameter 
+'FirstOctave' to -1):
 </p>
 
 <precode type="matlab">
 usSift = localFeatures.VlFeatSift('FirstOctave',-1); % Up-sampling SIFT
 [repeatability numCorresp] = ...
-  repBenchmark.testFeatureExtractor(usSift, H, refImage, testImage)
+  repBenchmark.testFeatureExtractor(usSift,...
+                                    dataset.getTransformation(2),...
+                                    dataset.getImagePath(1),...
+                                    dataset.getImagePath(2))
 </precode>
 
 <p>
@@ -224,7 +228,25 @@ xDet = localFeature.DetectorX();
 % User xDet for feature detection and sift for description
 xDetSiftDesc = localFeatures.DescriptorAdapter(xDet, sift);
 [matchingScore numMatches] = ...
-  matchBenchmark.testFeatureExtractor(xDetSiftDesc, H, refImage, testImage)
+  matchBenchmark.testFeatureExtractor(xDetSiftDesc,...
+                                      dataset.getTransformation(2),...
+                                      dataset.getImagePath(1),...
+                                      dataset.getImagePath(2))
+</precode>
+
+<p>Retrieval benchmark puts the detector into a simple
+retrieval system and calculated its mean average precision.
+The interface to the retrieval benchmark is similar to the
+repeatability benchmark as can be seen from the minimal example which
+calculates the Mean Average Precision of the retrieval system 
+which uses the SIFT detector and descriptor for image feature extraction.
+</p>
+
+<precode type="matlab">
+dataset = dataset.VggRetrievalDataset('Category','oxbuild');
+
+retBenchmark = benchmarks.RetrievalBenchmark();
+mAP = retBenchmark.testFeatureExtractor(sift, dataset);
 </precode>
 
  <h2 id="vlbenchmarks.refs">References</h2>
