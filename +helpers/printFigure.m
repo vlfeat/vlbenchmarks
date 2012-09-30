@@ -1,10 +1,13 @@
-function printFigure(path, fileName, R)
+function printFigure(path, fileName, R, ext)
   % PRINTFIGURE Save figure to an *.eps image file
   %   printFigure(PATH, IMG_FILE_NAME, R) Saves the actual figure to a file
   %   fullfile(PATH,[IMG_FILE_NAME,'.eps']). The third parameter sets 
   %   PaperPosition property of the current figure so that the width of 
   %   the figure is the fraction R of a 'uslsetter' page.
   %   If path is an empty string, nothing is done.
+  %
+  %   printFigure(PATH, IMG_FILE_NAME, R, EXT) Save in a format defined by
+  %   EXT. Default value is 'eps';
   %
   %   See also: vl_printsize
   if isempty(path), return; end;
@@ -15,7 +18,14 @@ function printFigure(path, fileName, R)
     R = 0.75;
   end
   vl_printsize(gcf, R) ;
-  filePath = fullfile(path, [fileName '.eps']) ;
-  print(gcf, '-depsc2',filePath) ;
+
+  if ~exist('ext','var')
+    ext = 'eps';
+  end
+  filePath = fullfile(path, [fileName '.' ext]) ;
+  extArgs = containers.Map({'eps','png','jpeg','jpg','ps'},...
+    {'-depsc2','-dpng','-djpeg90','-djpeg90','-dpsc2'});
+
+  print(gcf,extArgs(ext),filePath) ;
   fprintf('%s: wrote file ''%s''\n', mfilename,  filePath) ;
 end
