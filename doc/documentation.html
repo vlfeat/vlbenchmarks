@@ -55,7 +55,7 @@ benchmarking code.</li>
 For classes, options are set in their constructor.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h2 id="doc.extractors">Feature objects</h2>
+<h3 id="doc.extractors">Feature objects</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <p>All classes located in the package <code>localFeatures</code> are subclasses 
@@ -151,7 +151,7 @@ detectors are summarised in the following table:</p>
 </table>
 
 
-<h3 id="doc.benchmarkowndet">Benchmarking your own feature extractor</h3>
+<h4 id="doc.benchmarkowndet">Benchmarking your own feature extractor</h4>
 
 <p> This framework is easily extensible with your own image feature extraction
 algorithm as only two methods has to be implemented. To start you need to
@@ -317,6 +317,10 @@ images. Number of images in the dataset can be obtained through object property
 another abstract method <code type="matlab">getTransformation(imageNumber)</code>
 which returns homography between dataset images and a reference image (first image).</p>
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h4 id="doc.datasets">VggAffineDataset</h4>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 <p>Dataset which is a direct subclass of <code>GenericTransfDataset</code> is
 <code>VggAffineDataset</code>. This code handles the datasets presented in 
 <a href="#doc.ref2">[2]</a> and is used mainly for the repeatability 
@@ -367,6 +371,10 @@ benchmarks. Datasets are available at
         <td class="center">JPEG compression</td>
     </tr>
 </table>
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h4 id="doc.datasets">VggRetrievalDataset</h4>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <p>For the retrieval benchmark <code>VggRetrievalDataset</code> wraps around 
 datasets introduced in <a href="#doc.ref4">[4]</a>, <a href="#doc.ref5">[5]</a>
@@ -457,8 +465,9 @@ options:</p>
       dataset.
 </precode>
 
-Subsets are sampled used uniform random sampling and changing the seed 
+<p>Subsets are sampled used uniform random sampling and changing the seed 
 of random number generator more sampling of the same size can be generated.
+</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h3 id="doc.benchmarks">Benchmarks</h3>
@@ -510,15 +519,22 @@ for di = 1:numDetectors
   % Features does not have to be stored in any variable as they
   % cached.
   detectors{di}.extractFeatures(dataset.getImagePath(1));
+  % Prevent cache to clear the last recently used items
+  helpers.DataCache.disableAutoclear();
   parfor imageIdx = 2:numImages
     % Run the repeatability benchmark
   end
+  helpers.DataCache.enableAutoclear();
 end
 </precode>
 
 <p>This is possible thanks to the fact that the cache system depends only on the 
 file system context and does not share any variables and generally, if the 
-loops are properly designed, each process works with different data.</p>
+loops are properly designed, each process works with different data.
+However cache autoclear has to be disabled as it can yield situations when 
+two processes are deleting the same files or deleting files which are being
+read by a different process.
+</p>
 
 <p>In the case of retrieval benchmark, the parallelisation is more complicated
 task so the class <code>RetrievalBenchmark</code> already has several
@@ -531,33 +547,244 @@ in several threads.</p>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="doc.caching">Caching</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-What is caching, the key value paradigm, what class is used for that.
+<p>This project extensively caches its results in key-value pairs. String
+key is usually created based on the properties of input data and processing
+algorithm. Data are stored as <code>*.mat</code> files in directory
+<code>./data/cache</code> where the mat file filename is created as MD5 sum
+of the string key.</p>
 
-Where the cached files are stored. How they are looked for.
+<p>Input data are usually distinguished by a file signature which is made from
+the file name and last modification date of the file. This is also used 
+for algorithm binaries. Then the signature usually contain parameters
+of the algorithm as their change usually yield different results.</p>
 
-Clearing the cache, LRU algorithm implementation, autoclear, 
-erasing the cache data. Other cache parameters.
+<h3 id="doc.caching.methods">DataCache methods</h3>
 
-Disabling the cache - global and local way.
+<p>Caching is implemented in class <code>helpers.DataCache</code>. Because
+it is class only with static methods (in order to make it usable with parfor
+loops). This class implements the following methods:</p>
 
-Cache locking - only for the autoclear. No locks against overwriting the
-same data -> loosing the computed data.
+<ul>
+<li><code>data = DataCache.getData(key)</code> Get data from the cache 
+  indexed by string key. If the data has not been found, returns [].</li>
+                        
+<li><code>storeData(data,key)</code> Store data identified by key.</li>
+<li><code>res = hasData(key)</code> Check whether data are cached.</li>
 
-Limits of the cache.
+
+<li><code>removeData(key)</code> Remove particular data from the cache.</li>
+
+<li><code>clearCache()</code> Delete the last recently used data to limit 
+  the overall cached data size to <code>DataCache.maxDataSize</code> limit.
+</li>
+
+<li><code>deleteAllCachedData()</code> Delete all cached data.</li>
+
+<li><code>disableAutoClear()</code> Temporarily disable the autoclear 
+  function. Cannot be called in parallel function as it creates a lock file.
+</li>
+
+<li><code>enableAutoClear()</code>Enable autoClear after disableAutoClear. 
+  Cannot be called in parallel function as it deletes a lock file.</li>
+</ul>
+
+<h3 id="doc.caching.properties">DataCache properties</h3>
+
+<p>The caching properties can be changed only in <code>DataCache.m</code> 
+source code by changing the class constant properties which are:</p>
+
+<ul>
+<li><code>maxDataSize</code> Maximal storage space occupied by the 
+  cached data in Bytes.</li>
+<li><code>dataPath</code> Directory where to store cached data</li>
+<li><code>dataFileVersion</code> Version of the .mat file used for data 
+  storage</li>
+<li><code>autoClear</code> Check whether storage size has not exceeded 
+  the allowed size after each storeData call when true. If so, the oldest 
+  data are removed</li>
+<li><code>disable</code> Globally disable caching.</li>
+</ul>
+
+<p>Please note that the standard Matlab behaviour is to set these values only
+when the class is used for the first time. Therefore to apply the options
+you must call:</p>
+
+<precode type="matlab">
+>> clear all;
+</precode>
+
+
+<h4 id="doc.caching.autoclear">Auto clear functionality</h4>
+
+<p>Caching system also implements a way how to limit the overall size of the
+cached data, further denoted as an <i>autoclear</i> function. This basically
+checks the size of the cached data and deletes the last recently used
+items (based on the file modification date) to limit the storage usage.
+Autoclear can be disabled globally by editing changing the class property
+<code>helpers.DataCache.autoClear</code> or temporarily creating a lock
+file by calling method <code>helpers.DataCache.disableAutoclear()</code>.
+It is recommended to call this method before running parallel code to prevent
+two processes to delete the same files.</p>
+
+<h4 id="doc.caching.disabling">Disable caching</h4>
+
+<p>Cache can be disabled globally by setting the constant property
+<code>helpers.DataCache.autoClear</code> to true. Also several framework
+classes implements methods <code>disableCaching()</code> and 
+<code>enableCaching()</code> to control the caching behaviour of a single
+class.</p>
+
+<p>Cache does not support invalidation of data of a certain class. However
+if you want to, for example invalidate cached data of a certain detector
+you can use a simple trick to change the detector binary modification date:</p>
+
+<precode type="matlab">
+>> helpers.touch('./data/software/det_binary');
+</precode>
+
+<h3 id="doc.caching.limits">DataCache limits</h3>
+<p>As the cache depends heavily on a file system it is basically limited by a 
+number of files in a single directory. Having more files in a directory
+than is the OS limit can lead to slower file operations in this directory.
+Also using the cache with distributed computing may burden your network 
+file system.</p>
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="doc.logging">Logging</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-What it is implemented in, possibilities of logging.
+<p>Several classes in the framework uses the logging feature implemented
+in <code>helper.Logger</code> class. This class supports to display
+the events to std output or write them to a log file. It supports the 
+following events, inspired by the apache Log4j framework:</p>
 
-Verbose levels, for files for files.
+<table border="1" width="500px">
+    <tr>
+        <th class="center">Event name</th>
+        <th class="center">'VerboseLevel' value</th>
+        <th class="center">Usage</th>
+    </tr>
+    <tr>
+        <td class="center">TRACE</td>
+        <td class="center"><code>3</code></td>
+        <td> finer-grained informational events than the DEBUG.</td>
+    </tr>
+    <tr>
+        <td class="center">DEBUG</td>
+        <td class="center"><code>2</code></td>
+        <td>Information useful for debugging.</td>
+    </tr>
+    <tr>
+        <td class="center">INFO</td>
+        <td class="center"><code>1</code></td>
+        <td>Informational messages about the application progress.</td>
+    </tr>
+    <tr>
+        <td class="center">WARN</td>
+        <td class="center"><code>0</code></td>
+        <td>Logs potentially harmful situations. Calls 
+          <code>warn</code> command to show the backtrace.</td>
+    </tr>
+    <tr>
+        <td>ERROR</td>
+        <td class="center"><code>-1</code></td>
+        <td>Several errors which does not allow application
+          to continue. Calls Matlab <code>error</code> function.</td>
+    </tr>
+</table>
 
-Global and local settings.
+<p>Verbose level which events should be logged can be set both globally editing
+the file <code>helpers.Logger.m</code> and changing the default properties
+values or locally for each object which inherits the <code>Logger</code> 
+class by providing the <code>'OptionName',OptionValue</code> parameters
+to the class constructor call. Supported options are:</p>
 
-Adjusting the logging output.
+<precode>
+   VerboseLevel:: [helpers.Logger.DEBUG]
+    Maximal verbosity level of messages sent to stdout. If set to OFF all
+    messages are ignored, even errors would not stop the program execution.
 
-Parallelisation issues. No possibility to distinguish the processes 
-(host name, actual date and time etc.).
+  FileVerboseLevel:: [helpers.Logger.OFF]
+    Maximal verbosity level of messages which are written to a log file.
+
+  LogFile :: [./data/log]
+     Path to a log file.
+</precode>
+
+<p>If you want to change the format of the log output, just adjust the methods
+<code type="matlab">helpers.Logger.displayLog</code> and 
+<code type="matlab">helpers.Logger.logToFile</code> according to your 
+aesthetic preferences.</p>
+
+<h2 id="doc.logging.using">Logging to a file during distributed computation</h2>
+
+<p>When your computation are being computed with several processes, possibly 
+on several computers having a single logging file may lead to inconsistent
+data. That is why we would like to create separate files for each Matlab
+process.</p>
+
+<p>In this case we cane use simple fact that Matlab creates default values for
+object properties only once when the class is constructed for the first time.
+And as in classic matlabpool each lab has got its own matlab process,
+the log file name in the <code>helpers.Logger</code> can be set for 
+example to:</p>
+
+<precode type="matlab">
+LogFile = fullfile('data',['log-',helpers.hostname(),...
+  randsample(char(97:122),5)]);
+</precode>
+
+<p>And we can simply test it:</p>
+
+<precode type="matlab">
+>> matlabpool 5;
+>> import helpers.Logger;
+>> parfor i=1:3
+  for j=1:3
+    obj = testLogger();
+    fprintf('Proc. #%d Obj. #%d: %s\n',i,j,obj.LogFile);
+  end;
+end;
+
+Proc. #1 Obj. #1: data/log-comp02xcdqv
+Proc. #1 Obj. #2: data/log-comp02xcdqv
+Proc. #1 Obj. #3: data/log-comp02xcdqv
+Proc. #2 Obj. #1: data/log-comp02lwmxr
+Proc. #3 Obj. #1: data/log-comp02scirh
+Proc. #3 Obj. #2: data/log-comp02scirh
+Proc. #2 Obj. #2: data/log-comp02lwmxr
+Proc. #2 Obj. #3: data/log-comp02lwmxr
+Proc. #3 Obj. #3: data/log-comp02scirh
+</precode>
+
+<p>You can see that each process generated the random string only once.
+If the parfor wold be distributed on more computers, the 
+<code>hostname()</code> value would change as well.</p>
+
+<h2 id="doc.logging.using">Using Logger in your own classes</h2>
+
+<p>You can also use logger on your class as well simply by specifying the 
+<code>helpers.Logger</code> as a superclass. Here is a simple template how
+to do it and how to properly configure the logger:</p>
+
+<precode type="matlab">
+  classdef MyClass &lt; helpers.Logger
+    methods
+      function obj = RepeatabilityBenchmark(varargin)
+        varargin = obj.configureLogger('MyClassName',varargin);
+        % Now you can process varargin for your arguments
+        obj.info('Constructed.');
+      end
+    end
+  end
+</precode>
+
+<p>And constructing your object you will get:</p>
+
+<precode type="matlab">
+>> MyClass();
+(INFO)  MyClassName:  Constructed.
+</precode>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="vlbenchmarks.refs">References</h2>

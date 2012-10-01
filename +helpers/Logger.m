@@ -40,7 +40,11 @@ classdef Logger < handle
     VerboseLevel = helpers.Logger.DEBUG;
     % Verbose level of messages written to a log file
     FileVerboseLevel = helpers.Logger.OFF;
-    % Path to a log file
+    % Path to a log file. If you want to distinguish between the hosts
+    % on which the the static values were created you can use something
+    % like:
+    % LogFile = fullfile('data',['log-',helpers.hostname(),...
+    %   randsample(char(97:122),5)]);
     LogFile = fullfile('data','log');
     % Log label used as a preamble of all messages
     LogLabel = '';

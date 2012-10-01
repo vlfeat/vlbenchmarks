@@ -14,14 +14,12 @@ classdef DataCache
   %   PROPERTIES (Constant)
   %     maxDataSize - Maximal storage space occupied by the cache data
   %       in Bytes.
-  %     dataPath - Path to cached data
+  %     dataPath - Directory where to store cached data
   %     dataFileVersion - Version of the .mat file used for data storage
   %     autoClear - Check whether storage size has not exceeded the allowed
   %       size after each storeData call when true. If so, the oldest data
   %       are removed
-  %     lock - Lock cache when data being erased. However the cache is
-  %       locked by writing empty file which does not get rid of all race
-  %       conditions. Use carefully.
+  %     disabled - disable caching when true
   %
   %   METHODS (Static)
   %     data = getData(key) - Get data from the cache indexed by string
