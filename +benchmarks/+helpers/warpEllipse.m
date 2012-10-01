@@ -6,7 +6,7 @@ function well = warpEllipse(H, ell, varargin)
 %   while the frames ELL are in MATLAB image coordinate system with
 %   origin in (1,1).
 
-%   Author: Andrea Vedaldi
+% Authors: Andrea Vedaldi, Kristina Mikolajczyk
 
 % AUTORIGHTS
 
@@ -34,7 +34,7 @@ for i=1:size(ell,2)
     well(:,i) = [t_ ; S_([1;2;4])] ;
 
     case 'linearise'
-    % Kristian's Solution
+    % Kristian Mikolajczyk's Solution
     Mi1=[ell(3,i) ell(4,i);ell(4,i) ell(5,i)];
     x = ell(1,i); y = ell(2,i);
     h11=H(1); h12=H(4); h13=H(7);

@@ -1,9 +1,11 @@
 classdef GenericBenchmark< handle
-%  GENERICBENCHMARK The base class of a benchmark
-%    Defines getSignature abstract method.
-%    This base class implements only several helper methods as access to
-%    cache which is blockable using methods enableCahe() and
-%    disableCache().
+% benchmarks.GenericBenchmark The base class of a benchmark
+%   Defines getSignature abstract method.
+%   This base class implements only several helper methods as access to
+%   cache which is blockable using methods enableCahe() and
+%   disableCache().
+
+% Author: Karel Lenc
 
 % AUTORIGHTS
 

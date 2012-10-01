@@ -31,6 +31,8 @@ function plotFrameMatches(bestMatches,reprojFrames,varargin)
 %
 % See also: plot, helpers.vl_plotframe
 
+% Author: Karel Lenc
+
 % AUTORIGHTS
 
 refImMatchedStyle = {'Color',[0.1 0.1 0.9],'LineWidth',2};

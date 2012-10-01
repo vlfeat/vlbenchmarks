@@ -1,12 +1,16 @@
 function [ ret res ] = osExec( varargin )
-%OS_EXEC Run a command with system library paths
-%  [STATUS RESULT] = OS_EXEC('command') Run a command. Parameters are the
-%  same as for system command.
-%  This script sets LD_LIBRARY_PATH environment variable to contain all
-%  system paths received from ldconfig cache.
-%  This behaviour is supported only on GLNX86 and GLNXA64 systems, 
+% OS_EXEC Run a command with system library paths
+%   [STATUS RESULT] = OS_EXEC('command') Run a command. Parameters are the
+%   same as for system command.
+%   This script sets LD_LIBRARY_PATH environment variable to contain all
+%   system paths received from ldconfig cache.
+%   This behaviour is supported only on GLNX86 and GLNXA64 systems, 
 %
 %  See also: system
+
+% Authors: Karel Lenc
+
+% AUTORIGHTS
 import helpers.*;
 
 osType = computer;

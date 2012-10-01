@@ -1,27 +1,30 @@
 function [ img ] = genEllipticBlobs(varargin)
-%GENELLIPTICBLOBS Generate testing image with various multivariant Gauss. blobs
-%  IMG = GENELLIPTICBLOBS('OptionName',OptionValue,...) Generates image IMG
-%    with generated multivariate gaussian blobs according to the settings.
-%    There is generated 'NumDeformations' x 'NumDeformations' blobs which are
-%    filling the whole image, with size 'Width' x 'Height' (with a certain 
-%    border).
-%    The size of the blobs is determined in order to fit into the image.
-%    Output image is of type double and values are in interval [0;1].
+% GENELLIPTICBLOBS Generate testing image with multi-variant Gauss. blobs
+%   IMG = GENELLIPTICBLOBS('OptionName',OptionValue,...) Generates image IMG
+%     with generated multivariate Gaussian blobs according to the settings.
+%     There is generated 'NumDeformations' x 'NumDeformations' blobs which are
+%     filling the whole image, with size 'Width' x 'Height' (with a certain 
+%     border).
+%     The size of the blobs is determined in order to fit into the image.
+%     Output image is of type double and values are in interval [0;1].
 %
-%  Available options:
+%   Available options:
 %
-%  Width:: 800
-%    Output image width
+%   Width:: 800
+%     Output image width
 %
-%  Height:: 800
-%    Output image height
+%   Height:: 800
+%     Output image height
 %
-%  NumDeformations:: 5
-%    Number of blobs in a column with decreasing scale.
+%   NumDeformations:: 5
+%     Number of blobs in a column with decreasing scale.
 %
-%  MaxDeformation:: 1/3
-%    Maximal blob deformation.
+%   MaxDeformation:: 1/3
+%     Maximal blob deformation.
 
+% Authors: Karel Lenc, Andrea Vedaldi
+
+% AUTORIGHTS
 opts.width = 800;
 opts.height = 800;
 opts.numDeformations = 5;

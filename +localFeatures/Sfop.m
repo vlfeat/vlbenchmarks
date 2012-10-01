@@ -104,5 +104,5 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
         throw(err);
       end
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

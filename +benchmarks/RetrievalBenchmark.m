@@ -128,7 +128,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
   properties (Constant, Hidden)
     % Key prefix for final results
-    ResultsKeyPrefix = 'retreivalResults';
+    ResultsKeyPrefix = 'retreivalResults.';
     % Key prefix for KNN computation results (most time consuming)
     QueryKnnsKeyPrefix = 'retreivalQueryKnns';
     % Key prefix for additional information about the detector features

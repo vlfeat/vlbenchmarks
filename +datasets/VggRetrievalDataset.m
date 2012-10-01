@@ -22,10 +22,10 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %   be in a 'bad' set, i.e. object is not present.
 %
 %   The dataset object can be also created only with a subset of images by
-%   definition of '<catgory name>ImagesNum'. When all of these values are
+%   definition of '<category name>ImagesNum'. When all of these values are
 %   set to inf, whole original dataset is used.
 %
-%   Note that when aby subset is used, the image indexes changes.
+%   Note that when a subset is used, the image indexes changes.
 %
 %   Downloaded data are parsed and a database of the images and
 %   queries is created and on default is cached. However the validity
@@ -34,12 +34,14 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %   database, make sure that caching is disabled (option
 %   'CacheDatabase').
 %
+%   For the databases rights, see the websites of the datasets.
+%
 % Options:
 %   Category :: 'oxbuild'
 %     Dataset category. Available are 'oxbuild'.
 %
 %   GoodImagesNum :: inf
-%     Number of 'Good' images preserved in the databse. When inf, all
+%     Number of 'Good' images preserved in the database. When inf, all
 %     images preserved.
 %
 %   OkImagesNum :: inf
@@ -305,4 +307,4 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       dstPaths = [imagesPaths {fullfile(installDir,[curCategory '_gt'])}];
     end
   end
-end % -------- end of class ---------
+end

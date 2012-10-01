@@ -6,6 +6,9 @@ function writenetpbm( image, imPath )
 %    correct headers (they are missing '\n') which cause failures of some
 %    binary detectors.
 
+% Authors: Karel Lenc
+
+% AUTORIGHTS
 [pth name ext] = fileparts(imPath);
 if strcmp(ext,'.ppm')
   format = 'P6';
@@ -23,6 +26,4 @@ fprintf(imFile, [format '\n']);
 fprintf(imFile, '%d %d\n',size(image,2),size(image,1));
 fprintf(imFile, '255\n');
 fclose(imFile);
-
 end
-

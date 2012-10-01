@@ -31,7 +31,7 @@ function result = fastEllipseOverlap(f1, f2, varargin)
 %
 %        area(E1)/area(E2) > minAreaRatio, area(E1) < area(E2)
 
-%  Author:: Andrea Vedaldi, Karel Lenc
+%  Authors: Andrea Vedaldi, Karel Lenc
 
 % AUTORIGHTS
 

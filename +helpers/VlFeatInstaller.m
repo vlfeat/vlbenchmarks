@@ -1,7 +1,13 @@
 classdef VlFeatInstaller < helpers.GenericInstaller
-% VLFEATINSTALLER Downloads and installs the VLFeat library
-%    See or adjust constant class arguments for details about the
-%    library version or location.
+% helpers.VlFeatInstaller Downloads and installs the VLFeat library
+%   helpers.VlFeatInstaller('MinVersion') Constructs a VlFeatInstaller
+%   object and checks the minimal version 'MinVersion'. If this version
+%   is not available, fails with error.
+%
+%   To set what version should be installed edit the constant properties
+%   VlFeatInstaller.installVersion.
+%
+% See also: helpers.GenericInstaller
 
 % Author: Karel Lenc
 
@@ -20,9 +26,6 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 
   methods
     function obj = VlFeatInstaller(minVersion)
-      % VLFEATINSTALLER VLFeat library installer
-      % VLFEATINSTALLER(MIN_VERSION) Construct VLFeat installer and check
-      % whether atl least the MIN_VERSION of VlFeat is available.
       if exist('minVersion','var')
         numVersion =  str2double(char(regexp(obj.installVersion,'\.','split'))');
         numMinVersion = str2double(char(regexp(minVersion,'\.','split'))');
@@ -37,6 +40,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     end
 
     function setup(obj)
+      % setup Set up the Matlab path to contain VLFeat paths
       if(~exist('vl_demo','file')),
         vlFeatDir = helpers.VlFeatInstaller.dir;
         if(exist(vlFeatDir,'dir'))
@@ -60,7 +64,6 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       if obj.isCompiled()
         return;
       end
-
       fprintf('Compiling VLFeat\n');
 
       prevDir = pwd;
@@ -84,7 +87,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       deps = {helpers.Installer};
     end
   end
-  
+
   methods (Static)
     function mexflags = getMexFlags()
     % getMexFlags Get flags for compilation of mex files
@@ -136,4 +139,3 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     end
   end
 end
-

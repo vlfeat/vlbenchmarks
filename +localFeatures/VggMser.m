@@ -27,6 +27,8 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
 %   [1] J. Matas, O. Chum, M. Urban and T. Pajdla. Robust wide-baseline 
 %   stereo from maximally stable extremal regions. BMVC, 384-393, 2002.
 
+% Authors: Karel Lenc, Varun Gulshan
+
 % AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
     % The properties below correspond to parameters for the VggMser
@@ -114,5 +116,5 @@ classdef VggMser < localFeatures.GenericLocalFeatureExtractor & ...
       urls = {VggMser.softwareUrl};
       dstPaths = {VggMser.rootInstallDir};
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

@@ -113,5 +113,5 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
       % When unpacked, ibr is not executable
       helpers.setFileExecutable(Ibr.BinPath);
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

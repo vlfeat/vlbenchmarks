@@ -1,7 +1,10 @@
 function install()
 % INSTALL Install benchmarks and its basic support tools
 
-%   Instal
+% Authors: Karel Lenc
+
+% AUTORIGHTS
+
 ls VLFeat and compiles mex files needed for the benchmarking
 %   code. This script does not install any detector apart from VLFeat
 %   detectors and detectors with Matlab implementation. Other

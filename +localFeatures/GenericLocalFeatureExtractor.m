@@ -1,6 +1,6 @@
 classdef GenericLocalFeatureExtractor < handle & helpers.Logger
-% GENERICLOCALFEATUREEXTRACTOR Base class of a local feature extractors
-%   GENERICLOCALFEATUREEXTRACTOR defines the interface of a wrapper of
+% GenericLocalFeatureExtractor Base class of a local feature extractors
+%   GenericLocalFeatureExtractor defines the interface of a wrapper of
 %   a local feature. This class inherits from HANDLE, so it is copied
 %   by reference, not by value.
 %
@@ -9,7 +9,7 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 %
 %   Because some detector cannot split feature frame detection from the
 %   descriptor extraction, there are three ways how to extract features
-%   from an image using GENERICLOCALFEATUREEXTRACTOR object LFE:
+%   from an image using GenericLocalFeatureExtractor object LFE:
 %
 %   1. Detect feature frames
 %     Feature frames only are extracted when calling method:
@@ -51,7 +51,6 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 % Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
 
 % AUTORIGHTS
-
   properties (SetAccess=public, GetAccess=public)
     Name % General name of the feature extractor
   end
@@ -77,13 +76,13 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     % detector.
 
     function [frames descriptors] = extractFeatures(obj, imagePath)
-    % EXTRACTFEATURES Extracts features frames and descriptors from image
-    %   [FRAMES, DESCRIPTORS] = EXTRACTFEATURES(IMAGEPATH) is expected to
+    % extractFeatures Extracts features frames and descriptors from image
+    %   [FRAMES, DESCRIPTORS] = obj.extractFeatures(IMAGEPATH) is expected to
     %   extract fetures frames and optionally their descriptors from
     %   the image whose path is specified as input.
     %
     %   An implementation is also expected to cache the results by
-    %   using the methods CACHEFEATURES and LOADFEATURES.
+    %   using the methods storeFeatures and loadFeatures.
     %
     %   FRAMES has a column for each feature frame (keypoint, region)
     %   detected. A column FRAME can have one of the followin formats:
@@ -118,8 +117,8 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 
 
     function [frames descriptors] = extractDescriptors(obj, imagePath, frames)
-    % EXTRACTDESCRIPTOR Extract descriptors for specified features  on an image
-    %   [FRAMES, DESCRIPTORS] = EXTRACTDESCRIPTORS(OBJ, IMAGEPATH,
+    % extractDescriptors Extract descriptors for specified features  on an image
+    %   [FRAMES, DESCRIPTORS] = obj.extractDescriptors(IMAGEPATH,
     %   FRAMES) is similar to EXTRACTFEATURES() but computes
     %   descriptors for the specified frames instead of running a
     %   detector.
@@ -127,7 +126,7 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     end
 
     function sign = getSignature(obj)
-    % GETSIGNATURE Get a signature for a class instance
+    % getSignature Get a signature for a class instance
     %   The signature is a hash that should indentify a setting of
       error('Not supported') ;
     end
@@ -135,20 +134,20 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 
   methods (Access = public)
     function disableCaching(obj)
-      % DISABLECACHING Do not use cached features and always run the
+      % disableCaching Do not use cached features and always run the
       % features extractor.
       obj.UseCache = false;
     end
 
     function enableCaching(obj)
-      % ENABLECACHING Do cache extracted features
+      % enableCaching Do cache extracted features
       obj.UseCache = true;
     end
   end
 
   methods (Access = protected)
     function [frames descriptors] = loadFeatures(obj,imagePath,loadDescriptors)
-      % [FRAMES DESCS] = LOADFEATURES(IMG_PATH, LOAD_DESCS) Load features
+      % [FRAMES DESCS] = obj.loadFeatures(IMG_PATH, LOAD_DESCS) Load features
       %   extracted from image IMG_PATH from cache. If LOAD_DESCS is false,
       %   only FRAMES are loaded from cache. Please note that most of the
       %   descriptor extractors throw away several frames, therefore
@@ -176,15 +175,17 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     end
 
     function storeFeatures(obj, imagePath, frames, descriptors)
-      % STOREFEATURES(IMG_PATH, FRAMES) Store FRAMES detected in in image 
-      %   IMG_PATH to a cache.
-      % STOREFEATURES(IMG_PATH, FRAMES, DESCRIPTORS) Store features FRAMES
-      %   and DESCRIPTORS extracted from an image IMG_PATH to a cache.
-      % 
-      % Please note that calling with FRAMES or with FRAMES and DESCRIPTORS
-      % will create different records in the cache.
+      % storeFeatures Store extracted features to cache
+      %   obj.storeFeatures(IMG_PATH, FRAMES) Store FRAMES detected in in 
+      %   image IMG_PATH to a cache.
       %
-      % If useCache=false, nothing is done.
+      %   obj.storeFeatures(IMG_PATH, FRAMES, DESCRIPTORS) Store features 
+      %   FRAMES and DESCRIPTORS extracted from an image IMG_PATH to a cache.
+      % 
+      %   Please note that calling with FRAMES or with FRAMES and DESCRIPTORS
+      %   will create different records in the cache.
+      %
+      %   If obj.UseCache=false, nothing is done.
       if ~obj.UseCache, return; end
       hasDescriptors = true;
       if nargin < 4 || isempty(descriptors)
@@ -197,7 +198,7 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     end
 
     function key = getFeaturesKey(obj, imagePath, hasDescriptors)
-      % KEY = GETFEATURESKEY(IMG_PATH, HAS_DESCS) Get key KEY to features
+      % KEY = obj.getFeaturesKey(IMG_PATH, HAS_DESCS) Get key KEY to features
       %   which are extracted from image IMG_PATH. When HAS_DESCS is true,
       %   returns key for a record in the cache which contains both frames
       %   and descriptors (or only frames when HAS_DESCS=false).
@@ -213,7 +214,7 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
     end
     
     function [imagePath isTemp] = ensureImageFormat(obj, imagePath)
-    % ENSUREIMAGEFORMAT Ensure that image format is supported
+    % ensureImageFormat Ensure that image format is supported
     % NIMAGE_PATH = obj.ensureImageFormat(IMG_PATH) checks
     %   whether image format, defined by its extension of IMG_PATH is
     %   supported, i.e. the extension is in SUPPORTED. If not, new
@@ -253,6 +254,5 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
         end
       end
     end
-  end % ------- end of methods --------
-
-end % -------- end of class ---------
+  end
+end

@@ -1,7 +1,6 @@
 classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 % localFeatures.Ebr Edge-based detector
-
 %   localFeatures.Ebr('OptionName',optionValue,...) Constructs wrapper around
 %   edge-based detector binary [1] [2] used is downlaoded from:
 %
@@ -84,5 +83,5 @@ classdef Ebr < localFeatures.GenericLocalFeatureExtractor & ...
       % When unpacked, ebr is not executable
       helpers.setFileExecutable(Ebr.BinPath);
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

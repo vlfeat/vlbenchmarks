@@ -4,7 +4,7 @@ function signature = fileSignature(varargin)
 %   file FILEPATH based on its name and modification date. This is
 %   meant as a unique file identifier for hashing purposes.
 %
-%   FILESIGNATRUE(FILE1PATH, FILEPATH2, ...) concatenates the
+%   SIGNATURE = FILESIGNATRUE(FILE1PATH, FILEPATH2, ...) concatenates the
 %   signatures of the specified files.
 %
 %   In more detail, he SIGNATURE is obtained as the string
@@ -15,7 +15,6 @@ function signature = fileSignature(varargin)
 % Authors: Karel Lenc, Andrea Vedaldi
 
 % AUTORIGHTS
-
 signature = '';
 
 for i = 1:nargin

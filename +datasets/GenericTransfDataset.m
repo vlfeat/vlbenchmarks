@@ -4,6 +4,8 @@ classdef GenericTransfDataset < datasets.GenericDataset
 %   detectors). This class defines abstract method getTransformation(imgNo)
 %   which must be implemented by all its subclasses.
 
+% Author: Karel Lenc
+
 % AUTORIGHTS
   properties (SetAccess=protected, GetAccess=public)
     % Setting these properties is not mandatory however are usefull in 
@@ -18,4 +20,4 @@ classdef GenericTransfDataset < datasets.GenericDataset
     %   TF = getTransformation(IMG_NO) Return the 3x3 homography TF from 
     %   image 1 to image IMG_NO.
   end
-end % -------- end of class ---------
+end

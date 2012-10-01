@@ -102,5 +102,5 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
       obj.FrameDetector.enableCaching();
       obj.DescExtractor.enableCaching();
     end
-  end % ------- end of methods --------
-end % -------- end of class ---------
+  end
+end

@@ -15,7 +15,7 @@ function [eigval,eigvec] = ellipseEigen(frames)
 %   If FRAMES contains more than one elliptical frame, then EIGVEC
 %   and EIGVAL have one column per frame.
 
-% Author: Andrea Vedaldi, Karel Lenc
+% Authors: Andrea Vedaldi, Karel Lenc
 
 % AUTORIGHTS
 

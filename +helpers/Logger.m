@@ -151,4 +151,3 @@ classdef Logger < handle
     end
   end
 end
-

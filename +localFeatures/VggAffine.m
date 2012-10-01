@@ -13,7 +13,10 @@ classdef VggAffine < localFeatures.GenericLocalFeatureExtractor ...
 %     One of {'hesaff', 'haraff', 'heslap', 'harlap','har'} which are
 %     supported by the binary:
 %     ./data/software/vggAffine/extract_features.ln
-%
+
+% Authors: Karel Lenc, Varun Gulshan
+
+% AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
     Opts = struct(...
       'detector', 'hesaff',...

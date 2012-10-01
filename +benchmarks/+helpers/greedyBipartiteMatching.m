@@ -12,3 +12,7 @@
 %   Algorithm basically goes sequentially through the EDGES and 
 %   matches all vertices which has not been matched yet. Therefore
 %   the ranked list of EDGES represents edge weighting.
+
+% Author: Karel Lenc
+
+% AUTORIGHTS

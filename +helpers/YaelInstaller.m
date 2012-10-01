@@ -1,14 +1,14 @@
 classdef YaelInstaller < helpers.GenericInstaller
-% YAELINSTALLER Installer of Yael library
-%
-%   This script on default tries to download the binary. When no binary is
+% helpers.YaelInstaller Installer of Yael library
+%   obj = helpers.YaelInstaller() Constructs a YaelInstaller object.
+%   When install() called it tries to download the binary. When no binary is
 %   available for your architecture, it tries to compile it. However for
 %   succesful compilation you need to have 'python-dev' and 'swig' packages
 %   or similar available on your operating system.
 %
 %   Architectures with available binaries are 'GLNXA64' and 'MACIA64'.
 %
-%   Yael is not available for Microsoft Windows machines.
+%   Yael is not supported on Microsoft Windows machines.
 %
 %   Map YaelInstaller.DistMetricParamMap contains mapping between abbrev.
 %   of supported distance metrics to the argument values:
@@ -115,4 +115,3 @@ classdef YaelInstaller < helpers.GenericInstaller
     end
   end
 end
-

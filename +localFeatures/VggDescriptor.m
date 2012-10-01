@@ -28,6 +28,9 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
 %   CropFrames :: true
 %     Crop frames which after magnification overlap the image borders.
 
+% Authors: Karel Lenc, Varun Gulshan
+
+% AUTORIGHTS
   properties (SetAccess=private, GetAccess=public)
     Opts = struct(...
       'noAngle', false,...

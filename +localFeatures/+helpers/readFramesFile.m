@@ -1,8 +1,15 @@
 function frames = readFramesFile(framesFile)
 % READFRAMESFILE Read file exported by some of the older frame detectors.
-% vl_ubscread cannot be used because these files contain length of the
-% descriptors = 1 which this function is not able to handle.
+%   FRAMES = READFRAMESFILE(FRAME_FILE_PATH) Reads FRAMES from a file
+%   defined by FRAME_FILE_PATH
+%
+%   vl_ubscread cannot be used because some older detectors produce files
+%   which contain length of the descriptors = 1 which the vl_ubcread function 
+%   is not able to handle.
 
+% Authors: Karel Lenc
+
+% AUTORIGHTS
   fid = fopen(framesFile,'r');
   if fid==-1
     error('Could not read file: %s\n',framesFile);
@@ -26,5 +33,4 @@ function frames = readFramesFile(framesFile)
   frames(3:5,:) = S;
 
   fclose(fid);
-
 end

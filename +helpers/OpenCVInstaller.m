@@ -1,5 +1,5 @@
 classdef OpenCVInstaller < helpers.GenericInstaller
-% OPENCVINSTALLER Downloads and compiles OpenCV library
+% helpers.OpenCVInstaller Downloads and compiles OpenCV library
 %   For compilation, cmake binary, which can be executed from
 %   Matlab environment must be present in your PATH.
 %   Downloads OpenCV Library and compiles it using the compiler 
@@ -154,4 +154,3 @@ classdef OpenCVInstaller < helpers.GenericInstaller
     end
   end
 end
-

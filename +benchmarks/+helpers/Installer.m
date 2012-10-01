@@ -1,8 +1,12 @@
 classdef Installer < helpers.GenericInstaller
-% INSTALLER Benchmarks helpers installation.
+% Installer Benchmarks helpers installation.
 %
 %   Compiles mex files needed for ellipse overlap and matching
 %   calculation.
+
+% Author: Karel Lenc
+
+% AUTORIGHTS
   
   methods (Access=protected)
     function [srclist flags] = getMexSources(obj)

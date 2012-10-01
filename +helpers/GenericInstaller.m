@@ -1,6 +1,6 @@
 classdef GenericInstaller < handle
-% GENERICINSTALLER Helper class to install data and code dependencies
-%   GENERICINSTALLER is a helper class implementing several scripts
+% helpers.GenericInstaller Helper class to install data and code dependencies
+%   helpers.GenericInstaller is a helper class implementing several scripts
 %   for installation of data and code dependencies. The installation
 %   process is divided into four parts, executed in order:
 %
@@ -94,7 +94,7 @@ classdef GenericInstaller < handle
 
   methods (Access=protected, Hidden)
     function res = dependenciesInstalled(obj)
-    % DEPENDENCIESINSTALED Test whether all class dependencies
+    % dependenciesInstalled Test whether all class dependencies
     %   are installed
       deps = obj.getDependencies();
       res = true;
@@ -108,7 +108,7 @@ classdef GenericInstaller < handle
     end
 
     function res = mexFilesCompiled(obj)
-    % MEXFILESCOMPILED Test whether all mex files are compiled
+    % mexFilesCompiled Test whether all mex files are compiled
       mexSources = obj.getMexSources();
       for source=mexSources
         if ~obj.mexFileCompiled(source{:});
@@ -120,7 +120,7 @@ classdef GenericInstaller < handle
     end
 
     function res = tarballsInstalled(obj)
-    % TARBALLSINSTALLED Test whether all tarballs are downloaded.
+    % tarballsInstalled Test whether all tarballs are downloaded.
     %   Tests whether in all dest. directories exist a dummy file 
     %   <dst_dir>/.<archive_name>.unpacked
       import helpers.*;
@@ -135,7 +135,7 @@ classdef GenericInstaller < handle
     end
 
     function compileMexFiles(obj)
-    % COMPILEMEXFILES Compile specified mex file
+    % compileMexFiles Compile specified mex file
     %   List of mex files is specified by getMexSources method
     %   implementation.
       [sources flags] = obj.getMexSources();
@@ -149,7 +149,7 @@ classdef GenericInstaller < handle
     end
 
     function installTarballs(obj)
-    % INSTALLTARBALLS Download and unpack all tarballs (archives)
+    % installTarballs Download and unpack all tarballs (archives)
     %   List of tarballs and their unpack folder are defined by
     %   getTarballsList() method implementation. Only non-extracted
     %   tarballs (i.e. without tag file) are downloaded and extracted.
@@ -165,7 +165,7 @@ classdef GenericInstaller < handle
     end
 
     function res = installDependencies(obj)
-    % INSTALLDEPENDENCIES Install all dependencies.
+    % installDependencies Install all dependencies.
     %   List of classes which this class depends on is defined by
     %   return values of method getDependencies().
       deps = obj.getDependencies();
@@ -178,8 +178,8 @@ classdef GenericInstaller < handle
     end
 
     function varargin = checkInstall(obj, varargin)
-    % CHECKINSTALL Check whether object is installed.
-    %   CHECKINSTALL('AutoInstall', false) Do not install if not
+    % checkInstall Check whether object is installed.
+    %   obj.checkInstall('AutoInstall', false) Do not install if not
     %   installed.
       import helpers.*;
       opts.autoInstall = true;
@@ -190,7 +190,7 @@ classdef GenericInstaller < handle
     end
 
     function [srclist flags]  = getMexSources(obj)
-      % [SRCLIST FLAGS] = GETMEXSOURCES()
+      % [SRCLIST FLAGS] = obj.getMexSources()
       %   Reimplement this method if mex files compilation
       %   is needed. SRCLIST and FLAGS are cell arrays of same
       %   length which specify paths to C/CPP sources and mex
@@ -200,7 +200,7 @@ classdef GenericInstaller < handle
     end
 
     function [urls dstPaths] = getTarballsList(obj)
-      % [URLS DSTPATHS] = GETTARBALLSLIST()
+      % [URLS DSTPATHS] = obj.getTarballsList()
       %   Reimplement this method if your class need to download and
       %   unpack data. URLS and DSTPATHS are cell arrays of same
       %   length which specify locations of the tarballs and the
@@ -210,25 +210,25 @@ classdef GenericInstaller < handle
     end
 
     function deps = getDependencies(obj)
-      % DEPS = GETDEPENDENCIES()
+      % DEPS = obj.getDependencies()
       %   Reimplement this method if your class depends on different
       %   classes. Returns cell aray of objects.
       deps = {};
     end
 
     function res = isCompiled(obj)
-    % ISCOMPILED() Reimplement this method to specify whether
+    % obj.isCompiled() Reimplement this method to specify whether
     %   compilation (or another script) is neede.
       res = true;
     end
 
     function compile(obj)
-    % COMPILE() Reimplement this method if your class need to compile
+    % obj.compile() Reimplement this method if your class need to compile
     %   or perform another actions during installation process.
     end
 
     function cleanCompiled(obj)
-    % CLEANCOMPILED() Reimplement this function if your compile function
+    % obj.cleanCompiled() Reimplement this function if your compile function
     % creates some files/resources out of the tarball destination 
     % directories which are deleted automatically during the clean() call.
     end
@@ -236,13 +236,16 @@ classdef GenericInstaller < handle
 
   methods (Static, Hidden)
     function res = mexFileCompiled(mexFile)
-      % MEXFILECOMPILED Test whether a mex file is compiled
+      % mexFileCompiled Test whether a mex file is compiled
       [srcPath srcFilename] = fileparts(mexFile);
       mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
       res = exist(mexFile,'file');
     end
 
     function compileMex(mexFile, flags)
+      % compileMex Compile a C/C++ source with 'mex' command
+      %   compileMex(MEX_SRC_FILE, FLAGS) Compiles MEX_SRC_FILE with mex
+      %   command including FLAGS as its parameters.
       if ~exist('flags','var'), flags = ''; end;
       curDir = pwd;
       [mexDir mexFile mexExt] = fileparts(mexFile);
@@ -259,12 +262,14 @@ classdef GenericInstaller < handle
     end
 
     function res = tarballInstalled(url, distDir)
+      % tarballInstalled Check whether a tarball is successfully unpacked
       import helpers.*;
       unpackTagFile = GenericInstaller.getUnapckedTagFile(url, distDir);
       res = exist(unpackTagFile,'file');
     end
 
     function installTarball(url,distDir)
+      % installTarball Unpack a tarball
       import helpers.*;
       fprintf('Downloading and unpacking %s.\n',url);
       unpackTagFile = GenericInstaller.getUnapckedTagFile(url, distDir);
@@ -284,7 +289,7 @@ classdef GenericInstaller < handle
     end
 
     function unpackTagFile = getUnapckedTagFile(url, distDir)
-      % FILENAME = GETUNPACKEDTAGFILE(URL, DISTDIR) Get path to a tag file
+      % FILENAME = getUnapckedTagFile(URL, DISTDIR) Get path to a tag file
       %   FILENAME which signal that an tarball URL has been unpacked to a
       %   folder DISTDIR
       import helpers.*;

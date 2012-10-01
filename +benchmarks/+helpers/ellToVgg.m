@@ -1,16 +1,17 @@
 function vggEll = ellToVgg(ell,eigVal,eigVec)
-% ELLTOVGG Transforms the ellipse into format suitable for passing into 
-% Kristian Mikolajczyk's ellipse overlap function.
-%   VGG_ELL = ellToVgg(F, EIG, EIGVEC) Converts ellipse frame F with
-%     eigen values EIG and eigen vectors EIGVEC of the frame ellipse 
-%     matrix (see `help ellipseEigen`) to KM frame defined as:
+% ELLTOVGG Transforms the ellipse into mexComputeEllipseOverlap function
+%   VGG_ELL = ELLTOVGG(F, EIG, EIGVEC) Converts ellipse frame F with
+%   eigen values EIG and eigen vectors EIGVEC of the frame ellipse 
+%   matrix (see `help ellipseEigen`) to KM frame defined as:
 %
 %     VGG_ELL(1:5,.) = F(1:5,.)
 %     VGG_ELL(6:7,.) = sqrt(EIG(:,.)) % Size of the ellipse axes
 %     VGG_ELL(8:9,.) Size of the ellipse bounding box (allinged to image 
 %                    coordinates) half-axis.
-%   
-% 
+
+% Authors: Andrea Vedaldi, Karel Lenc
+
+% AUTORIGHTS
 
 vggEll = zeros(5+4,size(ell,2));
 

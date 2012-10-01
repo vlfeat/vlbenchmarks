@@ -69,7 +69,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %   too (see the 'Mode' option). To define this, a second set of 
 %   matches M_d is obtained similarly to the previous method, except 
 %   that the descriptors distances are used in place of the overlap, 
-%   no threshold is involved in the genration of canidate matches, and 
+%   no threshold is involved in the generation of candidate matches, and 
 %   these are selected by increasing descriptor distance rather than by
 %   decreasing overlap during greedy bipartite matching. Then the
 %   descriptor matching score is defined as:
@@ -108,7 +108,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %     normalised to.
 %
 %   CropFrames:: true
-%     Crop the frames out of overlaping regions (regions present in both
+%     Crop the frames out of overlapping regions (regions present in both
 %     images).
 %
 %   Magnification:: 3
@@ -132,7 +132,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %       J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
 %       comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
 
-% Author: Karel Lenc, Andrea Vedaldi
+% Authors: Karel Lenc, Andrea Vedaldi
 
 % AUTORIGHTS
 

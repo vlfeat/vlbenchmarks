@@ -128,4 +128,4 @@ classdef RandomFeaturesGenerator < localFeatures.GenericLocalFeatureExtractor
       signature = helpers.struct2str(obj.Opts);
     end
   end
-end % ----- end of class definition ----
+end

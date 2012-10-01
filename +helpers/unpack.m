@@ -1,11 +1,13 @@
 function unpack( url, distDir )
 % UNPACK Unpack internet archive
-%   unpack(url, distDir) Unpack archive defined by 'url' to a 
-%     'distDir'. Supports *.tar, *.tar.gz, *.tgz, *.zip
-%     archives.
-%     For *.gz and *.bz2 archives (formats not supported by Matlab) 
-%     needs  wget utility and gunzip + tar utility in the system path.
+%   UNPACK(URL, DIST_DIR) Unpack archive defined by URL to a DIST_DIR 
+%   directory. Supports *.tar, *.tar.gz, *.tgz, *.zip archives.
+%   For *.gz and *.bz2 archives (formats not supported by Matlab) 
+%   needs  wget utility and gunzip + tar utility in the system path.
 
+% Authors: Karel Lenc
+
+% AUTORIGHTS
 import helpers.*;
 
 unbzipCommand = 'tar xvjf %s';
@@ -79,4 +81,3 @@ end
   end
 
 end
-

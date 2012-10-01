@@ -1,10 +1,13 @@
 function sel = isEllipseInBBox(bbox, f)
 % ISELLIPSEINBBOX Test whether ellipse is fully in a box.
-%	SEL = isEllipseInBBox(BBOX, E) Tests whether ellipse E is in a 
+%	  SEL = isEllipseInBBox(BBOX, E) Tests whether ellipse E is in a 
 %   box BBOX defined as:
 %   
 %        [xmin ymin xmax ymax]
-%
+
+% Authors: Andrea Vedaldi, Karel Lenc
+
+% AUTORIGHTS
   if numel(bbox) ~= 4
     error('Invalid bounding box');
   end

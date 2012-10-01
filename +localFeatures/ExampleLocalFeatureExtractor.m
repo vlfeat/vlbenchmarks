@@ -22,7 +22,6 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
 % Authors: Karel Lenc
 
 % AUTORIGHTS
-
   properties (SetAccess=private, GetAccess=public)
     % Set the default values of the detector options
     Opts = struct(...
@@ -199,4 +198,4 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
     %     compiled using mex command. See helpers.Installer for an example.
     %
   end
-end % ----- end of class definition ----
+end

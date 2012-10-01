@@ -26,5 +26,4 @@ for installer=installers
 end
 
 DataCache.deleteAllCachedData();
-
 end

@@ -8,6 +8,8 @@ Edges are defined as n x 2 array where Edges(1,:) = [a b] defines
 edge between node a and b. Returns matching M which is array of size
 [1,numNodesA] and M(a) = b means that node a was matched to node b. If
 node a was not matched, b = 0.
+
+Author: Karel Lenc
 */
 
 

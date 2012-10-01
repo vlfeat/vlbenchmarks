@@ -14,8 +14,8 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
 %   Following options are supported:
 %
 %   Category :: ['graf']
-%     The category within the vgg dataset, has to be one of
-%     'bikes','trees', 'graf','wall','bark','boat','leuven','ubc'
+%     The category within the VGG dataset, has to be one of
+%     'bikes', 'trees', 'graf', 'wall', 'bark', 'boat', 'leuven', 'ubc'
 
 % Authors: Varun Gulshan, Karel Lenc
 

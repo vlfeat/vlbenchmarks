@@ -1,9 +1,23 @@
 function writeFeatures(file, frames, descriptors, varargin)
-% WRITEFEATURES Write frames data files
+% WRITEFEATURES Write image features to a file
+%   WRITEFEATURES(FILE_PATH, FRAMES, DESCRIPTORS) Write FRAMES and DESCRIPTORS
+%   to a file specified by FILE_PATH.
+%
+%   Features are written in a Oxford format:
+%
+%   <descriptor length size(descriptors,1)>\n
+%   <num features size(frames,2)>\n
+%   <Ellipse frame in format 'x_c y_c a b c' s.t. x' [a b ; b c] x = 1>
+%   <frame descriptor>\n
+%   ...
+
+% Authors: Karel Lenc, Andrea Vedaldi
+
+% AUTORIGHTS
 import helpers.*;
 
 opts.verbosity = 0 ;
-opts.format = 'oxford' ;
+opts.format = 'oxford';
 opts = vl_argparse(opts, varargin) ;
 
 g = fopen(file, 'w');
@@ -71,8 +85,6 @@ end
 % --------------------------------------------------------------------
 function S = inv2x2(C)
 % --------------------------------------------------------------------
-
 den = C(1,:) .* C(3,:) - C(2,:) .* C(2,:) ;
 S = [C(3,:) ; -C(2,:) ; C(1,:)] ./ den([1 1 1], :) ;
-
 end

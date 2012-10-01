@@ -3,7 +3,7 @@ classdef GenericDataset < handle
 %   This class defines only one abstract method getImagePath(imgNo) which
 %   must be implemented by all its subclasses.
 
-% Authors: Karel Lenc
+% Author: Karel Lenc
 
 % AUTORIGHTS
   properties (SetAccess=protected, GetAccess=public)
@@ -53,4 +53,4 @@ classdef GenericDataset < handle
       signatures = helpers.CalcMD5.CalcMD5(signatures);
     end
   end
-end % -------- end of class ---------
+end

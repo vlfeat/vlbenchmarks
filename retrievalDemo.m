@@ -5,7 +5,7 @@ function [mAP queriesAp] = retrievalDemo(resultsPath)
 %   RETRIEVALDEMO(RESULTS_PATH) Run the demo and save the results to
 %   path RESULTS_PATH.
 
-% Author: Karel Lenc and Andrea Vedaldi
+% Authors: Karel Lenc and Andrea Vedaldi
 
 % AUTORIGHTS
 

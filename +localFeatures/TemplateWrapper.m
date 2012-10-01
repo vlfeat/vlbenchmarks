@@ -4,9 +4,7 @@ classdef TemplateWrapper < localFeatures.GenericLocalFeatureExtractor
 %
 % See also: localFeatures.ExampleLocalFeatureExtractor
 
-% Authors: Karel Lenc
-
-% AUTORIGHTS
+% Author: Your Name
   properties (SetAccess=private, GetAccess=public)
     % Detector options
     Opts = struct(...

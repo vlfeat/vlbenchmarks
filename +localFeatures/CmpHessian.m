@@ -102,5 +102,5 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     function res = isCompiled(obj)
       res = true;
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

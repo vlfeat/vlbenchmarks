@@ -8,7 +8,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
 %   Only supported architectures are GLNX86 and GLNXA64 as for these the
 %   binaries are avaialable.
 %
-%   (No options available currently)
+%   (No options currently available)
 %
 %   REFERENCES
 %   [1] M. Perdoch, O. Chum and J. Matas: Efficient Representation of Local
@@ -109,5 +109,5 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
         CmpBinHessian.binName);
       res = exist(bin,'file');
     end
-  end % ---- end of static methods ----
-end % ----- end of class definition ----
+  end
+end

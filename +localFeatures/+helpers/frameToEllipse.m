@@ -1,13 +1,12 @@
 function g = frameToEllipse(f)
 % FRAMETOELLIPLSE converts frames to ellpises
-%   FRAMETOELLIPSE(F) converts the specified frames F to unoriented
-%   ellipses. If the frame is already an ellipse does not do anything
+%   ELL = FRAMETOELLIPSE(F) converts the specified frames F to unoriented
+%   ellipses ELL. If the frame is already an ellipse does not do anything
 %   and in case of an oriented ellipse converts into unoriented.
 
 % Author: Andrea Vedaldi, Karel Lenc
 
 % AUTORIGHTS
-
 if isempty(f)
   g=[];
   return;

@@ -3,6 +3,10 @@ function hname = hostname()
 %   NAME = HOSTNAME() returns hostname NAME. On PCWIN returns the value of
 %   COMPUTERNAME environment variable or calls 'hostname' command on other
 %   systems.
+
+% Authors: Karel Lenc
+
+% AUTORIGHTS
 switch computer
   case {'PCWIN','PCWIN64'}
     hname = getenv('COMPUTERNAME');
