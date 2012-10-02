@@ -151,7 +151,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
   properties(Constant, Hidden)
     KeyPrefix = 'repeatability';
     %
-    Modes = {'Repeatability','MatchingScore','DescMatchingScore'};
+    Modes = {'repeatability','matchingscore','descmatchingscore'};
     ModesOpts = containers.Map(benchmarks.RepeatabilityBenchmark.Modes,...
       {struct('matchGeometry',true,'matchDescs',false),...
       struct('matchGeometry',true,'matchDescs',true),...
@@ -165,6 +165,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       obj.BenchmarkName = 'repeatability';
       if numel(varargin) > 0
         [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
+        obj.Opts.mode = lower(obj.Opts.mode);
         if ~ismember(obj.Opts.mode, obj.Modes)
           error('Invalid mode %s.',obj.Opts.mode);
         end

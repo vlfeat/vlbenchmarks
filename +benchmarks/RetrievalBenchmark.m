@@ -137,6 +137,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 
   methods
     function obj = RetrievalBenchmark(varargin)
+      import helpers.*;
       obj.BenchmarkName = 'RetrBenchmark';
       [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
       varargin = obj.configureLogger(obj.BenchmarkName,varargin);
