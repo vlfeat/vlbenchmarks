@@ -46,20 +46,20 @@ benchmarking code.</li>
 (<strong><code>helpers</code></strong>). </li>
 </ul>
 
-<p>All classes and functions in this project which supports some optional 
-  parameters accept those in a similar manner as Matlab functions:</p>
+<p>All optional parameters of class constructors of functions are specified
+  in a following manner:</p>
 <precode type="matlab">
   function(obligatoryParams,'OptionName',OptionValue,...)
 </precode>
 <p>Available options are listed in the help string of the function or class. 
-For classes, options are set in their constructor.</p>
+For classes, options can be set only in their constructor.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h3 id="doc.extractors">Feature objects</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <p>All classes located in the package <code>localFeatures</code> are subclasses 
-of <code>lGenericLocalFeaturesExtractor</code>. The included image feature
+of <code>lGenericLocalFeaturesExtractor</code>. Included image feature
 detectors are summarised in the following table:</p>
 
 <table border="1" width="600px">
@@ -741,7 +741,7 @@ LogFile = fullfile('data',['log-',helpers.hostname(),...
 >> import helpers.Logger;
 >> parfor i=1:3
   for j=1:3
-    obj = testLogger();
+    obj = Logger();
     fprintf('Proc. #%d Obj. #%d: %s\n',i,j,obj.LogFile);
   end;
 end;
