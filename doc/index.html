@@ -63,7 +63,7 @@ run benchmarks efficiently.</p>
 <p>The current version of <b>VLBechmakrs</b> implements:</p>
 
 <ul>
-  <li>The detector repeatability of <a
+  <li>The feature extractor repeatability of <a
   href="#vlbenchmarks.ref1">[1]</a>.</li>
   <li>The descriptor matching score of <a
   href="#vlbenchmarks.ref1">[1]</a>.</li>
@@ -105,38 +105,34 @@ thea directory just created, and run:</p>
   >> install
 </precode>
 
-<p>
-This script downloads and installs a copy of <a
+<p> This script downloads and installs a copy of <a
 href="http://www.vlfeat.org">VLFeat</a> as the only dependency, and it
-compiles a number of <em>MEX files</em>. To successfully compile the
-code, you will need to be able to compile MEX files in your MATLAB
-environment, for detail see <a
-href="http://www.mathworks.com/help/matlab/matlab_external/building-mex-files.html">MATLAB
-documentation</a>.
-</p>
+compiles a number of <em>MEX files</em>. To successfully compile the code, you
+will need to be able to compile MEX files in your MATLAB environment, for
+detail see <a href="http://www.mathworks.com/help/matlab/matlab_external
+/building-mex-files.html">MATLAB documentation</a>. </p>
 
-<p>To test the benchmark installation run</p>
+<p>To test the benchmark installation run:</p>
 
 <precode type="matlab">
   >> benchmarksDemo
 </precode>
 
-<p>
-Note that this script will download and install the <a
-href="%pathto:vlbenchmarks.ref1;">VGG Affine Dataset</a>.
-</p>
+<p> Note that this script will download and install the <a
+href="%pathto:vlbenchmarks.ref1;">VGG Affine Dataset</a>. </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="vlbenchmarks.quickguide">Quick guide</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<p>
-Here is a script for computing image feature detector repeatability [1]. This script gets pair of images from the 'Graffiti' dataset, run the feature detector and compute there repeatability:
-</p>
+
+<p> Here is a script for computing image feature extractorr repeatability [1].
+This script gets pair of images from the 'Graffiti' dataset, run the feature
+extractor and compute there repeatability: </p>
 
 <precode type="matlab">
 dataset = datasets.VggAffineDataset('Category','graf'); % Test data
 repBenchmark = benchmarks.RepeatabilityBenchmark(); % Benchmark object
-sift = localFeatures.VlFeatSift(); % Tested detector
+sift = localFeatures.VlFeatSift(); % Tested feature extractor
 
 [repeatability numCorresp] = ...
   repBenchmark.testFeatureExtractor(sift,...
@@ -153,13 +149,11 @@ With a result:
 repeatability = 0.6589       numCorresp = 825
 </precode>
 
-<p>
-Running this script once again you will get the results straight away as 
-they are being loaded from cache. Now lets play with the descriptor 
-parameters. For example we can test what would happen if we compute 
-features of up-sampled images (by setting <code>vl_sift</code> parameter 
-'FirstOctave' to -1):
-</p>
+<p> Running this script once again you will get the results immediately as
+they are being loaded from cache. Now let's play with the descriptor
+parameters. For example we can test what would happen if we compute features
+of up-sampled images (by setting <code>vl_sift</code> parameter 'FirstOctave'
+to -1): </p>
 
 <precode type="matlab">
 usSift = localFeatures.VlFeatSift('FirstOctave',-1); % Up-sampling SIFT
@@ -170,16 +164,16 @@ usSift = localFeatures.VlFeatSift('FirstOctave',-1); % Up-sampling SIFT
                                     dataset.getImagePath(2))
 </precode>
 
-<p>
-And after few moments (as the number of features more than doubles)
-</p>
+<p>Few moments later we get the results:</p>
+
 <precode>
 repeatability =  0.5838       numCorresp =  2435
 </precode>
 
-<p>
- Now let's run your custom feature frame detector instead. Suppose you have a command line utility called "DETECTORX" that implements it. Start by copying a template wrapper located in '<code>localFeatures/TemplateWrapper.m' </code>and edit it according to your detector:
-</p>
+<p> Now let's run your custom feature extractor instead. Suppose you have
+a command line utility called "DETECTORX" that implements it. Start by copying
+a template wrapper located in '<code>localFeatures/TemplateWrapper.m'
+</code>and edit it according to your feature extractor: </p>
 
 <precode type="matlab">
 classdef DetectorX &lt; localFeatures.GenericLocalFeatureExtractor
@@ -211,15 +205,15 @@ classdef DetectorX &lt; localFeatures.GenericLocalFeatureExtractor
     end
     
     function signature = getSignature(obj)
-      signature = helpers.fileSignature(obj.BinPath); % Detector unique signature
+      signature = helpers.fileSignature(obj.BinPath); % Unique signature
     end
   end
 end
 </precode>
 
-<p>
-Now let's compute matching score of your detector [1]. Because created detector is not able to compute descriptors we will use SIFT descriptors instead.
-</p>
+<p> Let's compute matching score of your feature extractor [1]. Because
+created feature extractor is not able to compute descriptors we will use SIFT
+descriptors instead. </p>
 
 <precode type="matlab">
 matchBenchmark = ...
@@ -234,13 +228,11 @@ xDetSiftDesc = localFeatures.DescriptorAdapter(xDet, sift);
                                       dataset.getImagePath(2))
 </precode>
 
-<p>Retrieval benchmark puts the detector into a simple
-retrieval system and calculated its mean average precision.
-The interface to the retrieval benchmark is similar to the
-repeatability benchmark as can be seen from the minimal example which
-calculates the Mean Average Precision of the retrieval system 
-which uses the SIFT detector and descriptor for image feature extraction.
-</p>
+<p>Retrieval benchmark puts the feature extractor into a simple image
+retrieval system and calculates its mean Average Precision. Interface of the
+retrieval benchmark is similar to the repeatability benchmark. This minimal
+example shows how to calculate the Mean Average Precision of an image
+retrieval system which uses VLFeat SIFT feature extractor. </p>
 
 <precode type="matlab">
 dataset = dataset.VggRetrievalDataset('Category','oxbuild');
