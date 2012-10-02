@@ -4,15 +4,20 @@
 
 <h1 id="tut.rep;">Repeatability benchmark tutorial</h1> 
 
-<p>Repeatability benchmark, as it has been
-introduced in [1], defines two measurements. First measurement is detector
-repeatability which measures to what extent do detected regions overlap
-exactly the same scene by comparing detected frames in two images in the same
-scene. As repeatability is based only on the feature geometry, matching score
-includes also regions descriptors which helps to asses detected regions
-distinctiveness.</p>
+<p>The repeatability benchmark reimplements the protocol introduced by
+Mikolajczyk et al. [1]. It defines two feature extractor tests. The first test
+measures the feature extractor repeatability. The repeatability measures to
+what extent do detected regions overlap exactly the same scene region by
+comparing detected features in two images of the same scene. It is based only
+on the feature geometry.
 
-<p>In this tutorial it is shown how to compute both of these measurements together with visualisation of the results which helps to understand these scores.</p>
+
+The second test computes the matching score that includes also the local
+features descriptors. The second test helps to asses detected regions
+distinctiveness in planar scenes.</p>
+
+<p>In this tutorial, it is shown how to perform both tests together with
+visualisation of the computed scores.</p>
 
 <ul>
   <li><a href="%pathto:tut.rep.features;">Image features detection</a></li>
@@ -23,40 +28,37 @@ distinctiveness.</p>
 </ul>
 
 
-<p> The whole source code of this tutorial is available in 
-<code>retrievalDemo.m</code> function as this text shows only 
-selected parts of the code.
-</p>
+<p> The source code of this tutorial is available in
+<code>retrievalDemo.m</code> function, this text shows only selected parts of
+the code. </p>
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.rep.features">Image features detection</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<p>
-The benchmarks distribution contains a few built-in image feature
-detectors such as VLFeat SIFT, VLFeat MSER and a random features
-generator. Each detector is represented by a MATLAB object which
-unifies the feature detection. All these detectors are stored in a
-package <code>localFeatures</code>. For example to create a wrapper of
-VLFeat SIFT detector.
-</p>
+
+<p>VLBenchmarks contains a few built-in image feature extractors such as
+VLFeat SIFT, VLFeat MSER, VLFeat Covdet and a random features generator. Each
+feature extractor is represented by a MATLAB object which unifies the feature
+detection. All these feature extractors are implemented in a Matlab package
+<code>localFeatures</code>. For example, an instance of a class of VLFeat SIFT
+feature extractor can be obtained by:</p>
 
 <precode type="matlab">
 sift = localFeatures.VlFeatSift() ;
 </precode>
 
-<p>
-Another function of the detector object is to gather the detector
-parameters which are defined as constructor parameters. For example we
-can create SIFT detector with different peak threshold parameter.
-</p>
+<p> The feature extractor object manages the values of feature extractor
+parameters. Default values are set in the constructor of the object however
+any parameter can be changed. For example we can create VLF-SIFT feature
+extractor with different peak threshold parameter. </p>
 
 <precode type="matlab">
 thrSift = localFeatures.VlFeatSift('PeakThresh',11);
 </precode>
 
 <p>
-Now generate a test image.
+Let's generate a test image.
 </p>
 
 <precode type="matlab">
@@ -65,10 +67,8 @@ ellBlobsPath = fullfile('data','ellBlobs.png');
 imwrite(ellBlobs,ellBlobsPath);
 </precode>
 
-<p>
-Each frame detector implements method <code>frames =
-detObj.extractFeatures(imgPath)</code>.
-</p>
+<p> To extract features from an image, each feature extractor implements
+method <code>frames = detObj.extractFeatures(imgPath)</code>. </p>
 
 <precode type="matlab">
 siftFrames = sift.extractFeatures(ellBlobsPath);
@@ -76,7 +76,7 @@ bigScaleSiftFrames = bigScaleSift.extractFeatures(ellBlobsPath);
 </precode>
 
 <p>
-To see the detected features you can visualise their regions
+The detected features can be visualises with their regions
 using <code>vl_plotframe</code> function.
 </p>
 
@@ -97,85 +97,75 @@ legend([sfH bssfH],'SIFT','Big Scale SIFT');
 </div>
 
 <p>
-Because these wrappers cache the detected frames, when you
-run <code>extractFeatures(ellBlobsPath)</code>again, frames are loaded
-from cache. You can disable caching by calling detector
-method <code>disableCaching()</code>.
+The feature extractors cache the detected features in a cache, thus when you
+run <code>extractFeatures(ellBlobsPath)</code> again, features are loaded
+from the cache. You can disable caching by calling feature extractor
+method <code>obj.disableCaching()</code>.
 </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.rep.repeatability">Repeatability test</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>
-The detector repeatability is calculated for two sets of feature
-frames FRAMESA and FRAMESB detected in a reference image IMAGEA and a
-second image IMAGEB. The two images are assumed to be related by a
-known homography H mapping pixels in the domain of IMAGEA to pixels in
-the domain of IMAGEB (e.g. static camera, no parallax, or moving
-camera looking at a flat scene). A perfect co-variant detector would
-detect the same features in both images regardless of a change in
-viewpoint (for the features that are visible in both cases). A good
-detector will also be robust to noise and other
-distortion. Repeatability is the percentage of detected features that
-survive a viewpoint change or some other transformation or disturbance
-in going from IMAGEA to IMAGEB and is calculated only based on the
-frames overlap. For detail about this test see [1].
-</p>
+<p> The feature extractor repeatability is calculated for two sets of feature
+frames FRAMESA and FRAMESB detected in a reference image IMAGEA and a second
+image IMAGEB. The two images are assumed to be related by a known homography
+H, mapping pixels in the domain of IMAGEA to pixels in the domain of IMAGEB.
+The test assumes static camera, no parallax, or moving camera looking at a
+flat scene. </p>
 
-<p>
-For measuring detectors repeatability there is
-class <code>benchmarks.RepeatabilityBenchmarks().</code> For the
-repeatability test as it is defined in [1] the benchmark object needs
-the following configuration.
-</p>
+<p>A perfect co-variant feature extractor would detect the same features in
+both images regardless of a change in viewpoint (for the features that are
+visible in both cases). A good feature extractor will also be robust to noise
+and other distortion. The repeatability is the percentage of detected features
+that survive a viewpoint change or some other transformation or disturbance in
+going from IMAGEA to IMAGEB and is calculated only based on the frames
+overlap. For detail about this test see [1]. </p>
+
+<p> For measuring feature extractors repeatability there is a class
+<code>benchmarks.RepeatabilityBenchmarks()</code>. To measure the
+repeatability as it is defined in [1] the benchmark object needs the following
+configuration:</p>
 
 <precode type="matlab">
 repBenchmark = benchmarks.RepeatabilityBenchmark('Mode','Repeatability');
 </precode>
 
-<p> For testing a detector, it has a method
+<p>To test a feature extractor, benchmark object has a method
 <code>testFeatureExtractor(featExtractor, tf, imageAPath,imageBPath)</code>.
-The remaining parameters can be obtained from the VGG Affine dataset wrapper
-which contain sets of six images with known homographies. So lets use for
-example the graffiti dataset: </p>
+The remaining parameters can be obtained from the VGG Affine dataset class
+which contains sets of six images with known homographies. Let's take the
+graffiti scene:</p>
 
 <precode type="matlab">
 dataset = datasets.VggAffineDataset('Category','graf');
 </precode>
 
-<p>
-Now we can also define set of detectors which we want to test in order
-to get their comparison.
-</p>
+<p> Now we define set of feature extractors which we want to test.</p>
 
 <precode type="matlab">
 mser = localFeatures.VlFeatMser();
-detectors = {sift, thrSift, mser};
+featureExtractors = {sift, thrSift, mser};
 </precode>
 
-<p>
-And now we can simply loop over the detectors and dataset images.
-</p>
+<p> And finally loop over the feature extractors and selected images. </p>
 
 <precode type="matlab">
 imageAPath = dataset.getImagePath(1);
-for detIdx = 1:numel(detectors)
-  detector = detectors{detIdx};
+for detIdx = 1:numel(featureExtractors)
+  featExtractor = featureExtractors{detIdx};
   for imgIdx = 2:dataset.numImages
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [rep(detIdx,imgIdx) numCorr(detIdx,imgIdx)] = ...
-      repBenchmark.testFeatureExtractor(detector, tf, imageAPath,imageBPath);
+      repBenchmark.testFeatureExtractor(featExtractor, tf, imageAPath,imageBPath);
   end
 end
 </precode>
 
-<p>
-This loop can be easily executed in parallel
-using <code>parfor</code>.  Computed results are usually plotted in a
-graph showing together repeatability and number of correspondences.
-</p>
+<p> This loop can be easily executed in parallel using <code>parfor</code>.
+Computed results are usually plotted in a graph showing together repeatability
+and number of correspondences. </p>
 
 <precode type="matlab">
 detNames = {'SIFT','SIFT PT=10','MSER'};
@@ -194,7 +184,7 @@ axis([2 6 0 max(numCorr(:))]); set(gca,'XTick',2:6); grid on;
  <img src="%pathto:root;demo/repeatability.jpg"/>
  <div class="caption">
   <span class="content">
-   Detectors Repeatability, graffiti dataset.
+   Feature extractors Repeatability, graffiti dataset.
   </span>
  </div>
 </div>
@@ -210,13 +200,11 @@ axis([2 6 0 max(numCorr(:))]); set(gca,'XTick',2:6); grid on;
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.rep.correspondences">Displaying the correspondences</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<p>
-It is sometimes useful to see the feature frame correspondences
-itself. Let's see what correspondences has been found for the frames
-detected by SIFT detector in the third image. In order to be able to
-get that we need the cropped and reprojected feature frames and the
-correspondences itself.
-</p>
+
+<p> It is useful to see the feature frames correspondences. Let's see what
+correspondences have been found between the features detected by VLF-SIFT
+feature extractor in the first and the third image. We can get the cropped and
+reprojected features and the correspondences itself by: </p>
 
 <precode type="matlab">
 imgBIdx = 3;
@@ -226,11 +214,9 @@ tf = dataset.getTransformation(imgBIdx);
   repBenchmark.testFeatureExtractor(sift, tf, imageAPath,imageBPath);
 </precode>
 
-<p>
-Because the repeatability results are also stored in the cache, this
-data are directly loaded from cache and nothing is recalculated. Now
-this can be visualised.
-</p>
+<p> The repeatability results are also cached, thus the data are loaded from
+cache and nothing is recalculated for successive calls. To visualise the
+correspondences call: </p>
 
 <precode type="matlab">
 figure(2);
@@ -243,7 +229,8 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,siftReprojFrames,...
  <img src="%pathto:root;demo/correspondences.jpg"/>
  <div class="caption">
   <span class="content">
-   Frame correspondences between first and third image from the graffiti dataset using the SIFT detector.
+   Frame correspondences between first and third image from the graffiti 
+   dataset using the SIFT feature extractor.
   </span>
  </div>
 </div>
@@ -251,24 +238,23 @@ benchmarks.helpers.plotFrameMatches(siftCorresps,siftReprojFrames,...
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.rep.matching">Matching score</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<p>
-Matching score differs to repeatability that the one-to-one
-correspondences are calculated not only based on the frames geometry
-(overlaps) but also using their distance in descriptor
-domain. Therefore the detectors must be able to extract frames
-descriptors. This is not the case of MSER detector, so it has to be
-'packed' with a detector which supports descriptor
-calculation. Unfortunately none of the built-in descriptors is affine
-invariant so only similarity invariant SIFTs is used.
-</p>
+
+<p> The computation of the matching score differs from the repeatability
+score. The one-to-one correspondences are not only based on the feature frames
+geometry (overlaps) but also the distance in the descriptor space. Therefore
+the feature extractor must be able to extract feature descriptors. This is not
+the case of MSER feature extractor, so it has to be coupled with a feature
+extractor which supports descriptor calculation. Unfortunately none of the
+built-in descriptors is affine invariant so only similarity invariant SIFTs is
+used. </p>
 
 <precode type="matlab">
 mserWithSift = localFeatures.DescriptorAdapter(mser, sift);
-detectors = {sift, thrSift, mserWithSift};
+featureExtractors = {sift, thrSift, mserWithSift};
 </precode>
 
 <p>
-And now the matching benchmark object can be constrcuted.
+The matching benchmark object can be constructed.
 </p>
 
 <precode type="matlab">
@@ -276,20 +262,20 @@ matchingBenchmark = benchmarks.RepeatabilityBenchmark('Mode','MatchingScore');
 </precode>
 
 <p>
-And the rest remains the same as for repeatability.
+The rest is the same as for repeatability.
 </p>
 
 <precode type="matlab">
-matching = zeros(numel(detectors),dataset.numImages);
-numMatches = zeros(numel(detectors),dataset.numImages);
+matching = zeros(numel(featureExtractorss),dataset.numImages);
+numMatches = zeros(numel(featureExtractorss),dataset.numImages);
 
-for detIdx = 1:numel(detectors)
-  detector = detectors{detIdx};
+for detIdx = 1:numel(featureExtractorss)
+  featExtractor = featureExtractorss{detIdx};
   for imgIdx = 2:dataset.numImages
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [matching(detIdx,imgIdx) numMatches(detIdx,imgIdx)] = ...
-      matchingBenchmark.testFeatureExtractor(detector, tf, imageAPath,imageBPath);
+      matchingBenchmark.testFeatureExtractor(featExtractor, tf, imageAPath,imageBPath);
   end
 end
 
@@ -309,7 +295,7 @@ axis([2 6 0 max(numMatches(:))]); set(gca,'XTick',2:6); grid on;
  <img src="%pathto:root;demo/matchingScore.jpg"/>
  <div class="caption">
   <span class="content">
-   Detectors Matching Score, graffiti dataset.
+   Feature extractors Matching Score, graffiti dataset.
   </span>
  </div>
 </div>
@@ -329,7 +315,8 @@ As for repeatability we can also show the matched frames itself.
  <img src="%pathto:root;demo/matches.jpg"/>
  <div class="caption">
   <span class="content">
-   Frame matches between first and third image from the graffiti dataset using SIFT detector and descriptor.
+   Frame matches between first and third image from the graffiti dataset 
+   using SIFT feature extractor and descriptor.
   </span>
  </div>
 </div>
