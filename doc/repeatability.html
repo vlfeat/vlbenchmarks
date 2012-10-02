@@ -9,10 +9,10 @@ Mikolajczyk et al. [1]. It defines two feature extractor tests. The first test
 measures the feature extractor repeatability. The repeatability measures to
 what extent do detected regions overlap exactly the same scene region by
 comparing detected features in two images of the same scene. It is based only
-on the feature geometry.
+on the feature geometry.</p>
 
 
-The second test computes the matching score that includes also the local
+<p>The second test computes the matching score that includes also the local
 features descriptors. The second test helps to asses detected regions
 distinctiveness in planar scenes.</p>
 
@@ -96,12 +96,10 @@ legend([sfH bssfH],'SIFT','Big Scale SIFT');
  </div>
 </div>
 
-<p>
-The feature extractors cache the detected features in a cache, thus when you
-run <code>extractFeatures(ellBlobsPath)</code> again, features are loaded
-from the cache. You can disable caching by calling feature extractor
-method <code>obj.disableCaching()</code>.
-</p>
+<p> The feature extractors cache the detected features in a cache, thus when
+you run <code>extractFeatures(ellBlobsPath)</code> again, features are loaded
+from the cache. You can disable caching by calling feature extractor method
+<code>obj.disableCaching()</code>. </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="tut.rep.repeatability">Repeatability test</h2>
@@ -128,7 +126,8 @@ repeatability as it is defined in [1] the benchmark object needs the following
 configuration:</p>
 
 <precode type="matlab">
-repBenchmark = benchmarks.RepeatabilityBenchmark('Mode','Repeatability');
+import benchmarks.*;
+repBenchmark = RepeatabilityBenchmark('Mode','Repeatability');
 </precode>
 
 <p>To test a feature extractor, benchmark object has a method
@@ -158,7 +157,8 @@ for detIdx = 1:numel(featureExtractors)
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [rep(detIdx,imgIdx) numCorr(detIdx,imgIdx)] = ...
-      repBenchmark.testFeatureExtractor(featExtractor, tf, imageAPath,imageBPath);
+      repBenchmark.testFeatureExtractor(featExtractor, tf, ...
+        imageAPath,imageBPath);
   end
 end
 </precode>
@@ -169,14 +169,10 @@ and number of correspondences. </p>
 
 <precode type="matlab">
 detNames = {'SIFT','SIFT PT=10','MSER'};
-subplot(1,2,1);
 plot(rep'.*100,'LineWidth',2); legend(detNames); 
-xlabel('Image #'); ylabel('Repeatability [%]');
-set(gca,'XTick',2:6); grid on; 
-axis([2 6 0 100]); subplot(1,2,2); grid on; 
+...
 plot(numCorr','LineWidth',2); legend(detNames);
-xlabel('Image #'); ylabel('Number of Correspondences'); 
-axis([2 6 0 max(numCorr(:))]); set(gca,'XTick',2:6); grid on;
+...
 </precode>
 
 
@@ -219,7 +215,6 @@ cache and nothing is recalculated for successive calls. To visualise the
 correspondences call: </p>
 
 <precode type="matlab">
-figure(2);
 imshow(imread(imageBPath));
 benchmarks.helpers.plotFrameMatches(siftCorresps,siftReprojFrames,...
   'IsReferenceImage',false,'PlotMatchLine',false);
@@ -258,7 +253,7 @@ The matching benchmark object can be constructed.
 </p>
 
 <precode type="matlab">
-matchingBenchmark = benchmarks.RepeatabilityBenchmark('Mode','MatchingScore');
+matchingBenchmark = RepeatabilityBenchmark('Mode','MatchingScore');
 </precode>
 
 <p>
@@ -275,19 +270,17 @@ for detIdx = 1:numel(featureExtractorss)
     imageBPath = dataset.getImagePath(imgIdx);
     tf = dataset.getTransformation(imgIdx);
     [matching(detIdx,imgIdx) numMatches(detIdx,imgIdx)] = ...
-      matchingBenchmark.testFeatureExtractor(featExtractor, tf, imageAPath,imageBPath);
+      matchingBenchmark.testFeatureExtractor(featExtractor, ...
+        tf, imageAPath,imageBPath);
   end
 end
 
 detNames = {'SIFT','SIFT PT=10','MSER with SIFT'};
-subplot(1,2,1);
+
 plot(matching'.*100,'LineWidth',2); legend(detNames); 
-xlabel('Image #'); ylabel('Matching Score [%]');
-set(gca,'XTick',2:6); grid on; 
-axis([2 6 0 100]); subplot(1,2,2); grid on; 
+...
 plot(numMatches','LineWidth',2); legend(detNames);
-xlabel('Image #'); ylabel('Number of Matches'); 
-axis([2 6 0 max(numMatches(:))]); set(gca,'XTick',2:6); grid on;
+...
 </precode>
 
 
