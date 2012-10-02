@@ -26,10 +26,11 @@ classdef YaelInstaller < helpers.GenericInstaller
 
 % AUTORIGHTS
   properties (Constant)
-    InstallDir = fullfile('data','software','yael');
+    RootDir = fullfile('data','software','yael');
     GlnxA64Url = 'https://gforge.inria.fr/frs/download.php/30399/yael_matlab_linux64_v277.tar.gz';
-    MaciA64Url = 'https://gforge.inria.fr/frs/download.php/30399/yael_matlab_linux64_v277.tar.gz';
+    MaciA64Url = 'https://gforge.inria.fr/frs/download.php/30396/yael_matlab_mac64_v277.tar.gz';
     SrcUrl = 'https://gforge.inria.fr/frs/download.php/30394/yael_v277.tar.gz';
+    InstallDir = fullfile(helpers.YaelInstaller.RootDir,'yael_v277');
     MexDir = fullfile(helpers.YaelInstaller.InstallDir,'matlab');
 
     DistMetricParamMap = containers.Map(...
@@ -38,7 +39,6 @@ classdef YaelInstaller < helpers.GenericInstaller
 
     % Compilation
     ConfigCmd = './configure.sh';
-    MakeCmd = 'make';
     MexMakeCmd = 'make';
   end
 
@@ -58,13 +58,15 @@ classdef YaelInstaller < helpers.GenericInstaller
         case 'GLNXA64'
           urls = {YaelInstaller.GlnxA64Url};
           dstPaths = {YaelInstaller.MexDir};
+          urls = {YaelInstaller.SrcUrl};
+          dstPaths = {YaelInstaller.RootDir};
         case 'MACI64'
           urls = {YaelInstaller.MaciA64Url};
           dstPaths = {YaelInstaller.MexDir};
         otherwise
           warning('Yael Binary for your architecture not available.');
           urls = {YaelInstaller.SrcUrl};
-          dstPaths = {YaelInstaller.InstallDir};
+          dstPaths = {YaelInstaller.RootDir};
       end
     end
 
@@ -79,20 +81,14 @@ classdef YaelInstaller < helpers.GenericInstaller
         obj.InstallDir);
       prevDir = pwd;
       cd(fullfile(pwd,obj.InstallDir));
-      [status msg] = system(obj.ConfigCmd);
+      [status msg] = system(obj.ConfigCmd,'-echo');
       if status ~= 0 
         cd(prevDir);
         error('Yael "%s" failed:\n%s\n%s\n',obj.ConfigCmd,msg,errHelpCmd);
         return;
       end
-      [status msg] = system(obj.MakeCmd);
-      if status ~= 0 
-        cd(prevDir);
-        error('Yael "%s" failed:\n%s\n%s\n',obj.MakeCmd,msg,errHelpCmd);
-        return;
-      end
       cd(fullfile(pwd,obj.MexDir));
-      [status msg] = system(obj.MexMakeCmd);
+      [status msg] = system(obj.MexMakeCmd,'-echo');
       if status ~= 0 
         cd(prevDir);
         error('Yael "%s" failed:\n%s\n%s\n',obj.MexMakeCmd,msg,errHelpCmd);
