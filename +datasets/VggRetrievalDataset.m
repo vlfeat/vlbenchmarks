@@ -122,9 +122,11 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       obj.ImagesDir = fullfile(obj.RootInstallDir,obj.Opts.category,'');
       obj.GtDir = fullfile(obj.RootInstallDir,...
         [obj.Opts.category '_gt'],'');
-      % Use cached data only when datacache installed
-      helpersInstaller = helpers.Installer();
-      if obj.Opts.cacheDatabase && helpersInstaller.isInstalled()
+      % Load the object only in case when installed
+      if ~obj.isInstalled()
+        obj.warning('Not installed. Initialised empty dataset.');
+      end
+      if obj.Opts.cacheDatabase
         dataKey = [obj.DatasetName ';' struct2str(obj.Opts)];
         data = DataCache.getData(dataKey);
         if ~isempty(data)
