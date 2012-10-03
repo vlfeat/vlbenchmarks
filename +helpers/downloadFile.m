@@ -16,12 +16,12 @@ wgetCommand = 'wget %s -O %s'; % Command for downloading archives
 
 [address filename ext] = fileparts(url);
 vl_xmkdir(distDir);
-archivePath = fullfile(pwd,distDir,[filename ext]);
+archivePath = fullfile(distDir,[filename ext]);
 wgetC = sprintf(wgetCommand,url,archivePath);
 
-status = system(wgetC,'-echo');
+[status msg] = system(wgetC,'-echo');
 if status ~= 0 
-  warning('Error downloading, exit status %d',status);
+  warning('Error downloading: %s',msg);
   archivePath = '';
 end
 

@@ -50,12 +50,12 @@ end
 archivePath = helpers.downloadFile(url, distDir);
 
 if isempty(archivePath)
-  delete(distDir);
+  rmdir(distDir,'s');
   error('Error downloading file from %s.',url); 
 end
 
 % Unpack the file
-unpackC = sprintf(command,archivePath);
+unpackC = sprintf(command,fullfile(pwd,archivePath));
 
 curDir = pwd;
 cd(distDir)

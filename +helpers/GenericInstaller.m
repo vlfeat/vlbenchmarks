@@ -52,6 +52,8 @@ classdef GenericInstaller < handle
     %   obj.install() Installs unmet dependencies, downloads and
     %   unpack tarballs, run the compile script based on isCompiled()
     %   return value and compiles the mex files.
+    %
+    % See also: GenericInstaller.clean
       obj.installDependencies();
       obj.installTarballs();
       obj.compile();
@@ -64,13 +66,17 @@ classdef GenericInstaller < handle
     %   clean() Cleans all allocated resources. Deletes compiled mex
     %   files, cleans compiled files (calling cleanCompiled()) and
     %   deletes downloaded tarballs.
+    %
+    % See also: GenericInstaller.install
       if ~obj.isInstalled(), return; end;
+      obj.unload();
       srclist = obj.getMexSources();
       % Clean the compiled mex files
       for mexSrc = srclist
         [srcPath srcFilename] = fileparts(mexSrc{:});
         mexFile = fullfile(srcPath,[srcFilename '.' mexext]);
         if exist(mexFile,'file')
+          fprintf('Deleting mex: %s.\n',mexFile);
           delete(mexFile);
         end
       end
@@ -80,6 +86,7 @@ classdef GenericInstaller < handle
       [urls dstPaths] = obj.getTarballsList();
       for path = dstPaths
         if exist(path{:},'dir')
+          fprintf('Removing directory: %s.\n',path{:});
           rmdir(path{:},'s')
         end
       end
@@ -89,6 +96,17 @@ classdef GenericInstaller < handle
     % setup Setup the class environment.
     %   obj.setup() Implementation of this method should set up the
     %   environment needed by the class object (e.g. path etc.).
+    %
+    % See also: GenericInstaller.unload
+    end
+
+    function unload(obj)
+    % unload Unload the class environment.
+    %   obj.unload() Implementation of this method should unload the
+    %   environment needed by the class object (e.g. path etc.),
+    %   opposite to setup.
+    %
+    % See also: GenericInstaller.setup
     end
   end
 
@@ -296,6 +314,18 @@ classdef GenericInstaller < handle
       [address filename ext] = fileparts(url);
       unpackTagFile = fullfile(distDir,['.',filename,ext,...
         GenericInstaller.unpackedTagFileExt]);
+    end
+
+    function rmPaths(pattern)
+      % RMPATHS Remove directories from Matlab path
+      %   RMPATHS(PATTERN) Remove all directories which match pattern from
+      %   Matlab path.
+      paths = regexp(path(),':','split');
+      isMatchingPath = ~cellfun(@isempty,strfind(paths,pattern));
+      matchingPaths = paths(isMatchingPath);
+      if ~isempty(matchingPaths)
+        rmpath(matchingPaths{:});
+      end
     end
   end
 

@@ -48,6 +48,16 @@ classdef YaelInstaller < helpers.GenericInstaller
         obj.setup();
       end
     end
+
+    function setup(obj)
+      addpath(fullfile(pwd,obj.MexDir));
+    end
+
+    function unload(obj)
+      clear mex;
+      fprintf('Removing Yael from path.\n');
+      obj.rmPaths(obj.RootDir);
+    end
   end
 
   methods (Access=protected)
@@ -58,8 +68,6 @@ classdef YaelInstaller < helpers.GenericInstaller
         case 'GLNXA64'
           urls = {YaelInstaller.GlnxA64Url};
           dstPaths = {YaelInstaller.MexDir};
-          urls = {YaelInstaller.SrcUrl};
-          dstPaths = {YaelInstaller.RootDir};
         case 'MACI64'
           urls = {YaelInstaller.MaciA64Url};
           dstPaths = {YaelInstaller.MexDir};
@@ -87,7 +95,7 @@ classdef YaelInstaller < helpers.GenericInstaller
         error('Yael "%s" failed:\n%s\n%s\n',obj.ConfigCmd,msg,errHelpCmd);
         return;
       end
-      cd(fullfile(pwd,obj.MexDir));
+      cd(fullfile(prevDir,obj.MexDir));
       [status msg] = system(obj.MexMakeCmd,'-echo');
       if status ~= 0 
         cd(prevDir);
@@ -102,12 +110,6 @@ classdef YaelInstaller < helpers.GenericInstaller
       import helpers.*;
       nnBinFile = fullfile(obj.MexDir,['yael_nn.' mexext]);
       res = exist(nnBinFile,'file');
-    end
-  end
-  
-  methods 
-    function setup(obj)
-      addpath(fullfile(pwd,obj.MexDir));
     end
   end
 end

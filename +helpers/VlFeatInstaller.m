@@ -5,7 +5,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 %   is not available, fails with error.
 %
 %   To set what version should be installed edit the constant properties
-%   VlFeatInstaller.installVersion.
+%   VlFeatInstaller.Version.
 %
 % See also: helpers.GenericInstaller
 
@@ -13,21 +13,21 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 
 % AUTORIGHTS
   properties (Constant)
-    installVersion = '0.9.15';
-    installDir = fullfile('data','software','vlfeat');
-    name = ['vlfeat-' helpers.VlFeatInstaller.installVersion];
-    dir = fullfile(pwd,helpers.VlFeatInstaller.installDir,...
-      helpers.VlFeatInstaller.name,'');
-    url = sprintf('http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz', ...
-      helpers.VlFeatInstaller.installVersion);
-    mexDir = fullfile(helpers.VlFeatInstaller.dir,'toolbox','mex',mexext);
-    makeCmd = 'make';
+    Version = '0.9.15';
+    RootDir = fullfile('data','software','vlfeat');
+    Name = ['vlfeat-' helpers.VlFeatInstaller.Version];
+    InstallDir = fullfile(helpers.VlFeatInstaller.RootDir,...
+      helpers.VlFeatInstaller.Name,'');
+    Url = sprintf('http://www.vlfeat.org/download/vlfeat-%s-bin.tar.gz', ...
+      helpers.VlFeatInstaller.Version);
+    MexDir = fullfile(helpers.VlFeatInstaller.InstallDir,'toolbox','mex',mexext);
+    MakeCmd = 'make';
   end
 
   methods
     function obj = VlFeatInstaller(minVersion)
       if exist('minVersion','var')
-        numVersion =  str2double(char(regexp(obj.installVersion,'\.','split'))');
+        numVersion =  str2double(char(regexp(obj.Version,'\.','split'))');
         numMinVersion = str2double(char(regexp(minVersion,'\.','split'))');
         if numVersion < numMinVersion
           error('VlFeat version >= %s not available. Change the version in file %s.',...
@@ -42,7 +42,8 @@ classdef VlFeatInstaller < helpers.GenericInstaller
     function setup(obj)
       % setup Set up the Matlab path to contain VLFeat paths
       if(~exist('vl_demo','file')),
-        vlFeatDir = helpers.VlFeatInstaller.dir;
+        fprintf('Adding VLFeat to path.\n');
+        vlFeatDir = helpers.VlFeatInstaller.InstallDir;
         if(exist(vlFeatDir,'dir'))
           run(fullfile(vlFeatDir,'toolbox','vl_setup.m'));
         else
@@ -50,13 +51,19 @@ classdef VlFeatInstaller < helpers.GenericInstaller
         end
       end
     end
+
+    function unload(obj)
+      clear mex;
+      fprintf('Removing VLFeat from path.\n');
+      obj.rmPaths(obj.RootDir);
+    end
   end
 
   methods (Access=protected)
     function [urls dstPaths] = getTarballsList(obj)
       import helpers.*;
-      urls = {VlFeatInstaller.url};
-      dstPaths = {VlFeatInstaller.installDir};
+      urls = {VlFeatInstaller.Url};
+      dstPaths = {VlFeatInstaller.RootDir};
     end
 
     function compile(obj)
@@ -67,9 +74,8 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       fprintf('Compiling VLFeat\n');
 
       prevDir = pwd;
-      cd(VlFeatInstaller.dir);
-
-      status = system(VlFeatInstaller.makeCmd);
+      cd(VlFeatInstaller.InstallDir);
+      status = system(VlFeatInstaller.MakeCmd);
       cd(prevDir);
 
       if status ~= 0
@@ -80,7 +86,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 
     function res = isCompiled(obj)
       import helpers.*;
-      res = exist(VlFeatInstaller.mexDir,'dir');
+      res = exist(VlFeatInstaller.MexDir,'dir');
     end
 
     function deps = getDependencies(obj)
@@ -98,8 +104,8 @@ classdef VlFeatInstaller < helpers.GenericInstaller
         case {'GLNX86','GLNXA64'}
         mexflags = sprintf(...
           'LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lvl -I%s',...
-          VlFeatInstaller.mexDir, VlFeatInstaller.mexDir,...
-          VlFeatInstaller.dir);
+          VlFeatInstaller.MexDir, VlFeatInstaller.MexDir,...
+          VlFeatInstaller.InstallDir);
         otherwise
           warning('Architecture not supported yet.');
       end
@@ -120,7 +126,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
         otherwise
           error('Unknown architecture');
       end
-      dllPath = fullfile(VlFeatInstaller.mexDir,vlDllFileName);
+      dllPath = fullfile(VlFeatInstaller.MexDir,vlDllFileName);
     end
 
     function signature = getBinSignature(vlFunctionName)
@@ -130,7 +136,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
       %   library.
       import helpers.*;
       dllPath = VlFeatInstaller.getDynamicLibraryPath();
-      mexPath = fullfile(VlFeatInstaller.mexDir,...
+      mexPath = fullfile(VlFeatInstaller.MexDir,...
         [vlFunctionName '.' mexext]);
       if ~exist(mexPath,'file')
         error('Unknown function, mex %s does not exist.',mexPath);
