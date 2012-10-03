@@ -13,8 +13,12 @@
   </ul>
   </li>
   <li><a href="%pathto:doc.parallel;">Parallelisation</a></li>
-  <li><a href="%pathto:doc.caching;">Caching</a></li>
-  <li><a href="%pathto:doc.logging;">Logging</a></li>
+  <li><a href="%pathto:doc.helpers;">Helpers</a>
+  <ul>
+    <li><a href="%pathto:doc.caching;">DataCache</a></li>
+    <li><a href="%pathto:doc.logging;">Logger</a></li>
+  </ul>
+  </li>
 </ul>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -22,14 +26,13 @@
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 <p>
-<b>doc</b> is is organised into four parts, corresponding to
+<b>VLBenchmarks</b> is organised into four parts, corresponding to
 an equal number of MATLAB packages (namespaces):</p>
-
 <ul>
 
 <li><a href="%pathto:doc.extractors;">Image feature extractors</a>
 (<strong><code>localFeatures</code></strong>). This package contains
-wrapper for features detectors and descriptors. Add your own wrapper
+wrappers for features detectors and descriptors. Add your own wrapper
 here to evaluate your features.</li>
 
 <li><a href="%pathto:doc.datasets;">Datasets</a>
@@ -46,21 +49,22 @@ benchmarking code.</li>
 (<strong><code>helpers</code></strong>). </li>
 </ul>
 
-<p>All optional parameters of class constructors of functions are specified
-  in a following manner:</p>
+<p>Options of functions and of class objects are passed as optional 
+  function/constructor arguments in the following format:</p>
 <precode type="matlab">
   function(obligatoryParams,'OptionName',OptionValue,...)
 </precode>
-<p>Available options are listed in the help string of the function or class. 
-For classes, options can be set only in their constructor.</p>
+<p>Available options are listed in help string of functions or classes. 
+It is not possible to change options of already constructed object.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h3 id="doc.extractors">Feature objects</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>All classes located in the package <code>localFeatures</code> are subclasses 
-of <code>lGenericLocalFeaturesExtractor</code>. Included image feature
-detectors are summarised in the following table:</p>
+<p>All classes from package <code>localFeatures</code> are subclasses 
+of <code>GenericLocalFeaturesExtractor</code>. In VLBenchmarks those
+feature extractors wrappers are already implemented:
+</p>
 
 <table border="1" width="600px">
     <tr>
@@ -153,15 +157,16 @@ detectors are summarised in the following table:</p>
 
 <h4 id="doc.benchmarkowndet">Benchmarking your own feature extractor</h4>
 
-<p> This framework is easily extensible with your own image feature extraction
-algorithm as only two methods has to be implemented. To start you need to
-inherit from the <code>GenericLocalFeaturesExtractor</code> and
-implement methods <code>extractFeatures(imgPath)</code> and
-<code>extractDescriptors(imgPath, frames)</code>. </p>
+<p> The VLBenchmarks framework is easily extensible with your own image feature extraction
+algorithm. Your feature extractor wrapper has to be a subclass
+of <code>GenericLocalFeaturesExtractor</code> class and has to implement
+method <code>extractFeatures(imgPath)</code> and/or
+<code>extractDescriptors(imgPath, frames)</code> depending on your
+algorithm abilities. </p>
 
-<p>You can also use the existing infrastructure of the benchmarking suite.
+<p>You can use existing infrastructure of the benchmark.
 For example, by inheriting from <code>GenericLocalFeatureExtractor</code>
-you also inherit from the <code>helpers.Logger</code> class which implements
+you also inherit <code>helpers.Logger</code> class which implements
 simple logger. See <a href="%pathto:doc.logging;">Logging</a> for details.</p>
 
 <p>Another helper class used with the most of the built in detectors is 
@@ -169,9 +174,9 @@ simple logger. See <a href="%pathto:doc.logging;">Logging</a> for details.</p>
 and supports to define class dependencies on web-located archives, mex files
 and other classes.</p>
 
-<p>In the following example you can see more extensive feature extractor which
-supports both feature frame detection and descriptor calculation. Also this
-class, when constructed, downloads and compile the source code of the
+<p>This example shows a feature extractor which
+supports both feature frame detection and descriptor calculation. This
+class supports downloading and compiling mex source code of the
 detector.</p>
 
 <precode type="matlab">
@@ -279,53 +284,46 @@ end
 </precode>
 
 
-<p>
-Method <code>extractFeatures(imgPath)</code> can be called with one
-output argument when only feature frames need to be detected. When
-called with two output arguments, it extracts feature frames
-descriptors as well. This may seem to be dual to
-the <code>extractDescriptors()</code> method however some detectors
-does not support computation of descriptors of given frames.
-</p>
+<p> Method <code>extractFeatures(imgPath)</code> can be called with one output
+argument when only feature frames need to be detected. When called with two
+output arguments, it extracts both feature frames and descriptors. This may
+seem to be dual to the <code>extractDescriptors()</code> method however some
+detectors does not support computation of descriptors of given frames. </p>
 
-<p>
-If you want to take advantage of caching, you can use <code>loadFeatures()</code>
-or <code>obj.storeFeatures()</code> methods which implements access to the
-cache. However with that you will need to implement
-method <code>obj.getSignature()</code> which generates unique string
-signature of the detector properties. Caching can be enabled/disable with
-methods <code>obj.enableCaching()</code>, <code>obj.disableCaching()</code>
-</p>
+<p> To cache your detected features, you can use <code>loadFeatures()</code>
+or <code>obj.storeFeatures()</code> methods. However these methods need to
+implement method <code>obj.getSignature()</code> which generates unique string
+signature of the detector parameters. It is also useful to include signature
+of the detector binary file (<code>helpers.fileSignature</code>). Caching can
+be enabled/disables with methods <code>obj.enableCaching()</code>,
+<code>obj.disableCaching()</code> </p>
  
-<p>
-To see details about the logging, class options and installation
-framework, see
-the <code>localFeatures.ExampleLocalFeatureExtractor</code> class
-which implements simple feature detector together with simple descriptor.
-</p>
+<p> To see details about logging, class options and installation framework,
+see the <code>localFeatures.ExampleLocalFeatureExtractor</code> class. </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h3 id="doc.datasets">Datasets</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>All datasets are subclasses of abstract <code>GenericDataset</code> which defines
-method <code type="matlab">getImagePath(imageNumber)</code>, method for accessing
-images. Number of images in the dataset can be obtained through object property
-<code type="matlab">obj.NumImages</code>.</p>
+<p>All datasets are subclasses of abstract <code>GenericDataset</code> which
+defines method <code type="matlab">getImagePath(imageNumber)</code> to access
+dataset images. Number of images in the dataset can be obtained from
+object property <code type="matlab">obj.NumImages</code>.</p>
 
-<p>Another abstract class is <code>GenericTransfDataset</code> which adds
-another abstract method <code type="matlab">getTransformation(imageNumber)</code>
-which returns homography between dataset images and a reference image (first image).</p>
+<p>Repeatability benchmark needs datasets which inherits from class
+<code>GenericTransfDataset</code>. This benchmark needs method <code
+type="matlab">getTransformation(imageNumber)</code> which returns homography
+between a dataset image and a reference image (first image).</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h4 id="doc.datasets">VggAffineDataset</h4>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>Dataset which is a direct subclass of <code>GenericTransfDataset</code> is
-<code>VggAffineDataset</code>. This code handles the datasets presented in 
-<a href="#doc.ref2">[2]</a> and is used mainly for the repeatability 
-benchmarks. Datasets are available at 
-<a href="http://www.robots.ox.ac.uk/~vgg/research/affine/">VGG website</a>.</p>
+<p>Wrapper of the datasets from <a href="#doc.ref2">[2]</a> is implemented in
+class <code>VggAffineDataset</code> and is a subclass of
+<code>GenericTransfDataset</code>. Datasets data are available and downloaded
+from  <a href="http://www.robots.ox.ac.uk/~vgg/research/affine/">VGG
+website</a>.</p>
 
 <p>Available categories (accessible through option <code>'Category'</code>) are:</p>
 
@@ -379,7 +377,7 @@ benchmarks. Datasets are available at
 <p>For the retrieval benchmark <code>VggRetrievalDataset</code> wraps around 
 datasets introduced in <a href="#doc.ref4">[4]</a>, <a href="#doc.ref5">[5]</a>
 These datasets provide both a set of images and a set of queries. Each query
-consist from the query image and a query bounding box inside it and
+is specified by the query image, a bounding box and
 three subset of images:</p>
 
 <ul>
@@ -390,16 +388,16 @@ three subset of images:</p>
   <li><strong>Bad</strong> Object not present.</li>
 </ul>
 
-<p>Each query is available through method <code>getQuery(queryNum)</code> which 
-returns query structure with the following format:</p>
+<p>A query is accessible through method <code>getQuery(queryNum)</code> which 
+returns a structure with the following format:</p>
 
 <precode type='matlab'>
 >> dst = datasets.VggRetrievalDataset();
 (INFO)  VggRetrievalDataset:  Loading dataset VggRetrievalDataset.
 (DEBUG) VggRetrievalDataset:  Size of the images subset: 945
->> dst.getQuery(1)
+>> query = dst.getQuery(1)
 
-ans = 
+query = 
 
          name: 'all_souls_1'        % Query name
     imageName: 'all_souls_000013'   % Name of the query image
@@ -410,7 +408,18 @@ ans =
          junk: [1x33 double]
 </precode>
 
-<p>Number of images in the dataset can be obtained through object property
+<p>The image subsets are numeric arrays with image IDs. To obtain a path of
+  a certain image from these subsets, you can simply call: </p>
+
+<precode type="matlab">
+>> dst.getImagePath(query.junk(1))
+
+ans =
+
+data/datasets/vggRetrievalDataset/oxbuild/all_souls_000220.jpg
+</precode>
+
+<p>Number of all images in the dataset is stored in property
 <code type="matlab">obj.NumQueries</code>.</p>
 
 <p>Currently, two dataset categories are available:</p>
@@ -439,34 +448,35 @@ ans =
     </tr>
 </table>
 
-<p>As the dataset contains thousands of images, it is possible to use only
-a subset of images by specifying sizes of the dataset subsets with the following 
-options:</p>
+<p>These datasets usually contain thousands of images. It is
+possible to work only with its subset specified by these constructor
+parameters:</p>
 
 <precode>
-    GoodImagesNum :: inf
-      Number of 'Good' images preserved in the databse. When inf, all
+    GoodImagesNum
+      Number of 'Good' images preserved in the database. When inf, all
       images preserved.
  
-    OkImagesNum :: inf
-      Number of 'ok' images preserved in the databse. When inf, all
+    OkImagesNum
+      Number of 'ok' images preserved in the database. When inf, all
       images preserved.
  
-    JunkImagesNum :: inf
-      Number of 'junk' images preserved in the databse. When inf, all
+    JunkImagesNum
+      Number of 'junk' images preserved in the database. When inf, all
       images preserved.
  
-    BadImagesNum :: 100
-      Number of 'junk' images preserved in the databse. When inf, all
+    BadImagesNum
+      Number of 'junk' images preserved in the database. When inf, all
       images preserved.
  
-    SamplingSeed :: 1
+    SamplingSeed
       Seed of the random number generator used for sampling the image
       dataset.
 </precode>
 
-<p>Subsets are sampled used uniform random sampling and changing the seed 
-of random number generator more sampling of the same size can be generated.
+<p>Subsets are sampled used uniform random sampling. You can change the
+particular sampling by changing the seed of random number generator with 
+parameter <code>SamplingSeed</code>.
 </p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -475,98 +485,105 @@ of random number generator more sampling of the same size can be generated.
 
 <p>All benchmark classes are subclasses of abstract class 
 <code>GenericBenchmark</code>. 
-Currently in the project, three benchmarks are available.</p>
+Currently three benchmarks are implemented.</p>
 
 <p><code>RepeatabilityBenchmark</code> is based on tests introduced in 
 <a href="#doc.ref2">[2]</a>. For details about this test see the 
-help string of the <code>RetrievalBenchmark</code> class or 
+help string of the <code>RetrievalBenchmark</code> class or see 
 <a href="%pathto:tut.repeatability;">repeatability tutorial</a>.
-Because this test is mostly reimplemented original test, wrapper of the
-original benchmark <code>IjcvOriginalBenchmark</code> is also available.
+Because this test is mostly reimplementing the original test, wrapper of the
+original benchmark <code>IjcvOriginalBenchmark</code> is also available. This
+class directly calls the <code>repeatability.m</code> script.
 </p>
 
-<p><code>RetrievalBenchmark</code> class implements simple retrieval 
-benchmark of image features detectors. For details see help string
-of the class or 
-<a href="%pathto:tut.retrieval;">retrieval tutorial</a>.
-</p>
+<p><code>RetrievalBenchmark</code> class implements simple retrieval benchmark
+of image features detectors. For details see help string of the class or see
+<a href="%pathto:tut.retrieval;">image retrieval benchmark tutorial</a>. </p>
 
-<p>In the current implementation, retrieval benchmark depends on the
-<a href="https://gforge.inria.fr/projects/yael">Yael</a> library and 
-unfortunately this library is not available for Microsoft Windows 
-platforms.</p>
+<p>Currently the image retrieval benchmark depends on the <a
+href="https://gforge.inria.fr/projects/yael">Yael</a> library which is not
+available for Microsoft Windows platforms.</p>
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="doc.parallel">Parallelisation</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>The parallelisation approach differs for the repeatability and retrieval 
-benchmark but both of them is possible to run in parallel using the 
-Parallel Computing Toolbox. For details, see its 
+<p>The way how to parallelise is different for the repeatability and retrieval 
+benchmark but both approaches use Matlab Parallel Computing Toolbox. 
+For details about this toolbox, see its 
 <a href="http://www.mathworks.com/help/distcomp/index.html">documentation</a>.
 </p>
 
-<p> In the case of repeatability benchmark, parallelisation is 
-defined by user and can be run either over various detectors or over
-images of the dataset by simply replacing <code>for</code> with
-<code>parfor</code>, e.g.:</p>
+<p> Parallelisation of the repeatability benchmark can be done
+by interchanging <code>for</code> with <code>parfor</code> in any level, 
+e.g.:</p>
 
 <precode type="matlab">
+% Prevent cache to clear the last recently used items
+helpers.DataCache.disableAutoclear();
 for di = 1:numDetectors
   % Extract features from the first image to avoid race condition
-  % as several processes may then try to write the same file.
-  % Features does not have to be stored in any variable as they
+  % as several processes may try to write the same file.
+  % Features does not have to be stored in any variable as they are
   % cached.
   detectors{di}.extractFeatures(dataset.getImagePath(1));
-  % Prevent cache to clear the last recently used items
-  helpers.DataCache.disableAutoclear();
   parfor imageIdx = 2:numImages
     % Run the repeatability benchmark
   end
-  helpers.DataCache.enableAutoclear();
 end
+helpers.DataCache.enableAutoclear();
 </precode>
 
 <p>This is possible thanks to the fact that the cache system depends only on the 
-file system context and does not share any variables and generally, if the 
-loops are properly designed, each process works with different data.
-However cache autoclear has to be disabled as it can yield situations when 
-two processes are deleting the same files or deleting files which are being
-read by a different process.
+file system context and does not share any variables. However it does not
+implement any synchronisation mechanisms.
+If the loops are properly designed, each process works with different data.
+However cache autoclear has to be disabled as it can produce situations when 
+two processes are trying to delete the same files.
 </p>
 
-<p>In the case of retrieval benchmark, the parallelisation is more complicated
-task so the class <code>RetrievalBenchmark</code> already has several
-parfor loops. Both features extraction and KNN search are run in parallel.</p>
+<p>The image retrieval benchmark is already parallelised and the class
+<code>RetrievalBenchmark</code> uses several parfor loops for both features
+extraction and KNN search.</p>
 
 <p>In the case of KNN search you can advantage both from symmetric processing 
 and distributed computing as the Yael KNN uses OpenMP to run its algorithms
-in several threads.</p>
+in multiple threads.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h2 id="doc.caching">Caching</h2>
+<h2 id="doc.helpers">Helpers</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<p>This project extensively caches its results in key-value pairs. String
-key is usually created based on the properties of input data and processing
-algorithm. Data are stored as <code>*.mat</code> files in directory
-<code>./data/cache</code> where the mat file filename is created as MD5 sum
-of the string key.</p>
 
-<p>Input data are usually distinguished by a file signature which is made from
-the file name and last modification date of the file. This is also used 
-for algorithm binaries. Then the signature usually contain parameters
-of the algorithm as their change usually yield different results.</p>
+<p> Package helpers contains several classes and functions which are used in
+the rest of the project. <code>Logger</code> and <code>DataCache</code>
+classes are used almost in all classes therefore are described more in the
+following text. </p>
 
-<h3 id="doc.caching.methods">DataCache methods</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<h3 id="doc.caching">Caching</h3>
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>Caching is implemented in class <code>helpers.DataCache</code>. Because
-it is class only with static methods (in order to make it usable with parfor
-loops). This class implements the following methods:</p>
+<p>This project extensively caches its results using key-value caching system.
+The key string is usually created based on the properties of input data and
+processing algorithm. Data itself can be any Matlab data object and are stored
+as <code>*.mat</code> files in directory <code>./data/cache</code>. The
+target filename is created as MD5 sum of the key.</p>
+
+<p>Binary data are usually distinguished by a signature of the source file.
+File signature contains the file name and last modification date of the file.
+This is also used for algorithm binaries. Among that, the signature usually
+contain algorithm parameters as their values affect the results.</p>
+
+<h4 id="doc.caching.methods">DataCache methods</h4>
+
+<p>Caching is implemented in class <code>helpers.DataCache</code> and has only
+static methods, in order to be able to use it in parallel where no memory is
+shared among processes. This class implements the following methods:</p>
 
 <ul>
-<li><code>data = DataCache.getData(key)</code> Get data from the cache 
-  indexed by string key. If the data has not been found, returns [].</li>
+<li><code>data = DataCache.getData(key)</code> Get data identified by a 
+  string key. If the data has not been found, return [].</li>
                         
 <li><code>storeData(data,key)</code> Store data identified by key.</li>
 <li><code>res = hasData(key)</code> Check whether data are cached.</li>
@@ -575,7 +592,7 @@ loops). This class implements the following methods:</p>
 <li><code>removeData(key)</code> Remove particular data from the cache.</li>
 
 <li><code>clearCache()</code> Delete the last recently used data to limit 
-  the overall cached data size to <code>DataCache.maxDataSize</code> limit.
+  the overall size of the cached data to <code>DataCache.maxDataSize</code> limit.
 </li>
 
 <li><code>deleteAllCachedData()</code> Delete all cached data.</li>
@@ -585,29 +602,30 @@ loops). This class implements the following methods:</p>
 </li>
 
 <li><code>enableAutoClear()</code>Enable autoClear after disableAutoClear. 
-  Cannot be called in parallel function as it deletes a lock file.</li>
+  Cannot be called in parallel part of code as it deletes a lock file.</li>
 </ul>
 
-<h3 id="doc.caching.properties">DataCache properties</h3>
+<h4 id="doc.caching.properties">DataCache properties</h4>
 
-<p>The caching properties can be changed only in <code>DataCache.m</code> 
-source code by changing the class constant properties which are:</p>
+<p>The caching properties can be changed only in the
+<code>helpers/DataCache.m</code>  source code by changing the class constant
+properties:</p>
 
 <ul>
-<li><code>maxDataSize</code> Maximal storage space occupied by the 
+<li><code>maxDataSize</code> Maximal storage space occupied by 
   cached data in Bytes.</li>
 <li><code>dataPath</code> Directory where to store cached data</li>
 <li><code>dataFileVersion</code> Version of the .mat file used for data 
-  storage</li>
+  storage. See 'help save' for details.</li>
 <li><code>autoClear</code> Check whether storage size has not exceeded 
-  the allowed size after each storeData call when true. If so, the oldest 
-  data are removed</li>
+  the allowed size after each storeData method call. If so, the last recently
+  used data are removed</li>
 <li><code>disable</code> Globally disable caching.</li>
 </ul>
 
 <p>Please note that the standard Matlab behaviour is to set these values only
-when the class is used for the first time. Therefore to apply the options
-you must call:</p>
+once when the class file is loaded for the first time. Therefore to apply the
+options you must call:</p>
 
 <precode type="matlab">
 >> clear all;
@@ -616,13 +634,14 @@ you must call:</p>
 
 <h4 id="doc.caching.autoclear">Auto clear functionality</h4>
 
-<p>Caching system also implements a way how to limit the overall size of the
-cached data, further denoted as an <i>autoclear</i> function. This basically
-checks the size of the cached data and deletes the last recently used
+<p>Caching system implements a way how to limit the overall size of the
+cached data, further denoted as an <i>autoclear</i> function. It
+checks the size of the files in the cache directory and removes the last recently used
 items (based on the file modification date) to limit the storage usage.
-Autoclear can be disabled globally by editing changing the class property
-<code>helpers.DataCache.autoClear</code> or temporarily creating a lock
-file by calling method <code>helpers.DataCache.disableAutoclear()</code>.
+To globally disable autoclear set the class property
+<code>helpers.DataCache.autoClear</code> to false. You can also disable it 
+temporarily by calling method <code>helpers.DataCache.disableAutoclear()</code> 
+which creates a lock file.
 It is recommended to call this method before running parallel code to prevent
 two processes to delete the same files.</p>
 
@@ -634,29 +653,31 @@ classes implements methods <code>disableCaching()</code> and
 <code>enableCaching()</code> to control the caching behaviour of a single
 class.</p>
 
-<p>Cache does not support invalidation of data of a certain class. However
-if you want to, for example invalidate cached data of a certain detector
-you can use a simple trick to change the detector binary modification date:</p>
+<p>Cache does not support data invalidation. However to invalidate cached 
+data of a certain detector you can use a simple trick to change the detector 
+binary modification date:</p>
 
 <precode type="matlab">
 >> helpers.touch('./data/software/det_binary');
 </precode>
 
-<h3 id="doc.caching.limits">DataCache limits</h3>
-<p>As the cache depends heavily on a file system it is basically limited by a 
-number of files in a single directory. Having more files in a directory
-than is the OS limit can lead to slower file operations in this directory.
-Also using the cache with distributed computing may burden your network 
-file system.</p>
+<h4 id="doc.caching.limits">DataCache limits</h4> 
+
+<p>As the cache depends heavily on a file system it is basically limited by a
+number of files in a single directory which depends on your operating system.
+Big directory structures can lead to slow file operations and therefore the
+cache operations can take longer. Thus it is recommended to clear the cache
+once a while (specially when using network file system).</p>
+
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<h2 id="doc.logging">Logging</h2>
+<h3 id="doc.logging">Logger</h3>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-<p>Several classes in the framework uses the logging feature implemented
-in <code>helper.Logger</code> class. This class supports to display
-the events to std output or write them to a log file. It supports the 
-following events, inspired by the apache Log4j framework:</p>
+<p>Several classes in the framework uses logging implemented
+in class <code>helper.Logger</code> class. This class supports both sending
+the events to std output or writing them to a log file. 
+Following events, inspired by the apache Log4j framework, are supported:</p>
 
 <table border="1" width="500px">
     <tr>
@@ -693,9 +714,9 @@ following events, inspired by the apache Log4j framework:</p>
     </tr>
 </table>
 
-<p>Verbose level which events should be logged can be set both globally editing
-the file <code>helpers.Logger.m</code> and changing the default properties
-values or locally for each object which inherits the <code>Logger</code> 
+<p>The verbose level can be set both globally editing
+the constant properties of class <code>helpers.Logger</code> 
+or locally for each object which inherits the <code>Logger</code> 
 class by providing the <code>'OptionName',OptionValue</code> parameters
 to the class constructor call. Supported options are:</p>
 
@@ -716,52 +737,7 @@ to the class constructor call. Supported options are:</p>
 <code type="matlab">helpers.Logger.logToFile</code> according to your 
 aesthetic preferences.</p>
 
-<h2 id="doc.logging.using">Logging to a file during distributed computation</h2>
-
-<p>When your computation are being computed with several processes, possibly 
-on several computers having a single logging file may lead to inconsistent
-data. That is why we would like to create separate files for each Matlab
-process.</p>
-
-<p>In this case we cane use simple fact that Matlab creates default values for
-object properties only once when the class is constructed for the first time.
-And as in classic matlabpool each lab has got its own matlab process,
-the log file name in the <code>helpers.Logger</code> can be set for 
-example to:</p>
-
-<precode type="matlab">
-LogFile = fullfile('data',['log-',helpers.hostname(),...
-  randsample(char(97:122),5)]);
-</precode>
-
-<p>And we can simply test it:</p>
-
-<precode type="matlab">
->> matlabpool 5;
->> import helpers.Logger;
->> parfor i=1:3
-  for j=1:3
-    obj = Logger();
-    fprintf('Proc. #%d Obj. #%d: %s\n',i,j,obj.LogFile);
-  end;
-end;
-
-Proc. #1 Obj. #1: data/log-comp02xcdqv
-Proc. #1 Obj. #2: data/log-comp02xcdqv
-Proc. #1 Obj. #3: data/log-comp02xcdqv
-Proc. #2 Obj. #1: data/log-comp02lwmxr
-Proc. #3 Obj. #1: data/log-comp02scirh
-Proc. #3 Obj. #2: data/log-comp02scirh
-Proc. #2 Obj. #2: data/log-comp02lwmxr
-Proc. #2 Obj. #3: data/log-comp02lwmxr
-Proc. #3 Obj. #3: data/log-comp02scirh
-</precode>
-
-<p>You can see that each process generated the random string only once.
-If the parfor wold be distributed on more computers, the 
-<code>hostname()</code> value would change as well.</p>
-
-<h2 id="doc.logging.using">Using Logger in your own classes</h2>
+<h4 id="doc.logging.using">Using Logger in your own classes</h4>
 
 <p>You can also use logger on your class as well simply by specifying the 
 <code>helpers.Logger</code> as a superclass. Here is a simple template how
@@ -785,6 +761,52 @@ to do it and how to properly configure the logger:</p>
 >> MyClass();
 (INFO)  MyClassName:  Constructed.
 </precode>
+
+<h4 id="doc.logging.using">Logging to a file and distributed computing</h4>
+
+<p>When your computation are being computed with several processes, possibly 
+on several computers, having a single logging file may lead to inconsistent
+data. That is why we would like to create separate files for each Matlab
+process. This is generally a difficult task as the <code>parfor</code>
+environment does not include any information about the process.</p>
+
+<p>But simple trick can be used. Matlab creates default values for
+object properties only once when the file is loaded for the first time.
+And in classic matlabpool each lab has got its own MATLAB process,
+therefore a log file name in the <code>helpers.Logger</code> can be set for 
+example to:</p>
+
+<precode type="matlab">
+LogFile = fullfile('data',['log-',helpers.hostname(),...
+  randsample(char(97:122),5)]);
+</precode>
+
+<p>To test we can call the following code:</p>
+
+<precode type="matlab">
+>> matlabpool 5;
+>> import helpers.Logger;
+>> parfor i=1:3
+  for j=1:3
+    obj = Logger();
+    fprintf('Proc. #%d Obj. #%d: %s\n',i,j,obj.LogFile);
+  end;
+end;
+
+Proc. #1 Obj. #1: data/log-comp02xcdqv
+Proc. #1 Obj. #2: data/log-comp02xcdqv
+Proc. #1 Obj. #3: data/log-comp02xcdqv
+Proc. #2 Obj. #1: data/log-comp02lwmxr
+Proc. #3 Obj. #1: data/log-comp02scirh
+Proc. #3 Obj. #2: data/log-comp02scirh
+Proc. #2 Obj. #2: data/log-comp02lwmxr
+Proc. #2 Obj. #3: data/log-comp02lwmxr
+Proc. #3 Obj. #3: data/log-comp02scirh
+</precode>
+
+<p>You can see that each process generated the random string only once.
+If the parfor would be distributed on more computers, the 
+<code>hostname()</code> value would change as well.</p>
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <h2 id="vlbenchmarks.refs">References</h2>
