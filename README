@@ -12,10 +12,18 @@ instructions.
 The following benchmakrs are implemented:
 
   A. Wide-baseline matching
-    A1. Detector repeatability [ref]
-    A2. Descriptor matching score [ref]
+    A1. Detector repeatability [1]
+    A2. Descriptor matching score [1]
   B. Image retrieval
-    B1. Bag-of-words object instance retrieval [ref]
+    B1. Bag-of-words object instance retrieval [2]
+
+
+DEMO
+
+For the repeatability benchmark demo see file:
+  repeatabilityDemo.m
+Demo code of the image retrieval benchmark is in file:
+  retrievalDemo.m
 
 CHANGES
 
@@ -23,3 +31,11 @@ v1.0-beta  First public release.
 
 REFERENCES
 
+[1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
+    J. Matas, F. Schaffalitzky, T. Kadir, and L. Van Gool. A
+    comparison of affine region detectors. IJCV, 1(65):43–72, 2005.
+
+[2] H. Jegou, M. Douze and C. Schmid,
+    Exploiting descriptor distances for precise image search,
+    Research report, INRIA 2011
+    http://hal.inria.fr/inria-00602325/PDF/RA-7656.pdf
