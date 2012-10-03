@@ -46,7 +46,11 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
 %   imread, keep it 'all'. This is used in descriptor adapter in order to
 %   prevent double image conversion (for detector and for descriptor).
 %
-%   See also: extractFeatures, extractDescriptors
+%   For creating a new feature extractor wrapper you can start from 
+%   file TemplateWrapper.m.
+%
+%   See also: localFeatures.ExampleLocalFeatureExtractor
+%     localFeatures.TemplateWrapper
 
 % Authors: Karel Lenc, Varun Gulshan, Andrea Vedaldi
 
