@@ -122,8 +122,9 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       obj.ImagesDir = fullfile(obj.RootInstallDir,obj.Opts.category,'');
       obj.GtDir = fullfile(obj.RootInstallDir,...
         [obj.Opts.category '_gt'],'');
-
-      if obj.Opts.cacheDatabase
+      % Use cached data only when datacache installed
+      helpersInstaller = helpers.Installer();
+      if obj.Opts.cacheDatabase && helpersInstaller.isInstalled()
         dataKey = [obj.DatasetName ';' struct2str(obj.Opts)];
         data = DataCache.getData(dataKey);
         if ~isempty(data)
@@ -305,6 +306,10 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       imagesPaths(:) = {fullfile(installDir,curCategory)};
       urls = [imagesUrls VggRetrievalDataset.GtDataUrls(cIdx)];
       dstPaths = [imagesPaths {fullfile(installDir,[curCategory '_gt'])}];
+    end
+
+    function deps = getDependencies(obj)
+      deps = {helpers.Installer};
     end
   end
 end

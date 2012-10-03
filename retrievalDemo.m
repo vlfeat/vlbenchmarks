@@ -34,6 +34,14 @@ featExtractors{2} = VlFeatCovdet('method', 'harrislaplace', ...
                                  'doubleImage', false);
 featExtractors{3} = VlFeatSift('PeakThresh',2);
 
+% Define the benchmark class. This implements simple retrieval system which
+% uses extracted features in a K-Nearest Neighbour search in order to
+% retrieve queried images. Ranked set of retrieved images is then evaluated
+% measuring the mean average precision of all queries.
+% Parameter 'MaxNumImagesPerSearch' sets in how big chunks the dataset
+% should be divided for the KNN search.
+retBenchmark = RetrievalBenchmark('MaxNumImagesPerSearch',100);
+
 % Define the dataset which will be used for the benchmark. In this case we
 % will use 'oxbuild' dataset (Philbin, CVPR07) which originally consists
 % from 5k images. In order to compute the results in a reasonable time, we
@@ -44,14 +52,6 @@ dataset = VggRetrievalDataset('Category','oxbuild',...
                               'OkImagesNum',inf,...
                               'JunkImagesNum',100,...
                               'BadImagesNum',100);
-
-% Define the benchmark class. This implements simple retrieval system which
-% uses extracted features in a K-Nearest Neighbour search in order to
-% retrieve queried images. Ranked set of retrieved images is then evaluated
-% measuring the mean average precision of all queries.
-% Parameter 'MaxNumImagesPerSearch' sets in how big chunks the dataset
-% should be divided for the KNN search.
-retBenchmark = RetrievalBenchmark('MaxNumImagesPerSearch',100);
 
 % Run the test for all defined feature extractors
 for d=1:numel(featExtractors)
