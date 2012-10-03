@@ -75,6 +75,9 @@ if deleteArchive
 end
 
   function res = commandExist(command)
+    if ismember(computer,{'PCWIN','PCWIN64'})
+      res = false; return;
+    end;
     [ret drop] = system(command);
     % When command does not exist, it return error code 127
     res = (ret ~= 127);

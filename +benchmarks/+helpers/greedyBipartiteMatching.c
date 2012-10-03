@@ -34,6 +34,10 @@ void mexFunction(int nlhs,       mxArray *plhs[],
                  int nrhs, const mxArray *prhs[])
 {
     int i;
+    int numNodesA, numNodesB, numEdges, matchedNodes, maxNumMatches;
+    const int *dims = mxGetDimensions(A_IN);
+    double *startNodes, *endNodes, *matches;
+    int *nodeAAvail, *nodeBAvail;
 
     if (nrhs > 3) {
         mexErrMsgTxt("Too many input arguments\n");
@@ -49,29 +53,28 @@ void mexFunction(int nlhs,       mxArray *plhs[],
         mexErrMsgTxt("Array with edges must be a real 2D full double array.");
     }
 
-    const int *dims = mxGetDimensions(A_IN);
     if (dims[1] != 2){
         mexErrMsgTxt("Input array must be n x 2 array.\n");
     }
 
-    const int numNodesA = (int)mxGetScalar(NUM_EL1_IN);
-    const int numNodesB = (int)mxGetScalar(NUM_EL2_IN);
-    const int numEdges = dims[0];
-    const double *startNodes = mxGetPr(A_IN);
-    const double *endNodes = startNodes + numEdges;
+    numNodesA = (const int)mxGetScalar(NUM_EL1_IN);
+    numNodesB = (const int)mxGetScalar(NUM_EL2_IN);
+    numEdges = (const int)dims[0];
+    startNodes = mxGetPr(A_IN);
+    endNodes = startNodes + numEdges;
     RES = mxCreateDoubleMatrix(1, numNodesA, mxREAL);
-    double *matches = mxGetPr(RES);
+    matches = mxGetPr(RES);
     for (i = 0; i < numNodesA; ++i) {
         *matches = 0.;
     }
 
-    int *nodeAAvail = malloc(numNodesA * sizeof(int));
-    int *nodeBAvail = malloc(numNodesB * sizeof(int));
+    nodeAAvail = malloc(numNodesA * sizeof(int));
+    nodeBAvail = malloc(numNodesB * sizeof(int));
     memset(nodeAAvail, 1, numNodesA * sizeof(int));
     memset(nodeBAvail, 1, numNodesB * sizeof(int));
 
-    int matchedNodes = 0;
-    const int maxNumMatches = numNodesA < numNodesB ? numNodesA : numNodesB;
+    matchedNodes = 0;
+    maxNumMatches = numNodesA < numNodesB ? numNodesA : numNodesB;
 
     for (i = 0; i < numEdges; ++i) {
         int aIdx = (int)(*startNodes++) - 1;

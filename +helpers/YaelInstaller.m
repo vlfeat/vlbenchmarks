@@ -83,6 +83,9 @@ classdef YaelInstaller < helpers.GenericInstaller
       if obj.isCompiled()
         return;
       end
+      if ismember(computer,{'PCWIN','PCWIN64'})
+        error('Yael library is not supported on your platform.');
+      end
       fprintf('Compiling Yael\n');
 
       errHelpCmd = sprintf('Compile Yael by hand, located in %s\n',...

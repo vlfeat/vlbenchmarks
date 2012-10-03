@@ -15,9 +15,14 @@ installers = {...
   helpers.VlFeatInstaller(),...
   helpers.Installer(), ...
   benchmarks.RepeatabilityBenchmark(),...
-  benchmarks.IjcvOriginalBenchmark(),...
-  benchmarks.RetrievalBenchmark()
+  benchmarks.IjcvOriginalBenchmark()
   };
+
+if ~ismember(computer,{'PCWIN','PCWIN64'})
+  installers = [installers {benchmarks.RetrievalBenchmark()}];
+else
+  warning('Retrieval benchmark currently not supported on your platform.');
+end
 
 for installer=installers
   installer{:}.install();
