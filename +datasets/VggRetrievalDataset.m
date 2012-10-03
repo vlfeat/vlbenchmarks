@@ -124,7 +124,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         [obj.Opts.category '_gt'],'');
       % Load the object only in case when installed
       if ~obj.isInstalled()
-        obj.warning('Not installed. Initialised empty dataset.');
+        obj.warn('Not installed. Initialised empty dataset.');
       end
       if obj.Opts.cacheDatabase
         dataKey = [obj.DatasetName ';' struct2str(obj.Opts)];
