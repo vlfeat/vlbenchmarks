@@ -97,7 +97,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
 %.     name. See helpers.YaelInstaller for available options.
 %
 %   MaxNumImagesPerSearch :: 1000
-%     Maimal number of images which descriptors are in the database. If the
+%     Maximal number of images which descriptors are in the database. If the
 %     number of images in dataset is bigger, it is divided into several
 %     chunks. Decrease this number if your computer is runing out of 
 %     memory. Set to inf to disable division of the dataset into chunks.
@@ -520,7 +520,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
     function deps = getDependencies(obj)
       import helpers.*;
       deps = {Installer(),benchmarks.helpers.Installer(),...
-        VlFeatInstaller('0.9.14'),YaelInstaller()};
+        VlFeatInstaller('0.9.15'),YaelInstaller()};
     end
   end
 
@@ -534,6 +534,10 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       %
       %   [AP RECALL PRECISION] = rankedListAp(...) Return also precision
       %   recall values.
+
+      % make sure each image appears at most once in the rankedList
+      [temp,inds]=unique(rankedList,'first');
+      rankedList= rankedList( sort(inds) );
 
       numImages = numel(rankedList);
       labels = - ones(1, numImages);
