@@ -20,7 +20,6 @@ function sel = isEllipseInBBox(bbox, f)
     return;
   end
 
-  % TODO wrong bbox calculation, see repeatability.m:219
   rx = sqrt(f(3,:)) ;
   ry = sqrt(f(5,:)) ;
 

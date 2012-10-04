@@ -18,7 +18,7 @@ cite it as:</p>
 
 <div class="pub" style="padding:1em 2em;background-color:#f5f5f5;"
 id="lenc12vlbenchmarks">
-  K. Lenc, V. Gulshan, and A. Vedaldi, VLBenchmakrs,
+  K. Lenc, V. Gulshan, and A. Vedaldi, VLBenchmarks,
   <br/>
   <span class="conf">http://www.vlfeat.org/benchmarks/</span>, 2012.
   <span class="links">
@@ -50,7 +50,7 @@ id="lenc12vlbenchmarks">
 <h2 id="vlbenchmarks.overview">Overview</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>The <b>VLBechmakrs</b> MATLAB framework makes it simple to
+<p>The <b>VLBechmarks</b> MATLAB framework makes it simple to
 evaluate feature detector and descriptors automatically. Evaluating
 a feature is as simple as writing a single wrapper class for your
 feature code. Then <b>VLBenchmarks</b> takes care of downloading
@@ -60,7 +60,7 @@ number of publicly available features to enable comparing to them
 easily. Functions such as caching of intermediate results allow to
 run benchmarks efficiently.</p>
 
-<p>The current version of <b>VLBechmakrs</b> implements:</p>
+<p>The current version of <b>VLBechmarks</b> implements:</p>
 
 <ul>
   <li>The feature extractor repeatability of <a
@@ -125,9 +125,10 @@ href="%pathto:vlbenchmarks.ref1;">VGG Affine Dataset</a>. </p>
 <h2 id="vlbenchmarks.quickguide">Quick guide</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p> Here is a script for computing image feature extractorr repeatability [1].
-This script gets pair of images from the 'Graffiti' dataset, run the feature
-extractor and compute there repeatability: </p>
+<p> Here is a script for computing image feature extractor repeatability <a
+href="#vlbenchmarks.ref1">[1]</a>. This script gets pair of images from the
+'Graffiti' dataset, run the feature extractor and compute there repeatability:
+</p>
 
 <precode type="matlab">
 dataset = datasets.VggAffineDataset('Category','graf'); % Test data

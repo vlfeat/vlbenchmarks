@@ -5,11 +5,11 @@
 <h1 id="tut.rep;">Repeatability benchmark tutorial</h1> 
 
 <p>The repeatability benchmark reimplements the protocol introduced by
-Mikolajczyk et al. [1]. It defines two feature extractor tests. The first test
-measures the feature extractor repeatability. The repeatability measures to
-what extent do detected regions overlap exactly the same scene region by
-comparing detected features in two images of the same scene. It is based only
-on the feature geometry.</p>
+Mikolajczyk et al. <a href="#rep.ref1">[1]</a>. It defines two feature
+extractor tests. The first test measures the feature extractor repeatability.
+The repeatability measures to what extent do detected regions overlap exactly
+the same scene region by comparing detected features in two images of the same
+scene. It is based only on the feature geometry.</p>
 
 
 <p>The second test computes the matching score that includes also the local
@@ -28,9 +28,10 @@ visualisation of the computed scores.</p>
 </ul>
 
 
-<p> The source code of this tutorial is available in
-<code>retrievalDemo.m</code> function, this text shows only selected parts of
-the code. </p>
+<p> The source code of this tutorial is available in 
+<a href="https://github.com/vlfeat/vlbenchmarks/blob/master/repeatabilityDemo.m">
+<code>repeatabilityDemo.m</code></a> function, this text shows only selected
+parts of the code. </p>
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -118,11 +119,12 @@ visible in both cases). A good feature extractor will also be robust to noise
 and other distortion. The repeatability is the percentage of detected features
 that survive a viewpoint change or some other transformation or disturbance in
 going from IMAGEA to IMAGEB and is calculated only based on the frames
-overlap. For detail about this test see [1]. </p>
+overlap. For detail about this test see <a href="#rep.ref1">[1]</a>. </p>
 
 <p> For measuring feature extractors repeatability there is a class
 <code>benchmarks.RepeatabilityBenchmarks()</code>. To measure the
-repeatability as it is defined in [1] the benchmark object needs the following
+repeatability as it is defined in <a href="#rep.ref1">[1]</a> the 
+benchmark object needs the following
 configuration:</p>
 
 <precode type="matlab">
@@ -319,7 +321,7 @@ As for repeatability we can also show the matched frames itself.
  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
  <ol>
-  <li id="repeatability.ref1"> K. Mikolajczyk, T. Tuytelaars,
+  <li id="rep.ref1"> K. Mikolajczyk, T. Tuytelaars,
   C. Schmid, A. Zisserman, J. Matas, F. Schaffalitzky, T. Kadir, and
   L. Van Gool. A comparison of affine region detectors. IJCV,
   1(65):43–72, 2005.</li>

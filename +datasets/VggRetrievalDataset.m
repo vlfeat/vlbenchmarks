@@ -30,7 +30,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
 %   Downloaded data are parsed and a database of the images and
 %   queries is created and on default is cached. However the validity
 %   of cached data is checked only based on the class options and not
-%   on the files. Therefore if you want change the contents of the
+%   on the files. Therefore if you want to change the contents of the
 %   database, make sure that caching is disabled (option
 %   'CacheDatabase').
 %
@@ -147,7 +147,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     function imgPath = getImagePath(obj,imageNo)
       % getImagePath Get a path of an image from the database.
       %   IMG_PATH = obj.getImagePath(IMG_NO) Get path IMG_PATH of an
-      %   image defined by its number 0 < IMG_NO < obj.NumImages.
+      %   image defined by its number 0 < IMG_NO <= obj.NumImages.
       if imageNo >= 1 && imageNo <= obj.NumImages
         imgPath = fullfile(obj.ImagesDir,obj.Images.names{imageNo});
       else
@@ -158,7 +158,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
     function query = getQuery(obj,queryIdx)
       % getQuery Get a dataset query
       %  QUERY = obj.getQuery(QUERYID) Returns struct QUERY defined by
-      %  0 < QUERYID < obj.NumQueries. For query definition see class
+      %  0 < QUERYID <= obj.NumQueries. For query definition see class
       %  documentation.
       %
       %  See also: datasets.VggRetrievalDataset

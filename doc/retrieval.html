@@ -14,7 +14,8 @@
 </ul>
 
 <p> The source code of this tutorial is available in 
-<code>retrievalDemo.m</code> function, this text shows only 
+<a href="https://github.com/vlfeat/vlbenchmarks/blob/master/retrievalDemo.m">
+<code>retrievalDemo.m</code></a> function, this text shows only 
 selected parts of the code.
 </p>
 
@@ -27,16 +28,16 @@ selected parts of the code.
 
 <p> The image retrieval benchmark tests feature extractorss in a simple image
 retrieval system. The retrieval benchmark closely follows the work Jegou et.
-al [2]. First a set of local features is detected by selected feature
-extractor, and described using selected descriptor. To find most similar
-features it employs a <i>K-Nearest neighbours search</i> over descriptors from
-the all dataset images. Finally, a simple voting criterion based on K-nearest
-descriptors distances is used to sort the images (for the details c.f. [2]).
-</p>
+al <a href="#tut.ret.ref1">[1]</a>. First a set of local features is detected
+by selected feature extractor, and described using selected descriptor. To
+find most similar features it employs a <i>K-Nearest neighbours search</i>
+over descriptors from the all dataset images. Finally, a simple voting
+criterion based on K-nearest descriptors distances is used to sort the images
+(for the details c.f. <a href="#tut.ret.ref1">[1]</a>). </p>
 
 <p> The dataset used in the evaluation consists of a set of images and a set
-of queries. Set of ground truth images for each query is split into three classes 'Good', 
-'Ok', 'Junk'. For each query, the average precision (area
+of queries. Set of ground truth images for each query is split into three
+classes 'Good', 'Ok', 'Junk'. For each query, the average precision (area
 under the precision-recall curve) is calculated and averaged over all queries
 to get mean Average Precision (mAP) of the feature extractor. </p>
 
@@ -69,8 +70,9 @@ original SIFT feature extractor (DoG detector, in fact). All local features
 are described using by SIFT descriptor.</p>
 
 <p>To perform the image retrieval benchmark we defined a subset of the
-original 'The Oxford Buildings' [add link] dataset to compute the results in a
-reasonable time. </p>
+original <a href="http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/">'The
+Oxford Buildings'</a> dataset to compute the results in a reasonable time.
+</p>
 
 <precode type="matlab">
 dataset = VggRetrievalDataset('Category','oxbuild',...
@@ -115,8 +117,8 @@ end
 
 <p>Even having a subset of the Oxford buildings dataset, it takes a while to
 evaluate the benchmark for selected feature extractors. The feature extraction
-for a single image takes several seconds so overall the feature extraction takes
-approximately:</p>
+for a single image takes several seconds so overall the feature extraction
+takes approximately:</p>
 
 <precode> 3 × 748 × 3 = 6732s ~ 2h </precode>
 
@@ -250,14 +252,14 @@ therefore the area under the precision recall curve shrinks significantly.</p>
 <h2 id="tut.ret.images">Retrieved images</h2>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-<p>The indices of the retrieved images are stored in 
-  <code>info.rankedList</code> field. It
-contains indices of all dataset images sorted by the voting score
-of each image. The details of the voting scheme can be found in the help string of the
-retrieval benchmark class or in [1].</p>
+<p>The indices of the retrieved images are stored in
+<code>info.rankedList</code> field. It contains indices of all dataset images
+sorted by the voting score of each image. The details of the voting scheme can
+be found in the help string of the retrieval benchmark class or in <a
+href="#tut.ret.ref1">[1]</a>.</p>
 
-<p>To asses the performance of the feature extractor, let's inspect the query number
-8.</p>
+<p>To asses the performance of the feature extractor, let's inspect the query
+number 8.</p>
 
 <precode type="matlab">
 image(imread(dataset.getImagePath(query.imageId)));
@@ -331,7 +333,7 @@ SIFT feature extractor, consequently reducing its AP.</p>
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
  <ol>
-  <li id="tut.ret.ref2">H. J&eamp;egou, M. Douze, and
+  <li id="tut.ret.ref1">H. J&eamp;egou, M. Douze, and
   C. Schmid. Exploiting descriptor distances for precise image
   search. Technical Report 7656, INRIA, 2011.
   </li>
