@@ -289,12 +289,17 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
       qDescriptors = cell(1,numQueries);
       for q=1:numQueries
         query = dataset.getQuery(q);
+        bbox = query.box + 1;
         imgPath = dataset.getImagePath(query.imageId);
         [qFrames qDescriptors{q}] = featExtractor.extractFeatures(imgPath);
         % Pick only features in the query box
-        qFrames = localFeatures.helpers.frameToEllipse(qFrames);
-        visibleFrames = helpers.isEllipseInBBox(query.box, qFrames);
+        visibleFrames = ...
+          bbox(1) < qFrames(1,:) & ...
+          bbox(2) < qFrames(2,:) & ...
+          bbox(3) > qFrames(1,:) & ...
+          bbox(4) > qFrames(2,:) ;
         qDescriptors{q} = qDescriptors{q}(:,visibleFrames);
+        obj.info('Query %d: %d features.',q,size(qDescriptors{q}));
       end
     end
 
