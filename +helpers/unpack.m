@@ -17,6 +17,7 @@ unZipCommand = 'unzip %s';
 deleteArchive = true;
 
 [address filename ext] = fileparts(url);
+hasWget = commandExist('wget --version');
 
 switch ext
   case '.gz'
@@ -27,14 +28,14 @@ switch ext
       deleteArchive = false;
     else
       command = unTarGzipCommand;
-      if ~commandExist(command), untar(url,distDir); return; end
+      if ~commandExist(command) || ~hasWget, untar(url,distDir);return;end
     end
   case {'.tar','.tgz'}
     command = unTarGzipCommand;
-    if ~commandExist(command), untar(url,distDir); return; end
+    if ~commandExist(command) || ~hasWget, untar(url,distDir); return; end
   case '.zip'
     command = unZipCommand;
-    if ~commandExist(command), unzip(url,distDir); return; end
+    if ~commandExist(command) || ~hasWget, unzip(url,distDir); return; end
     return;
   case '.bz2'
     command = unbzipCommand;

@@ -114,8 +114,8 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       import helpers.*;
       obj.DatasetName = 'VggRetrievalDataset';
       varargin = obj.configureLogger(obj.DatasetName, varargin);
-      varargin = obj.checkInstall(varargin);
-      obj.Opts = helpers.vl_argparse(obj.Opts,varargin);
+      [obj.Opts varargin] = helpers.vl_argparse(obj.Opts,varargin);
+      obj.checkInstall(varargin);
       assert(ismember(obj.Opts.category,obj.AllCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
              obj.Opts.category));
