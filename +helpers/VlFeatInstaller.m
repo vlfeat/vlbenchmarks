@@ -13,7 +13,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 
 % AUTORIGHTS
   properties (Constant)
-    Version = '0.9.15';
+    Version = '0.9.16';
     RootDir = fullfile('data','software','vlfeat');
     Name = ['vlfeat-' helpers.VlFeatInstaller.Version];
     InstallDir = fullfile(helpers.VlFeatInstaller.RootDir,...
@@ -27,11 +27,13 @@ classdef VlFeatInstaller < helpers.GenericInstaller
   methods
     function obj = VlFeatInstaller(minVersion)
       if exist('minVersion','var')
-        numVersion =  str2double(char(regexp(obj.Version,'\.','split'))');
-        numMinVersion = str2double(char(regexp(minVersion,'\.','split'))');
+        versionParts = regexp(obj.Version,'\.','split');
+        minVersionParts = regexp(minVersion,'\.','split');
+        numVersion =  str2double(strcat(versionParts{:}));
+        numMinVersion = str2double(strcat(minVersionParts{:}));
         if numVersion < numMinVersion
-          error('VlFeat version >= %s not available. Change the version in file %s.',...
-            numMinVersion,mfilename);
+          error('VlFeat version >= %s is not available. Change the version in file %s.',...
+            minVersion,mfilename);
         end
       end
       if obj.isInstalled()

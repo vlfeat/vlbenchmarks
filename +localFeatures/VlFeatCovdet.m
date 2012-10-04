@@ -73,7 +73,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
   methods (Access=protected)
     function deps = getDependencies(obj)
-      deps = {helpers.VlFeatInstaller('0.9.15')};
+      deps = {helpers.VlFeatInstaller('0.9.16')};
     end
   end
 end
