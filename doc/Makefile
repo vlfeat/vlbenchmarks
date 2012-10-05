@@ -85,5 +85,7 @@ dist-src:
 .PHONY: post
 post: all
 	rsync --delete --exclude=.htaccess \
-              --exclude='*.DS_Store' --copy-links \
+              --exclude='*.DS_Store' \
+	      --exclude='*.eps' \
+	      --copy-links \
 	      -rvz html/ vlfeat-admin:vlfeat.org/sandbox/benchmarks/
