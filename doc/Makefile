@@ -74,13 +74,16 @@ distclean:
 	rm -rf html/
 
 .PHONY: dist-src
-dist-src:
+dist-src: all
 	mkdir -p assets/versions/
 	COPYFILE_DISABLE=1 \
 	COPY_EXTENDED_ATTRIBUTES_DISABLE=1 \
 	cd ..; \
-	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) | gzip > doc/assets/versions/$(DIST).tar.gz ;\
-	cd doc ;
+	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) > $(DIST).tar ;
+	cd ..; tar -rvf $(DIST).tar doc/*.{html,css} doc/demo/*jpg doc/assets/hidebib.js doc/images/
+	cd ..; gzip -f $(DIST).tar > $(DIST).tar.gz
+	cd ..; mv -v $(DIST).tar.gz doc/assets/versions/
+
 
 .PHONY: post
 post: all
