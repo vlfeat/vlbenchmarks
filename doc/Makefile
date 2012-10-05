@@ -1,6 +1,15 @@
+# file: Makefile
+# author: Andera Vedaldi and Karel Lenc
+# brief: Build the documentation and package
+
+NAME := vlbenchmakrs
+VER := 1.0-beta
+DIST = $(NAME)-$(VER)
+
 html_src = $(wildcard *.html)
 demo_src := $(wildcard demo/*.eps)
 
+GIT ?= git
 WEBDOC  ?= webdoc/webdoc.py
 PYTHON  ?= python2.7
 CONVERT ?= convert
@@ -33,7 +42,7 @@ html $(img_tgt) $(html_src) $(WEBDOC)
 	$(PYTHON) $(WEBDOC) $(<)
 
 assets: html/assets html/images html/demo \
-html/vlbenchmarks.css html/pygmentize.css
+html/vlbenchmarks.css html/pygmentize.css dist-src
 
 html:
 	mkdir html
@@ -63,6 +72,13 @@ clean:
 .PHONY: distclean
 distclean:
 	rm -rf html/
+
+.PHONY: dist-src
+dist-src:
+	mkdir -p assets/versions/
+	COPYFILE_DISABLE=1 \
+	COPY_EXTENDED_ATTRIBUTES_DISABLE=1 \
+	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) | gzip > assets/versions/$(DIST).tar.gz
 
 .PHONY: post
 post: all
