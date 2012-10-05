@@ -1,33 +1,26 @@
-                    VLBenchmakrs Version 1.0-beta
-                              Karel Lenc
-                            Varun Gulshan
-                            Andrea Vedaldi
+                           VLBenchmakrs
+                         Version 1.0-beta
+              Karel Lenc   Varun Gulshan   Andrea Vedaldi
 
 
-This package implements a collection of benchmkar routines to evaluate
+This package implements a collection of benchmkark routines to evaluate
 local feature detectors and descriptors. See
-http://www.vlfeat.org/benchmarks/index.html for installation and usage
-instructions.
-
-The following benchmakrs are implemented:
-
-  A. Wide-baseline matching
-    A1. Detector repeatability [1]
-    A2. Descriptor matching score [1]
-  B. Image retrieval
-    B1. Bag-of-words object instance retrieval [2]
-
-
-DEMO
-
-For the repeatability benchmark demo see file:
-  repeatabilityDemo.m
-Demo code of the image retrieval benchmark is in file:
-  retrievalDemo.m
+http://www.vlfeat.org/benchmarks/index.html or the bundled copy
+doc/index.html for installation and usage instructions.
 
 CHANGES
 
-v1.0-beta  First public release.
+v1.0-beta  (5-10-2012) First public release.
+
+ACKNOWLEDGMENTS
+    This project was supported by the PASCAL Harvest Programme 2012.
+
+    Part of the package is based on code of Krystian Mikolajczyk
+    as available here: http://www.robots.ox.ac.uk/~vgg/research/affine/.
+
+    The authors would like to thank Andrew Zisserman, Jiri Matas,
+    Krystian Mikolajczyk, Tinne Tuytelaars, and Cordelia Schmid for
+    helpful discussion and supports.
 
 REFERENCES
 
