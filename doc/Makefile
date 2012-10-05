@@ -78,7 +78,9 @@ dist-src:
 	mkdir -p assets/versions/
 	COPYFILE_DISABLE=1 \
 	COPY_EXTENDED_ATTRIBUTES_DISABLE=1 \
-	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) | gzip > assets/versions/$(DIST).tar.gz
+	cd ..; \
+	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) | gzip > doc/assets/versions/$(DIST).tar.gz ;\
+	cd doc ;
 
 .PHONY: post
 post: all
