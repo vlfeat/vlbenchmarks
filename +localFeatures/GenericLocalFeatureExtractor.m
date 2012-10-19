@@ -253,7 +253,6 @@ classdef GenericLocalFeatureExtractor < handle & helpers.Logger
           end
         elseif size(image,3) == 1
           imagePath = [tmpName,'.pgm'];
-          image = rgb2gray(image);
           helpers.writenetpbm(image, imagePath);
         end
       end
