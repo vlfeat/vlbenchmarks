@@ -1,0 +1,19 @@
+*** config.h	2012-10-19 16:15:17.000000000 +0200
+--- config.h.patched	2012-10-19 16:16:59.000000000 +0200
+***************
+*** 79,85 ****
+  const bool DEFAULT_UPRIGHT = false; // Upright descriptors, not invariant to rotation
+  const bool DEFAULT_SAVE_SCALE_SPACE = false; // For saving the scale space images
+  const bool DEFAULT_VERBOSITY = false; // Verbosity level (0->no verbosity)
+! const bool OPENCV_VISUALIZATION = true; // For showing the output image with the detected features
+  const bool DEFAULT_SAVE_KEYPOINTS = false; // For saving the list of keypoints
+  
+  // Some important configuration variables
+--- 79,85 ----
+  const bool DEFAULT_UPRIGHT = false; // Upright descriptors, not invariant to rotation
+  const bool DEFAULT_SAVE_SCALE_SPACE = false; // For saving the scale space images
+  const bool DEFAULT_VERBOSITY = false; // Verbosity level (0->no verbosity)
+! const bool OPENCV_VISUALIZATION = false; // For showing the output image with the detected features
+  const bool DEFAULT_SAVE_KEYPOINTS = false; // For saving the list of keypoints
+  
+  // Some important configuration variables
