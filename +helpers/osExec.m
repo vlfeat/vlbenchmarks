@@ -1,4 +1,4 @@
-function [ ret res ] = osExec( varargin )
+function [ ret res ] = osExec( path, varargin )
 % OS_EXEC Run a command with system library paths
 %   [STATUS RESULT] = OS_EXEC('command') Run a command. Parameters are the
 %   same as for system command.
@@ -29,16 +29,19 @@ sysLibPaths=regexp(strtrim(res),'\n','split');
 matlabLdLibPath = getenv('LD_LIBRARY_PATH');
 ldLibPath = [cell2str(sysLibPaths,':') ':' matlabLdLibPath];
 
+prevDir = pwd;
 try
+  cd(path);
   setenv('LD_LIBRARY_PATH',ldLibPath);
   [ret res] = system(varargin{:});
 catch err
   % return back the matlab configuration
   setenv('LD_LIBRARY_PATH',matlabLdLibPath);
+  cd(prevDir);
   throw(err);
 end
-
 setenv('LD_LIBRARY_PATH',matlabLdLibPath);
+cd(prevDir);
 
 end
 

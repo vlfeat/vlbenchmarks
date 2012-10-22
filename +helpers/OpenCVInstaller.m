@@ -19,31 +19,31 @@ classdef OpenCVInstaller < helpers.GenericInstaller
 % AUTORIGHTS
   properties (Constant)
     % Version of the installed OpenCV
-    version = '2.4.2';
+    Version = '2.4.2';
     % Name of the OpenCV directory
-    name = sprintf('OpenCV-%s',helpers.OpenCVInstaller.version);
+    Name = sprintf('OpenCV-%s',helpers.OpenCVInstaller.Version);
     % Path to base OpenCV directory
-    dir = fullfile('data','software',helpers.OpenCVInstaller.name);
+    SoftwareDir = fullfile('data','software',helpers.OpenCVInstaller.Name);
     % URL with tarball with source code
-    url = sprintf('http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/%s/OpenCV-%s.tar.bz2',...
-      helpers.OpenCVInstaller.version,helpers.OpenCVInstaller.version);
+    SoftwareUrl = sprintf('http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/%s/OpenCV-%s.tar.bz2',...
+      helpers.OpenCVInstaller.Version,helpers.OpenCVInstaller.Version);
     % Target directory for make install
-    installDir = fullfile(pwd,helpers.OpenCVInstaller.dir,'install');
+    InstallDir = fullfile(pwd,helpers.OpenCVInstaller.SoftwareDir,'install');
     % Directory where sources are built
-    buildDir = fullfile(helpers.OpenCVInstaller.dir,'build');
+    BuildDir = fullfile(helpers.OpenCVInstaller.SoftwareDir,'build');
     % Location of OpenCV libraries
-    libDir = fullfile(helpers.OpenCVInstaller.installDir,'lib');
+    LibDir = fullfile(helpers.OpenCVInstaller.InstallDir,'lib');
     % Location of OpenCV headers
-    includeDir = fullfile(helpers.OpenCVInstaller.installDir,'include');
+    IncludeDir = fullfile(helpers.OpenCVInstaller.InstallDir,'include');
     
     % Make command
-    makeCommand = 'make';
+    MakeCommand = 'make';
     % CMake command
-    cmakeCommand = 'cmake';
+    CmakeCommand = 'cmake';
     % CMake build arguments
-    cmakeArgs = {...
+    CmakeArgs = {...
       sprintf('-DCMAKE_INSTALL_PREFIX:PATH="%s"',...
-        helpers.OpenCVInstaller.installDir),...
+        helpers.OpenCVInstaller.InstallDir),...
       sprintf('-DCMAKE_CXX_COMPILER:FILEPATH="%s"',...
         mex.getCompilerConfigurations('C++','Selected').Details.CompilerExecutable),...
       sprintf('-DCMAKE_C_COMPILER:FILEPATH="%s"',...
@@ -69,8 +69,8 @@ classdef OpenCVInstaller < helpers.GenericInstaller
   methods (Access=protected)
     function [urls dstPaths] = getTarballsList(obj)
       import helpers.*;
-      urls = {OpenCVInstaller.url};
-      dstPaths = {OpenCVInstaller.dir};
+      urls = {OpenCVInstaller.SoftwareUrl};
+      dstPaths = {OpenCVInstaller.SoftwareDir};
     end
     
     function compile(obj)
@@ -80,34 +80,32 @@ classdef OpenCVInstaller < helpers.GenericInstaller
         return;
       end
       
-      if ~exist(OpenCVInstaller.dir,'dir')
+      if ~exist(OpenCVInstaller.SoftwareDir,'dir')
         error('Source code of OpenCV not present in %s.',...
-          OpenCVInstaller.dir);
+          OpenCVInstaller.SoftwareDir);
       end
       
       fprintf('Compiling OpenCV\n');
       
-      srcDir = fullfile('..',OpenCVInstaller.name);
+      srcDir = fullfile('..',OpenCVInstaller.Name);
       
       prevDir = pwd;
-      vl_xmkdir(OpenCVInstaller.buildDir);
+      vl_xmkdir(OpenCVInstaller.BuildDir);
       
       % Run cmake
-      args = cell2str(OpenCVInstaller.cmakeArgs,' ');
-      cmd = cell2str({OpenCVInstaller.cmakeCommand,srcDir,args},' ');
+      args = cell2str(OpenCVInstaller.CmakeArgs,' ');
+      cmd = cell2str({OpenCVInstaller.CmakeCommand,srcDir,args},' ');
       
-      cd(OpenCVInstaller.buildDir);
       % Run cmake with sys. libraries environment
-      status = helpers.osExec(cmd,'-echo');
-      cd(prevDir);
+      status = helpers.osExec(OpenCVInstaller.BuildDir,cmd,'-echo');
       
       if status ~= 0
         error('CMake was not succesfull, error status %d',status);
       end
       
       % Run Make
-      cd(OpenCVInstaller.buildDir);
-      status = unix(OpenCVInstaller.makeCommand,'-echo');
+      cd(OpenCVInstaller.BuildDir);
+      status = unix(OpenCVInstaller.MakeCommand,'-echo');
       cd(prevDir);
       
       if status ~= 0
@@ -115,8 +113,8 @@ classdef OpenCVInstaller < helpers.GenericInstaller
       end
       
       % Run Make Install
-      cd(OpenCVInstaller.buildDir);
-      status = unix([OpenCVInstaller.makeCommand ' install'],'-echo');
+      cd(OpenCVInstaller.BuildDir);
+      status = unix([OpenCVInstaller.MakeCommand ' install'],'-echo');
       cd(prevDir);
       
       if status ~= 0
@@ -128,7 +126,7 @@ classdef OpenCVInstaller < helpers.GenericInstaller
 
     function res = isCompiled(obj)
       import helpers.*;
-      res = exist(obj.libDir,'dir') && exist(obj.includeDir,'dir');
+      res = exist(obj.LibDir,'dir') && exist(obj.IncludeDir,'dir');
     end
 
     function deps = getDependencies(obj)
@@ -146,8 +144,8 @@ classdef OpenCVInstaller < helpers.GenericInstaller
         case {'GLNX86','GLNXA64'}
         mexflags = sprintf(...
           'LDFLAGS=''"\\$LDFLAGS -Wl,-rpath,%s"'' -L%s -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_contrib -lopencv_nonfree -I%s',...
-          OpenCVInstaller.libDir,OpenCVInstaller.libDir,...
-          OpenCVInstaller.includeDir);
+          OpenCVInstaller.LibDir,OpenCVInstaller.LibDir,...
+          OpenCVInstaller.IncludeDir);
         otherwise
           warning('Architecture not supported yet.');
       end

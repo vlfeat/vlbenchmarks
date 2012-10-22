@@ -44,12 +44,7 @@ classdef Sfop < localFeatures.GenericLocalFeatureExtractor & ...
       frames = obj.loadFeatures(imagePath, false);
       if numel(frames) > 0; return; end;
       startTime = tic;
-      if nargout == 1
-        obj.info('Computing frames of image %s.',getFileName(imagePath));
-      else
-        obj.info('Computing frames and descriptors of image %s.',...
-          getFileName(imagePath));
-      end
+      obj.info('Computing frames of image %s.',getFileName(imagePath));
       tmpName = tempname;
       outFile = [tmpName '.points'];
 

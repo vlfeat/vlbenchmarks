@@ -51,7 +51,7 @@ classdef Ibr < localFeatures.GenericLocalFeatureExtractor & ...
       % Check platform dependence
       machineType = computer();
       if ~ismember(machineType,{'GLNX86','GLNXA64'})
-          error('Arch: %s not supported by EBR',machineType);
+          error('Arch: %s not supported by IBR',machineType);
       end
       obj.Name = 'IBR';
       varargin = obj.checkInstall(varargin);
