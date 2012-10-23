@@ -34,8 +34,6 @@ classdef SynthDataset < datasets.GenericTransfDataset
       transfName = [sprintf('%s%d_',cropStr,numImages) cell2str(transfNames,'_')];
       obj.DataDir = fullfile(obj.RootDir,...
         obj.ImageName,transfName);
-      vl_xmkdir(obj.DataDir);
-      obj.Image = imread(imagePath);
       obj.ImageNames = cell(obj.NumImages,1);
       obj.ImageNamesLabel = 'Image ';
 
@@ -45,9 +43,13 @@ classdef SynthDataset < datasets.GenericTransfDataset
       if numel(imgFiles) == numImages && numel(tfsFiles) == numImages
         fprintf('Transformations "%s" of image "%s" already exist.\n',...
           transfName,obj.ImageName);
+        % Generate image names
+        for tfh = transformations, tfh{1}(obj); end
         return;
       else
         % Generate transformed images and save them
+        obj.Image = imread(imagePath);
+        vl_xmkdir(obj.DataDir);
         fprintf('Generating transformations "%s" of image "%s"...\n',...
         transfName,obj.ImageName);
         obj.GenImages = cell(1,numImages);
@@ -153,6 +155,8 @@ classdef SynthDataset < datasets.GenericTransfDataset
       scales = linspace(minScale, maxScale,obj.NumImages);
       for scale=scales
         obj.ImageNames{i} = [num2str(scale,'%0.2f') 'x '];
+        i = i + 1;
+        if isempty(obj.Image), continue; end;
         tfs = obj.createScalingTfs(scale);  
         obj.GenTfs{i} = obj.GenTfs{i} * tfs;
         % If the image is subsampled, filter the high frequencies
@@ -162,7 +166,6 @@ classdef SynthDataset < datasets.GenericTransfDataset
           filtr = fspecial('gaussian',[filterSize filterSize],sigma);
           obj.GenImages{i} = imfilter(obj.Image,filtr,'same');
         end
-        i = i + 1;
       end
       fprintf('Scales: %s.\n',...
         [sprintf('%g, ',scales(1:end-1)) num2str(scales(end))]);
@@ -179,6 +182,8 @@ classdef SynthDataset < datasets.GenericTransfDataset
       i = 2;
       for nval=noiseValues
         obj.ImageNames{i} = ['\sigma_n=' num2str(nval,'%0.2f') ' '];
+        i = i + 1;
+        if isempty(obj.Image), continue; end;
         switch noiseType
           case 'gaussian'
           obj.GenImages{i} = imnoise(obj.GenImages{i},'gaussian',0,nval);
@@ -187,7 +192,7 @@ classdef SynthDataset < datasets.GenericTransfDataset
           otherwise
           error('Unsupported type of noise: %s',noiseType);
         end
-        i = i + 1;
+
       end
       fprintf('Image noise sigmas: %s.\n',...
         [sprintf('%g, ',noiseValues(1:end-1)) num2str(noiseValues(end))]);
@@ -199,10 +204,11 @@ classdef SynthDataset < datasets.GenericTransfDataset
       i = 2;
       for sigma=sigmas
         obj.ImageNames{i} = ['\sigma_b=' num2str(sigma,'%0.2f') ' '];
+        i = i + 1;
+        if isempty(obj.Image), continue; end;
         filtrSize = round(3*sigma);
         filtr = fspecial(blurType,[filtrSize filtrSize],sigma);
         obj.GenImages{i} = imfilter(obj.Image,filtr,'same');
-        i = i + 1;
       end
       fprintf('Image blur sigmas: %s.\n',...
         [sprintf('%g, ',sigmas(1:end-1)) num2str(sigmas(end))]);
