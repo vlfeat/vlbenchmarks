@@ -6,13 +6,13 @@ classdef Kaze < localFeatures.GenericLocalFeatureExtractor & ...
   properties (SetAccess=public, GetAccess=public)
     Opts = struct(...
       'soffset', 1.6,...        % the base scale offset (sigma units)
-      'omax', 3,...             % the coarsest nonlinear scale space level (sigma units)
+      'omax', 8,...             % the coarsest nonlinear scale space level (sigma units)
       'nsublevels', 4,...       % number of sublevels per octave
       'dthreshold', 0.001,...   % Feature detector threshold response for accepting points
       'derivatives', 0,...      % Derivatives Type 0 -> Finite Differences, 1 -> Scharr
       'descriptor', 1,...       % Descriptor Type 0 -> SURF, 1 -> M-SURF
       'upright', 1,...          % 0 -> Rotation Invariant, 1 -> No Rotation Invariant
-      'save_scale_space', 1 ... % 1 in case we want to save the nonlinear scale space images. 0 otherwise
+      'save_scale_space', 0 ... % 1 in case we want to save the nonlinear scale space images. 0 otherwise
       );
   end
 

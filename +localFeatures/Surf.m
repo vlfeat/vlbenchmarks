@@ -16,8 +16,8 @@ classdef Surf < localFeatures.GenericLocalFeatureExtractor & ...
       'ms', 3,...       % custom lobe size
       'ss', 2,...       % initial sampling step
       'oc', 4,...       % number of octaves
-      'u', false,...    % U-SURF (not rotation invariant)
-      'e',true,...      % extended descriptor (SURF-128)
+      'u', [],...    % U-SURF (not rotation invariant)
+      'e',[],...      % extended descriptor (SURF-128)
       'in', 4);         % descriptor size
   end
 
@@ -102,7 +102,14 @@ classdef Surf < localFeatures.GenericLocalFeatureExtractor & ...
       for i = 1:numel(fields)
         val = obj.Opts.(fields{i});
         if ~isempty(val)
-          args = [args,' -',fields{i},' ', num2str(val)];
+          % Handle the bool options
+          if ismember(fields{i},{'u','e'})
+            if val
+              args = [args,' -',fields{i}];
+            end
+          else
+            args = [args,' -',fields{i},' ', num2str(val)];
+          end
         end
       end
     end
