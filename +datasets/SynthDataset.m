@@ -180,6 +180,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         angle = angles(i);
         obj.ImageNames{i} = [obj.ImageNames{i} ...
         num2str(angle/pi*180,'%0.2f') '° '];
+        if isempty(obj.Image), continue; end;
         rot = [cos(angle) -sin(angle) 0;... 
            sin(angle) cos(angle) 0; 0 0 1];
         obj.GenTfs{i} = rot * obj.GenTfs{i};
@@ -346,7 +347,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         imageFileName = fullfile(obj.DataDir,imgName);
         tf = obj.GenTfs{i};
         % If the image is subsampled, filter the high frequencies
-        if det(tf) < 1
+        if det(tf) < 0.95
           % Take the affine transformation in the centre point of the image
           % where the transformation is defined
           obj.info('Smoothing input image.');
