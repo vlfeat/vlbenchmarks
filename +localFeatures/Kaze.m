@@ -63,7 +63,7 @@ classdef Kaze < localFeatures.GenericLocalFeatureExtractor & ...
       if imIsTmp, delete(imagePath); end;
       obj.debug('%d features from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed);
-      obj.storeFeatures(imagePath, frames, []);
+      obj.storeFeatures(imagePath, frames, descriptors);
     end
 
     function sign = getSignature(obj)
