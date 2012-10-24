@@ -282,9 +282,9 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
           size(framesA,2),size(framesB,2));
       matchGeometry = obj.ModesOpts(obj.Opts.mode).matchGeometry;
       matchDescriptors = obj.ModesOpts(obj.Opts.mode).matchDescs;
-
+      score = 0; numMatches = 0;
       if isempty(framesA) || isempty(framesB)
-        matches = zeros(size(framesA,2)); reprojFrames = {};
+        matches = zeros(size(framesA,2)); reprojFrames = {}; 
         obj.info('Nothing to compute.');
         return;
       end
@@ -297,7 +297,6 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         obj.error('Unable to match descriptors without descriptors.');
       end
 
-      score = 0; numMatches = 0;
       startTime = tic;
       normFrames = obj.Opts.normaliseFrames;
       overlapError = obj.Opts.overlapError;
