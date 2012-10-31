@@ -41,7 +41,7 @@ classdef Kaze < localFeatures.GenericLocalFeatureExtractor & ...
     function [frames descriptors] = extractFeatures(obj, origImagePath)
       import helpers.*;
       import localFeatures.helpers.*;
-      frames = obj.loadFeatures(origImagePath,true);
+      [frames descriptors] = obj.loadFeatures(origImagePath,true);
       if numel(frames) > 0; return; end;      
       obj.info('Computing features of image %s.',...
         getFileName(origImagePath));
