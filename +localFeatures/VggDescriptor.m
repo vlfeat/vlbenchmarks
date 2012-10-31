@@ -166,7 +166,7 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
         error('Computing descriptors failed.\nOffending command: %s\n%s',descrCmd, msg);
       end
       [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
-      obj.debug('%d Descriptors computed in %gs',elapsedTime,size(frames,2));
+      obj.debug('%d Descriptors computed in %gs',size(frames,2),elapsedTime);
       delete(outDescFile);
       if imIsTmp, delete(imagePath); end;
     end

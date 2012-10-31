@@ -36,7 +36,8 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
     % Installation directory
     RootInstallDir = fullfile('data','datasets','vggAffineDataset','');
     % Names of the image transformations in particular categories
-    CategoryImageNames = {...
+    CategoryImageNames = containers.Map(...
+      datasets.VggAffineDataset.AllCategories, {...
       'Viewpoint angle',... % graf
       'Viewpoint angle',... % wall
       'Scale changes',... % boat
@@ -45,9 +46,10 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       'Increasing blur',... % trees
       'JPEG compression %',... % ubc
       'Decreasing light'...% leuven
-      };
+      });
     % Image labels for particular categories (degree of transf.)
-    CategoryImageLabels = {...
+    CategoryImageLabels =  containers.Map(...
+      datasets.VggAffineDataset.AllCategories, {...
       [20 30 40 50 60],... % graf
       [20 30 40 50 60],... % wall
       [1.12 1.38 1.9 2.35 2.8],... % boat
@@ -56,7 +58,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       [2 3 4 5 6],... % trees
       [60 80 90 95 98],... % ubc
       [2 3 4 5 6]...% leuven
-      };
+      });
     % Root url for dataset tarballs
     RootUrl = 'http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/';
   end
@@ -67,10 +69,10 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       import helpers.*;
       opts.Category = obj.Category;
       [opts varargin] = vl_argparse(opts,varargin);
-      [valid loc] = ismember(opts.Category,obj.AllCategories);
+      valid = ismember(opts.Category,obj.AllCategories);
       assert(valid,...
-        sprintf('Invalid category for vgg dataset: %s\n',opts.Category));
-      obj.DatasetName = ['VggAffineDataset-' opts.Category];
+        sprintf('Invalid category: %s\n',opts.Category));
+      obj.DatasetName = ['VggAffineDataset' opts.Category];
       obj.Category= opts.Category;
       obj.DataDir = fullfile(obj.RootInstallDir,opts.Category,'');
       obj.NumImages = 6;
@@ -84,8 +86,8 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       else
         error('Ivalid dataset image files.');
       end
-      obj.ImageNames = obj.CategoryImageLabels{loc};
-      obj.ImageNamesLabel = obj.CategoryImageNames{loc};
+      obj.ImageNames = obj.CategoryImageLabels(opts.Category);
+      obj.ImageNamesLabel = obj.CategoryImageNames(opts.Category);
     end
 
     function imgPath = getImagePath(obj,imgNo)
