@@ -14,7 +14,7 @@ function result = fastEllipseOverlap(f1, f2, varargin)
 %   symmetric. With rescaling, the frames of F2 are used to fix the
 %   scaling factors.
 %
-%   MATCHELLIPSES(F1, F2, 'OptionName', OptionValue) accepts the
+%   FASTELLIPSEOVERLAP(F1, F2, 'OptionName', OptionValue) accepts the
 %   following options:
 %
 %   NormaliseFrames:: [true]
