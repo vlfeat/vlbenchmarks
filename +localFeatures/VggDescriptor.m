@@ -40,7 +40,7 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
       );
   end
   properties (Constant)
-    ValidDescriptors = {'sift','jla','gloh','mom','koen','kf','sc',...
+    ValidDescriptors = {'sift','jla','gloh','mom','koen','cf','sc',...
       'spin','pca','cc'};
   end
 
@@ -136,6 +136,7 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
         framesFile)
       % COMPUTEDESCRIPTORS Compute descriptors from frames stored in a file
       import localFeatures.*;
+      import localFeatures.helpers.*;
       tmpName = tempname;
       outDescFile = [tmpName '.descs'];
 
@@ -165,7 +166,7 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
       if status
         error('Computing descriptors failed.\nOffending command: %s\n%s',descrCmd, msg);
       end
-      [frames descriptors] = vl_ubcread(outDescFile,'format','oxford');
+      [frames descriptors] = readFeaturesFile(outDescFile,'floatDesc',true);
       obj.debug('%d Descriptors computed in %gs',size(frames,2),elapsedTime);
       delete(outDescFile);
       if imIsTmp, delete(imagePath); end;
