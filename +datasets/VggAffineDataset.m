@@ -72,7 +72,7 @@ classdef VggAffineDataset < datasets.GenericTransfDataset & helpers.Logger...
       valid = ismember(opts.Category,obj.AllCategories);
       assert(valid,...
         sprintf('Invalid category: %s\n',opts.Category));
-      obj.DatasetName = ['VggAffineDataset' opts.Category];
+      obj.DatasetName = ['VggAffineDataset-' opts.Category];
       obj.Category= opts.Category;
       obj.DataDir = fullfile(obj.RootInstallDir,opts.Category,'');
       obj.NumImages = 6;
