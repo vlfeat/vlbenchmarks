@@ -53,6 +53,17 @@ classdef HannoverAffineDataset < datasets.GenericTransfDataset & helpers.Logger.
       'Viewpoint change + text. rep.',... % posters
       'Viewpoint change' ... % there
       });
+    CategoryPackageNames = containers.Map(...
+      datasets.HannoverAffineDataset.AllCategories, {...
+      'GrafHomAcc',... % graf
+      'BarkHomAcc',... % bark
+      'BikesHomAcc',... % bikes
+      'grace',... % grace
+      'underground',... % underground
+      'colors',... % colors
+      'posters',... % posters
+      'there' ... % there
+      });
     % Image labels for particular categories (degree of transf.)
     CategoryImageLabels = containers.Map(...
       datasets.HannoverAffineDataset.AllCategories, {...
@@ -122,7 +133,8 @@ classdef HannoverAffineDataset < datasets.GenericTransfDataset & helpers.Logger.
       import datasets.*;
       installDir = HannoverAffineDataset.RootInstallDir;
       dstPaths = {fullfile(installDir,obj.Category)};
-      urls = {sprintf(obj.RootUrl,obj.Category,obj.Category)};
+      pkgName = obj.CategoryPackageNames(obj.Category);
+      urls = {sprintf(obj.RootUrl,obj.Category,pkgName)};
       urls = [urls obj.AdditionalArchives(obj.Category)];
     end
   end
