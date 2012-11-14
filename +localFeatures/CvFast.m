@@ -28,7 +28,6 @@ classdef CvFast < localFeatures.GenericLocalFeatureExtractor & ...
 
     function frames = extractFeatures(obj, imagePath)
       import helpers.*;
-
       frames = obj.loadFeatures(imagePath,false);
       if numel(frames) > 0; return; end;
       startTime = tic;

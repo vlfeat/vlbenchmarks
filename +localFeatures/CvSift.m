@@ -56,6 +56,7 @@ classdef CvSift < localFeatures.GenericLocalFeatureExtractor & ...
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img);
       startTime = tic;
+      frames = [frames(1:2,:); localFeatures.helpers.getFrameScale(frames)];
       [frames descriptors] = mex.cvSift(img,'Frames', ...
         frames,obj.CvSiftArguments{:});
       timeElapsed = toc(startTime);
