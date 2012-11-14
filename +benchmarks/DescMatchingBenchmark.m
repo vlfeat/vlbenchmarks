@@ -57,7 +57,7 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
       obj.checkInstall(varargin);
     end
 
-    function [precision recall bestMatches reprojFrames] = ...
+    function [precision recall info bestMatches reprojFrames] = ...
         testFeatureExtractor(obj, featExtractor, tf, imageAPath, ...
         imageBPath, magnification)
       % testFeatureExtractor
@@ -103,21 +103,21 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
       if isempty(cachedResults) || ~featExtractor.UseCache
         [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
         [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
-        [precision recall bestMatches reprojFrames] = obj.testFeatures(...
+        [precision recall info bestMatches reprojFrames] = obj.testFeatures(...
           tf, imageASize, imageBSize, framesA, framesB,...
           descriptorsA, descriptorsB, magnification);
         if featExtractor.UseCache
-          results = {precision recall bestMatches reprojFrames};
+          results = {precision recall info bestMatches reprojFrames};
           obj.storeResults(results, resultsKey);
         end
       else
-        [precision recall bestMatches reprojFrames] = cachedResults{:};
+        [precision recall info bestMatches reprojFrames] = cachedResults{:};
         obj.debug('Results loaded from cache');
       end
 
     end
 
-    function [precision recall matches reprojFrames] = ...
+    function [precision recall info matches reprojFrames] = ...
         testFeatures(obj, tf, imageASize, imageBSize, framesA, framesB, ...
         descriptorsA, descriptorsB, magnification)
       % testFeatures Compute repeatability of given image features
@@ -243,7 +243,8 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
                 descriptorsA, 'NumNeighbors', 1) ;
               score = -dists(1,:);
             case 'nn-dist-ratio'
-              [index, dists] = vl_kdtreequery(kdtree, X, Q, 'NumNeighbors', 1) ;
+              [index, dists] = vl_kdtreequery(kdtree, descriptorsB,...
+                descriptorsA, 'NumNeighbors', 2) ;
               score = -dists(1,:)./dists(2,:);
           end
           labels = -ones(1,numFramesA);
@@ -259,7 +260,7 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
       end
       numCorrectMatches = sum(labels > 0);
       obj.info('Number of correct matches: %d',numCorrectMatches);
-      [recall precision] = vl_pr(labels,score,'NumPositives',numCorresps);
+      [recall precision info] = vl_pr(labels,score,'NumPositives',numCorresps);
       %[recall precision] = vl_pr(labels,score);
 
       obj.debug('Results between %d/%d frames comp. in %gs',size(framesA,2), ...
