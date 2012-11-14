@@ -175,9 +175,10 @@ classdef GenericInstaller < handle
         return;
       end
       [urls dstPaths] = obj.getTarballsList();
-      for i = 1:min(numel(urls),numel(dstPaths))
-        if ~obj.tarballInstalled(urls{i}, dstPaths{i});
-          obj.installTarball(urls{i},dstPaths{i});
+      for i = 1:numel(urls)
+        dstPath = dstPaths{min(i,numel(dstPaths))};
+        if ~obj.tarballInstalled(urls{i}, dstPath);
+          obj.installTarball(urls{i},dstPath);
         end
       end
     end
