@@ -17,6 +17,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
   properties (SetAccess=public, GetAccess=public)
     VlCovdetArguments
+    Opts = struct('featureType','');
   end
 
   methods
@@ -24,6 +25,7 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       import helpers.*;
       obj.Name = 'VLFeat Covdet';
       varargin = obj.configureLogger(obj.Name,varargin);
+      [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
       obj.VlCovdetArguments = obj.checkInstall(varargin);
       obj.ExtractsDescriptors = true;
     end
@@ -36,13 +38,27 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
       if (size(img,3)>1), img = rgb2gray(img); end
       img = im2single(img) ;
       startTime = tic;
-      if nargout == 1
-        obj.info('Computing frames of image %s.',getFileName(imagePath));
-        frames = vl_covdet(img, obj.VlCovdetArguments{:});
+      if isempty(obj.Opts.featureType)
+        if nargout == 1
+          obj.info('Computing frames of image %s.',getFileName(imagePath));
+          frames = vl_covdet(img, obj.VlCovdetArguments{:});
+        else
+          obj.info('Computing features of image %s.',...
+                   getFileName(imagePath));
+          [frames descriptors] = vl_covdet(img, obj.VlCovdetArguments{:});
+        end
       else
-        obj.info('Computing frames and descriptors of image %s.',...
-                 getFileName(imagePath));
-        [frames descriptors] = vl_covdet(img, obj.VlCovdetArguments{:});
+        obj.info('Computing features of image %s.',getFileName(imagePath));
+        [frames descriptors info] = vl_covdet(img, obj.VlCovdetArguments{:}) ;
+        responses = info.peakScores;
+        switch obj.Opts.featureType
+          case 'min'
+            valid = responses < 0;
+          case 'max'
+            valid = responses > 0;
+        end
+        frames = frames(:,valid);
+        if nargout>1, descriptors = descriptors(:,valid); end;
       end
       timeElapsed = toc(startTime);
       obj.debug('%d Frames from image %s computed in %gs',...
@@ -67,7 +83,8 @@ classdef VlFeatCovdet < localFeatures.GenericLocalFeatureExtractor & ...
 
     function sign = getSignature(obj)
       sign = [helpers.VlFeatInstaller.getBinSignature('vl_covdet'),...
-              helpers.cell2str(obj.VlCovdetArguments)];
+              helpers.cell2str(obj.VlCovdetArguments) ...
+              helpers.struct2str(obj.Opts)];
     end
   end
 
