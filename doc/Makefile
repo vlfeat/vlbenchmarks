@@ -33,8 +33,8 @@ all: html/index.html assets $(pub_thumbs)
 deep: all ../repeatabilityDemo.m
 	cd .. ; \
 	$(MATLAB_EXE) -$(ARCH) -nodesktop -r "clear mex;repeatabilityDemo(fullfile(pwd,'doc','demo'));exit"
+	cd .. ; \
 	$(MATLAB_EXE) -$(ARCH) -nodesktop -r "clear mex;retrievalDemo(fullfile(pwd,'doc','demo'));exit"
-	cd .. ;
 
 html/index.html: vlbenchmarks.xml \
 vlbenchmarks.css pygmentize.css \
@@ -74,16 +74,21 @@ distclean:
 	rm -rf html/
 
 .PHONY: dist-src
-dist-src:
+dist-src: all
 	mkdir -p assets/versions/
 	COPYFILE_DISABLE=1 \
 	COPY_EXTENDED_ATTRIBUTES_DISABLE=1 \
 	cd ..; \
-	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) | gzip > doc/assets/versions/$(DIST).tar.gz ;\
-	cd doc ;
+	$(GIT) archive --prefix=$(NAME)-$(VER)/ v$(VER) > $(DIST).tar ;
+	cd ..; tar -rvf $(DIST).tar doc/*.{html,css} doc/demo/*jpg doc/assets/hidebib.js doc/images/
+	cd ..; gzip -f $(DIST).tar > $(DIST).tar.gz
+	cd ..; mv -v $(DIST).tar.gz doc/assets/versions/
+
 
 .PHONY: post
 post: all
 	rsync --delete --exclude=.htaccess \
-              --exclude='*.DS_Store' --copy-links \
+              --exclude='*.DS_Store' \
+	      --exclude='*.eps' \
+	      --copy-links \
 	      -rvz html/ vlfeat-admin:vlfeat.org/sandbox/benchmarks/
