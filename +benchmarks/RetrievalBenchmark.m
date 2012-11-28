@@ -299,7 +299,7 @@ classdef RetrievalBenchmark < benchmarks.GenericBenchmark ...
           bbox(3) > qFrames(1,:) & ...
           bbox(4) > qFrames(2,:) ;
         qDescriptors{q} = qDescriptors{q}(:,visibleFrames);
-        obj.info('Query %d: %d features.',q,size(qDescriptors{q}));
+        obj.info('Query %d: %d features.',q,size(qDescriptors{q},2));
       end
     end
 
