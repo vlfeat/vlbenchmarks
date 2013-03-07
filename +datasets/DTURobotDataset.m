@@ -1,38 +1,22 @@
-classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
-    & helpers.GenericInstaller
+classdef DTURobotDataset < datasets.GenericCorrespondenceDataset ...
+    & helpers.Logger & helpers.GenericInstaller
 
 
   properties (SetAccess=private, GetAccess=public)
     Category = 'arc1'; % Dataset category
-    DataDir; % Image location
-    ImgExt; % Image extension
-    % Number of different perturbation configurations within the category.
-    NumPerturbationsConfigurations;
-    % Number of images for each perturbation configuration.
-    NumImagesPerPerturbation;
-    ImageNames;
-    ImageNamesLabel;
     Viewpoints;
     Lightings;
     ReconstructionsDir;
     CacheDir;
     CamerasPath;
-    ImgWidth;
-    ImgHeight;
     CodeDir;
+    DataDir;
   end
 
   properties (Constant)
-    KeyPrefix = 'DTURobotDataset';
     % All dataset categories
     AllCategories = {'arc1', 'arc2', 'arc3', 'linear_path', ...
                      'lighting_x', 'lighting_y'};
-    %=3mm
-    StrLBoxPad=3e-3;
-    %pixels
-    BackProjThresh=5;
-    %Margin for change in scale, corrected for distance to the secen, in orer for a correspondance to be accepted. A value of 2 corresponds to an octave.
-    ScaleMargin=2;
   end
 
   properties (Constant, Hidden)
@@ -51,37 +35,46 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
       round([-25: 50/29: 25]*10)/10,... % arc2
       round([-20: 40/24: 20]*10)/10,... % arc3
       round([.5214: .3/14: .8]*10)/10,...   % linear_path
-      round([0: 180.8/10: 180.8]*10)/10,... % lighting_x
-      round([0: 80.3/10: 80.3]*10)/10,... % lighting_y
+      round([0: 180.8/8: 180.8]*10)/10,... % lighting_x
+      round([0: 80.3/6: 80.3]*10)/10,... % lighting_y
     };
-
+    % Viewpoint indices for each category.
     CategoryViewpoints = {...
       [1:24 26:49], ...
       [65:94], ...
       [95:119], ...
       [51:64], ...
-      [12 25 56 64], ...
-      [12 25 56 64], ...
+      [12 25 60 87], ...
+      [12 25 60 87], ...
     };
-
+    % Lighting indices for each category.
     CategoryLightings = {...
       0, ...
       0, ...
       0, ...
       0, ...
-      [20:30], ...
-      [31:41], ...
+      [20:28], ...
+      [29:35], ...
     };
-
-    NumScenes = 60;
-    %Size of search cells in the structured light grid.
+    % Size of search cells in the structured light grid.
     CellRadius = 10;
+    % Acceptance threshold of point distance in 3D. 3e-3 = 3mm.
+    StrLBoxPad=3e-3;
+    % Acceptance threshold of backprojection error in pixels.
+    BackProjThresh=5;
+    % Acceptance threshold of scale difference after distance normalization. A 
+    % value of 2 corresponds to an octave.
+    ScaleMargin = 2;
+
+    ImgWidth = 1600;
+    ImgHeight = 1200;
+
     % Installation directory
     RootInstallDir = fullfile('data','datasets','DTURobot');
-    % Root url for dataset tarballs
-%   % URL for code (+ some data) tarballs
-    CodeUrl = 'http://roboimagedata.imm.dtu.dk/code/RobotEvalCode.tar.gz';
-%    DatasetUrl = 'http://roboimagedata.imm.dtu.dk/code/RobotEvalCode.tar.gz';
+    % URL for dataset tarballs
+    CodeUrl = 'http://roboimagedata.imm.dtu.dk/data/code.tar.gz';
+    ReconstructionsUrl = 'http://roboimagedata.imm.dtu.dk/data/ground_truth.tar.gz';
+    ScenesUrl = 'http://roboimagedata.imm.dtu.dk/data/condensed.tar.gz';
   end
 
   methods
@@ -96,13 +89,6 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
       obj.DatasetName = ['DTURobotDataset-' opts.Category];
       obj.Category= opts.Category;
       obj.DataDir = fullfile(obj.RootInstallDir,'scenes');
-      if strcmp(obj.Category,'lighting_x') || strcmp(obj.Category,'lighting_y')
-        obj.NumPerturbationsConfigurations = numel(obj.CategoryLightings{loc})
-        obj.NumImagesPerPerturbation = obj.NumScenes * numel(obj.CategoryViewpoints{loc});
-      else
-        obj.NumPerturbationsConfigurations = numel(obj.CategoryViewpoints{loc});
-        obj.NumImagesPerPerturbation = obj.NumScenes;
-      end
 
       obj.checkInstall(varargin);
       obj.ImageNames = obj.CategoryImageLabels{loc};
@@ -113,46 +99,58 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
       obj.CamerasPath = fullfile(obj.RootInstallDir, 'cameras.mat');
       obj.CacheDir = fullfile(obj.RootInstallDir, 'cache');
       obj.CodeDir = fullfile(obj.RootInstallDir, 'code');
-      obj.ImgWidth = 1600;
-      obj.ImgHeight = 1200;
-
+      obj.NumScenes = 60;
+      obj.NumLabels = numel(obj.ImageNames);
+      if strfind(obj.Category,'lighting')
+        obj.NumImages = obj.NumScenes * obj.NumLabels * numel(obj.CategoryViewpoints{loc});
+      else
+        obj.NumImages = obj.NumScenes * obj.NumLabels;
+      end
       addpath(obj.CodeDir)
     end
 
     function imgPath = getImagePath(obj, imgId)
-      imgPath = fullfile(obj.DataDir, sprintf('scene%.3d/%.3d_%.2d.png', ...
-          imgId.scene, imgId.viewpoint, imgId.lighting));
+      if isstruct(imgId)
+        imgPath = fullfile(obj.DataDir, sprintf('scene%.3d/%.3d_%.2d.png', ...
+            imgId.scene, imgId.viewpoint, imgId.lighting));
+      else
+        labelNo = floor(imgId/obj.NumImages)+1;
+        sceneNo = mod(imgId,obj.NumImages)+1;
+        imgId = obj.getImageId(labelNo, sceneNo);
+        imgPath = obj.getImagePath(imgId);
+      end
     end
 
-    function imgId = getReferenceImageId(obj, confNo, imgNo)
-      imgId.scene = imgNo;
+    function imgId = getReferenceImageId(obj, labelNo, sceneNo)
+      imgId.scene = sceneNo;
       imgId.viewpoint = 25;
       imgId.lighting = 0;
     end
 
-    function imgId = getImageId(obj, confNo, imgNo)
-      if strcmp(obj.Category,'lighting_x') || strcmp(obj.Category,'lighting_y')
-        imgId.viewpoint = obj.Viewpoints(mod(imgNo, numel(obj.Viewpoints))+1);
-        imgId.lighting = obj.Lightings(confNo);
-        imgId.scene = floor(imgNo/numel(obj.Viewpoints));
+    function imgId = getImageId(obj, labelNo, sceneNo)
+      if strfind(obj.Category,'lighting')
+        imgId.viewpoint = obj.Viewpoints(mod(sceneNo, numel(obj.Viewpoints))+1);
+        imgId.lighting = obj.Lightings(labelNo);
+        imgId.scene = floor(sceneNo/numel(obj.Viewpoints))+1;
       else
-        imgId.viewpoint = obj.Viewpoints(confNo);
+        imgId.viewpoint = obj.Viewpoints(labelNo);
         imgId.lighting = 0;
-        imgId.scene = imgNo;
+        imgId.scene = sceneNo;
       end
     end
 
-    function tfs = getTransformation(obj, imageAId, imageBId)
-      Cams = GetCamPair(imageAId.viewpoint, imageBId.viewpoint);
-      %TODO
+    function [validFramesA validFramesB] = validateFrames(obj, ...
+        imgAId, imgBId, framesA, framesB)
+        validFramesA = logical(ones(1, size(framesA,2)));
+        validFramesB = logical(ones(1, size(framesB,2)));
     end
 
-    function frameOverlaps = getFrameOverlaps(obj, imageAId, imageBId, framesA, framesB)
+    function overlaps = scoreFrameOverlaps(obj, imgAId, imgBId, framesA, framesB)
       % Get 3D reconstruction
-      [Grid3D, Pts] = GenStrLightGrid(imageAId.viewpoint, ...
+      [Grid3D, Pts] = GenStrLightGrid(imgAId.viewpoint, ...
           obj.ReconstructionsDir, obj.ImgHeight, obj.ImgWidth, ...
-          obj.CellRadius, imageAId.scene);
-      CamPair = GetCamPair(imageAId.viewpoint, imageBId.viewpoint);
+          obj.CellRadius, imgAId.scene);
+      CamPair = GetCamPair(imgAId.viewpoint, imgBId.viewpoint);
 
       N = size(framesA,2);
       neighs = cell(1,N);
@@ -161,8 +159,8 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
         frame_ref = framesA(:, f)';
         [neighs{f}, scores{f}] = obj.overlap(Grid3D, Pts, CamPair, frame_ref, framesB');
       end
-      frameOverlaps.neighs = neighs;
-      frameOverlaps.scores = scores;
+      overlaps.neighs = neighs;
+      overlaps.scores = scores;
     end
 
 
@@ -178,8 +176,8 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
       if(IsEst)
         Var = Var+obj.StrLBoxPad;
         Q = Mean*ones(1,8)+[Var(1)*[-1  1 -1  1 -1  1 -1  1];
-                          Var(2)*[-1 -1  1  1 -1 -1  1  1];
-                          Var(3)*[-1 -1 -1 -1  1  1  1  1]];
+                            Var(2)*[-1 -1  1  1 -1 -1  1  1];
+                            Var(3)*[-1 -1 -1 -1  1  1  1  1]];
         q = Cams(:,:,2)*[Q;ones(1,8)];
         depth = mean(q(3,:));
         q(1,:) = q(1,:)./q(3,:);
@@ -196,14 +194,12 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
                    frames(:,3)>Scale/obj.ScaleMargin & ...
                    frames(:,3)<Scale*obj.ScaleMargin );
         
-        if(~isempty(idx))
-          for i=1:length(idx),
-            % Score matches 
-            consistency = PointCamGeoConsistency([KeyP 1]', [frames(idx(i),1:2) 1]', Cams);
-            if consistency < obj.BackProjThresh
-              neighs = [neighs idx(i)];
-              scores = [scores 1/consistency];
-            end
+        for i=1:length(idx),
+          % Score matches 
+          consistency = PointCamGeoConsistency([KeyP 1]', [frames(idx(i),1:2) 1]', Cams);
+          if consistency < obj.BackProjThresh
+            neighs = [neighs idx(i)];
+            scores = [scores 1/consistency];
           end
         end
       end
@@ -215,10 +211,13 @@ classdef DTURobotDataset < datasets.GenericDataset & helpers.Logger...
   methods (Access = protected)
     function [urls dstPaths] = getTarballsList(obj)
       import datasets.*;
-      error('Dataset not available at the moment.')
       installDir = DTURobotDataset.RootInstallDir;
-      dstPaths = {fullfile(installDir)};
-      urls = {DTURobotDataset.CodeUrl};
+      dstPaths = {fullfile(installDir),
+                  fullfile(installDir),
+                  fullfile(installDir)};
+      urls = {DTURobotDataset.CodeUrl,
+              DTURobotDataset.ReconstructionsUrl,
+              DTURobotDataset.ScenesUrl};
     end
   end
 end

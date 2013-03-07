@@ -29,7 +29,7 @@ import localFeatures.*;
 % settings, one simply creates multiple instances of these objects.
 
 siftDetector = VlFeatSift();
-thrSiftDetector = VlFeatSift('PeakThresh',11);
+thrSiftDetector = VlFeatSift('PeakThresh',10);
 
 % VLBenchmarks enables a simple access to a number of public
 % benchmakrs. It also provides simple facilities to generate test data
@@ -73,6 +73,9 @@ helpers.printFigure(resultsPath,'siftFrames',0.9);
 
 dataset = datasets.VggAffineDataset('Category','graf');
 
+% Uncomment this to demo the DTU Robot dataset instead of VGG Affine
+%dataset = datasets.DTURobotDataset('Category','arc2');
+
 % Next, the benchmark is intialised by choosing various
 % parameters. The defaults correspond to the seetting in the original
 % publication (IJCV05).
@@ -83,8 +86,18 @@ repBenchmark = RepeatabilityBenchmark('Mode','Repeatability');
 % detects MSER image features.
 
 mser = VlFeatMser();
-featExtractors = {siftDetector, thrSiftDetector, mser};
 
+if strfind(dataset.DatasetName, 'DTURobotDataset')
+  % Set more restrictive thresholds to limit the number of interest points per
+  % image. At default thresholds, the detectors generate ~6000 interest points.
+  thrSiftDetector = VlFeatSift('PeakThresh',11);
+  thrMserDetector = VlFeatMser('Delta',15);
+  featExtractors = {thrSiftDetector, thrMserDetector};
+  detectorNames = {'DoG(PT=11)', 'MSER(Delta=15)'};
+else
+  featExtractors = {siftDetector, thrSiftDetector, mser};
+  detectorNames = {'SIFT','SIFT PT=10','MSER'};
+end
 % Now we are ready to run the repeatability test. We do this by fixing
 % a reference image A and looping through other images B in the
 % set. To this end we use the following information:
@@ -105,21 +118,24 @@ featExtractors = {siftDetector, thrSiftDetector, mser};
 repeatability = [];
 numCorresp = [];
 
-imageAPath = dataset.getImagePath(1);
 for d = 1:numel(featExtractors)
-  for i = 2:dataset.NumImages
-    [repeatability(d,i) numCorresp(d,i)] = ...
-      repBenchmark.testFeatureExtractor(featExtractors{d}, ...
-                                dataset.getTransformation(i), ...
-                                dataset.getImagePath(1), ...
-                                dataset.getImagePath(i));
+  % use a maximum of three scenes for this demo.
+  scenes = min(dataset.NumScenes, 3);
+  for sceneNo = 1:scenes
+    for labelNo = 1:dataset.NumLabels
+      img_ref_id = dataset.getReferenceImageId(labelNo, sceneNo);
+      img_id = dataset.getImageId(labelNo, sceneNo);
+      [repeatability(d, labelNo, sceneNo) numCorresp(d, labelNo, sceneNo)] = ...
+          repBenchmark.testFeatureExtractor(featExtractors{d}, dataset, ... 
+                                            img_ref_id, img_id);
+    end
   end
 end
+
 
 % The scores can now be prented, as well as visualized in a
 % graph. This uses two simple functions defined below in this file.
 
-detectorNames = {'SIFT','SIFT PT=10','MSER'};
 printScores(detectorNames, 100 * repeatability, 'Repeatability');
 printScores(detectorNames, numCorresp, 'Number of correspondences');
 
@@ -138,24 +154,26 @@ helpers.printFigure(resultsPath,'numCorresp',0.6);
 % We do this by running the repeatabiltiy score again. However, since
 % the results are cached, this is fast.
 
-imageBIdx = 3;
+% TODO: andersbll: I propose to implement a function in RepeatabilityBenchmark 
+% called 'matchFrames' and use it like the following.
 
-[drop drop siftCorresps siftReprojFrames] = ...
-  repBenchmark.testFeatureExtractor(siftDetector, ...
-                            dataset.getTransformation(imageBIdx), ...
-                            dataset.getImagePath(1), ...
-                            dataset.getImagePath(imageBIdx));
+%imageBIdx = 3;
+%sceneNo = 1;
+%img_ref_id = dataset.getReferenceImageId(imageBIdx, sceneNo);
+%img_id = dataset.getImageId(imageBIdx, sceneNo);
+%[siftCorresps siftReprojFrames] = ...
+%  repBenchmark.matchFrames(siftDetector, dataset, img_ref_id, img_id);
 
-% And plot the feature frame correspondences
+%% And plot the feature frame correspondences
 
-figure(4); clf;
-imshow(dataset.getImagePath(imageBIdx));
-benchmarks.helpers.plotFrameMatches(siftCorresps,...
-                                    siftReprojFrames,...
-                                    'IsReferenceImage',false,...
-                                    'PlotMatchLine',false,...
-                                    'PlotUnmatched',false);
-helpers.printFigure(resultsPath,'correspondences',0.75);
+%figure(4); clf;
+%imshow(dataset.getImagePath(imageBIdx));
+%benchmarks.helpers.plotFrameMatches(siftCorresps,...
+%                                    siftReprojFrames,...
+%                                    'IsReferenceImage',false,...
+%                                    'PlotMatchLine',false,...
+%                                    'PlotUnmatched',false);
+%helpers.printFigure(resultsPath,'correspondences',0.75);
 
 % --------------------------------------------------------------------
 % PART 3: Detector matching score
@@ -171,30 +189,54 @@ helpers.printFigure(resultsPath,'correspondences',0.75);
 % detector is used as descriptor form MSER.
 
 mserWithSift = DescriptorAdapter(mser, siftDetector);
-featExtractors = {siftDetector, thrSiftDetector, mserWithSift};
+if strfind(dataset.DatasetName, 'DTURobotDataset')
+  thrSiftDetector = VlFeatSift('PeakThresh',11);
+  thrMserDetector = VlFeatMser('Delta',15);
+  mserWithSift = DescriptorAdapter(thrMserDetector, siftDetector);
+  featExtractors = {thrSiftDetector, mserWithSift};
+  detectorNames = {'DoG(PT=11) with SIFT', 'MSER(Delta=15) with SIFT'}
+else
+  featExtractors = {siftDetector, thrSiftDetector, mserWithSift};
+  detectorNames = {'SIFT','SIFT PT=10','MSER with SIFT'}
+end
 
 % We create a benchmark object and run the tests as before, but in
 % this case we request that descriptor-based matched should be tested.
 
 matchingBenchmark = RepeatabilityBenchmark('Mode','MatchingScore');
 
+%matchScore = [];
+%numMatches = [];
+
+%for d = 1:numel(featExtractors)
+%  for i = 2:dataset.NumImages
+%    [matchScore(d,i) numMatches(d,i)] = ...
+%      matchingBenchmark.testFeatureExtractor(featExtractors{d}, ...
+%                                dataset, ...
+%                                1, ...
+%                                i);
+%  end
+%end
+
 matchScore = [];
 numMatches = [];
 
 for d = 1:numel(featExtractors)
-  for i = 2:dataset.NumImages
-    [matchScore(d,i) numMatches(d,i)] = ...
-      matchingBenchmark.testFeatureExtractor(featExtractors{d}, ...
-                                dataset.getTransformation(i), ...
-                                dataset.getImagePath(1), ...
-                                dataset.getImagePath(i));
+  % use a maximum of three scenes for this demo.
+  scenes = min(dataset.NumScenes, 3);
+  for sceneNo = 1:scenes
+    for labelNo = 1:dataset.NumLabels
+      img_ref_id = dataset.getReferenceImageId(labelNo, sceneNo);
+      img_id = dataset.getImageId(labelNo, sceneNo);
+      [matchScore(d, labelNo, sceneNo) numMatches(d, labelNo, sceneNo)] = ...
+          matchingBenchmark.testFeatureExtractor(featExtractors{d}, ...
+                                dataset, img_ref_id, img_id);
+    end
   end
 end
 
+
 % Print and plot the results
-
-detectorNames = {'SIFT','SIFT PT=10','MSER with SIFT'};
-
 printScores(detectorNames, matchScore*100, 'Match Score');
 printScores(detectorNames, numMatches, 'Number of matches') ;
 
@@ -209,21 +251,22 @@ helpers.printFigure(resultsPath,'numMatches',0.6);
 % Same as with the correspondences, we can plot the matches based on
 % feature frame descriptors. The code is nearly identical.
 
-imageBIdx = 3;
-[r nc siftCorresps siftReprojFrames] = ...
-  matchingBenchmark.testFeatureExtractor(siftDetector, ...
-                            dataset.getTransformation(imageBIdx), ...
-                            dataset.getImagePath(1), ...
-                            dataset.getImagePath(imageBIdx));
+% TODO, see above
+%imageBIdx = 3;
+%[r nc siftCorresps] = ...
+%  matchingBenchmark.testFeatureExtractor(siftDetector, ...
+%                            dataset, ...
+%                            1, ...
+%                            imageBIdx);
 
-figure(7); clf;
-imshow(imread(dataset.getImagePath(imageBIdx)));
-benchmarks.helpers.plotFrameMatches(siftCorresps,...
-                                    siftReprojFrames,...
-                                    'IsReferenceImage',false,...
-                                    'PlotMatchLine',false,...
-                                    'PlotUnmatched',false);
-helpers.printFigure(resultsPath,'matches',0.75);
+%figure(7); clf;
+%imshow(imread(dataset.getImagePath(imageBIdx)));
+%benchmarks.helpers.plotFrameMatches(siftCorresps,...
+%                                    siftReprojFrames,...
+%                                    'IsReferenceImage',false,...
+%                                    'PlotMatchLine',false,...
+%                                    'PlotUnmatched',false);
+%helpers.printFigure(resultsPath,'matches',0.75);
 
 % --------------------------------------------------------------------
 % Helper functions
@@ -252,8 +295,18 @@ function printScores(detectorNames, scores, name)
 end
 
 function plotScores(detectorNames, dataset, score, titleText)
-  xstart = max([find(sum(score,1) == 0, 1) + 1 1]);
+  xstart = 1;
   xend = size(score,2);
+  if ndims(score) == 2
+    plot(xstart:xend,score(:,xstart:xend)','+-','linewidth', 2); hold on ;
+  else
+    score_std = std(score,0,3);
+    score = mean(score,3);
+    X = repmat(xstart:xend,[size(score, 1) 1])';
+    Y = score(:,xstart:xend)';
+    E = score_std(:,xstart:xend)';
+    errorbar(X,Y,E,'+-','linewidth', 2); hold on ;
+  end
   xLabel = dataset.ImageNamesLabel;
   xTicks = dataset.ImageNames;
   plot(xstart:xend,score(:,xstart:xend)','+-','linewidth', 2); hold on ;
@@ -274,3 +327,4 @@ function plotScores(detectorNames, dataset, score, titleText)
   axis([xstart xend 0 maxScore]);
 end
 end
+

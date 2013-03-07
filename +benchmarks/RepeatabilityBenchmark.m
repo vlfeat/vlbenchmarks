@@ -139,13 +139,9 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
   properties
     Opts = struct(...
       'overlapError', 0.4,...
-      'normaliseFrames', true,...
       'cropFrames', true,...
-      'magnification', 3,...
-      'warpMethod', 'linearise',...
       'mode', 'repeatability',...
-      'descriptorsDistanceMetric', 'L2',...
-      'normalisedScale', 30);
+      'descriptorsDistanceMetric', 'L2');
   end
 
   properties(Constant, Hidden)
@@ -174,8 +170,8 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       obj.checkInstall(varargin);
     end
 
-    function [score numMatches bestMatches reprojFrames] = ...
-        testFeatureExtractor(obj, featExtractor, tf, imageAPath, imageBPath)
+    function [score numMatches bestMatches] = ...
+        testFeatureExtractor(obj, featExtractor, dataset, imgAId, imgBId)
       % testFeatureExtractor Image feature extractor repeatability
       %   REPEATABILITY = obj.testFeatureExtractor(FEAT_EXTRACTOR, TF,
       %   IMAGEAPATH, IMAGEBPATH) computes the repeatability REP of a image
@@ -211,6 +207,8 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       import benchmarks.*;
       import helpers.*;
 
+      imageAPath = dataset.getImagePath(imgAId);
+      imageBPath = dataset.getImagePath(imgBId);
       obj.info('Comparing frames from det. %s and images %s and %s.',...
           featExtractor.Name,getFileName(imageAPath),...
           getFileName(imageBPath));
@@ -228,29 +226,29 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         if obj.ModesOpts(obj.Opts.mode).matchDescs
           [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
           [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
-          [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
-            tf, imageASize, imageBSize, framesA, framesB,...
+          [score numMatches bestMatches] = obj.testFeatures(...
+            dataset, imgAId, imgBId, imageASize, imageBSize, framesA, framesB,...
             descriptorsA, descriptorsB);
         else
           [framesA] = featExtractor.extractFeatures(imageAPath);
           [framesB] = featExtractor.extractFeatures(imageBPath);
-          [score numMatches bestMatches reprojFrames] = ...
-            obj.testFeatures(tf,imageASize, imageBSize,framesA, framesB);
+          [score numMatches bestMatches] = ...
+            obj.testFeatures(dataset, imgAId, imgBId, imageASize, imageBSize,framesA, framesB);
         end
         if featExtractor.UseCache
-          results = {score numMatches bestMatches reprojFrames};
+          results = {score numMatches bestMatches};
           obj.storeResults(results, resultsKey);
         end
       else
-        [score numMatches bestMatches reprojFrames] = cachedResults{:};
+        [score numMatches bestMatches] = cachedResults{:};
         obj.debug('Results loaded from cache');
       end
 
     end
 
-    function [score numMatches matches reprojFrames] = ...
-        testFeatures(obj, tf, imageASize, imageBSize, framesA, framesB, ...
-        descriptorsA, descriptorsB)
+    function [score numMatches matches] = ...
+        testFeatures(obj, dataset, imgAId, imgBId, imageASize, ...
+        imageBSize, framesA, framesB, descriptorsA, descriptorsB)
       % testFeatures Compute repeatability of given image features
       %   [SCORE NUM_MATCHES] = obj.testFeatures(TF, IMAGE_A_SIZE,
       %   IMAGE_B_SIZE, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B) Compute
@@ -284,7 +282,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       matchDescriptors = obj.ModesOpts(obj.Opts.mode).matchDescs;
 
       if isempty(framesA) || isempty(framesB)
-        matches = zeros(size(framesA,2)); reprojFrames = {};
+        matches = zeros(size(framesA,2));
         obj.info('Nothing to compute.');
         return;
       end
@@ -299,7 +297,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       score = 0; numMatches = 0;
       startTime = tic;
-      normFrames = obj.Opts.normaliseFrames;
+
       overlapError = obj.Opts.overlapError;
       overlapThresh = 1 - overlapError;
 
@@ -308,57 +306,29 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       framesA = localFeatures.helpers.frameToEllipse(framesA) ;
       framesB = localFeatures.helpers.frameToEllipse(framesB) ;
 
-      % map frames from image A to image B and viceversa
-      reprojFramesA = warpEllipse(tf, framesA,...
-        'Method',obj.Opts.warpMethod) ;
-      reprojFramesB = warpEllipse(inv(tf), framesB,...
-        'Method',obj.Opts.warpMethod) ;
-
       % optionally remove frames that are not fully contained in
       % both images
       if obj.Opts.cropFrames
-        % find frames fully visible in both images
-        bboxA = [1 1 imageASize(2)+1 imageASize(1)+1] ;
-        bboxB = [1 1 imageBSize(2)+1 imageBSize(1)+1] ;
-
-        visibleFramesA = isEllipseInBBox(bboxA, framesA ) & ...
-          isEllipseInBBox(bboxB, reprojFramesA);
-
-        visibleFramesB = isEllipseInBBox(bboxA, reprojFramesB) & ...
-          isEllipseInBBox(bboxB, framesB );
+        [validFramesA validFramesB] = dataset.validateFrames(imgAId, imgBId, framesA, framesB);
 
         % Crop frames outside overlap region
-        framesA = framesA(:,visibleFramesA);
-        reprojFramesA = reprojFramesA(:,visibleFramesA);
-        framesB = framesB(:,visibleFramesB);
-        reprojFramesB = reprojFramesB(:,visibleFramesB);
+        framesA = framesA(:,validFramesA);
+        framesB = framesB(:,validFramesB);
+
         if isempty(framesA) || isempty(framesB)
           matches = zeros(size(framesA,2)); reprojFrames = {};
           return;
         end
 
         if matchDescriptors
-          descriptorsA = descriptorsA(:,visibleFramesA);
-          descriptorsB = descriptorsB(:,visibleFramesB);
+          descriptorsA = descriptorsA(:,validFramesA);
+          descriptorsB = descriptorsB(:,validFramesB);
         end
       end
 
-      if ~normFrames
-        % When frames are not normalised, account the descriptor region
-        magFactor = obj.Opts.magnification^2;
-        framesA = [framesA(1:2,:); framesA(3:5,:).*magFactor];
-        reprojFramesB = [reprojFramesB(1:2,:); ...
-          reprojFramesB(3:5,:).*magFactor];
-      end
-
-      reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
+      frameOverlaps = dataset.scoreFrameOverlaps(imgAId, imgBId, framesA, framesB);
       numFramesA = size(framesA,2);
-      numFramesB = size(reprojFramesB,2);
-
-      % Find all ellipse overlaps (in one-to-n array)
-      frameOverlaps = fastEllipseOverlap(reprojFramesB, framesA, ...
-        'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh,...
-        'NormalisedScale',obj.Opts.normalisedScale);
+      numFramesB = size(framesB,2);
 
       matches = [];
 
