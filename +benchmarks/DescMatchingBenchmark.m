@@ -1,70 +1,72 @@
 classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
     & helpers.Logger & helpers.GenericInstaller
-% benchmarks.DescMatchingBenchmark Descriptors matching PR curves
-%   benchmarks.DescMatchingBenchmark('OptionName',optionValue,...) 
-%   constructs an object of a becnhmark for testing performance of image
-%   feature descriptors measuring the precision/recall curves as defined in
-%   [1].
-%
-%   OverlapError:: 0.5
-%     Maximal overlap error of two frames to be considered as a valid
-%     correspondence.
-%
-%   CropFrames:: true
-%     Crop the frames out of overlapping regions (regions present in both
-%     images).
-%
-%   WarpMethod:: 'linearise'
-%     Numerical method used for warping ellipses. Available mathods are
-%     'standard' and 'linearise' for precise reproduction of IJCV2005 
-%     benchmark results.
-%
-%   DescriptorsDistanceMetric:: 'L2'
-%     Distance metric used for matching the descriptors. See
-%     documentation of vl_alldist2 for details.
-%
-%   See also: datasets.VggAffineDataset, vl_alldist2
-%
-%   REFERENCES
-%   [1] K. Mikolajczyk, C. Schmid. A performace Evaluation of Local
-%       Descriptors. IEEE PAM, 2005.
-
-% Authors: Karel Lenc
-
-% AUTORIGHTS
-
+  % benchmarks.DescMatchingBenchmark Descriptors matching PR curves
+  %   benchmarks.DescMatchingBenchmark('OptionName',optionValue,...)
+  %   constructs an object of a becnhmark for testing performance of image
+  %   feature descriptors measuring the precision/recall curves as defined in
+  %   [1].
+  %
+  % Options:
+  %
+  %   OverlapError:: 0.5
+  %     Maximal overlap error of two frames to be considered as a valid
+  %     correspondence.
+  %
+  %   CropFrames:: true
+  %     Crop the frames out of overlapping regions (regions present in both
+  %     images).
+  %
+  %   WarpMethod:: 'linearise'
+  %     Numerical method used for warping ellipses. Available mathods are
+  %     'standard' and 'linearise' for precise reproduction of IJCV2005
+  %     benchmark results.
+  %
+  %   DescriptorsDistanceMetric:: 'L2'
+  %     Distance metric used for matching the descriptors. See
+  %     documentation of vl_alldist2 for details.
+  %
+  %   See also: datasets.VggAffineDataset, vl_alldist2
+  %
+  %   REFERENCES
+  %   [1] K. Mikolajczyk, C. Schmid. A performace Evaluation of Local
+  %       Descriptors. IEEE PAM, 2005.
+  
+  % Authors: Karel Lenc
+  
+  % AUTORIGHTS
+  
   properties
     Opts = struct(...
-      'overlapError', 0.5,...
-      'cropFrames', false,...
-      'warpMethod', 'linearise',...
       'descriptorsDistanceMetric', 'L2',...
-      'matchingStrategy','nn');
+      'matchingStrategy','nn',...
+      'prPointsNum',inf);
+    ConsistencyModel;
   end
-
+  
   properties(Constant, Hidden)
     KeyPrefix = 'descMatching';
     MatchingStrategies = {'threshold','nn','nn-dist-ratio'};
   end
-
+  
   methods
-    function obj = DescMatchingBenchmark(varargin)
+    function obj = DescMatchingBenchmark(consistencyModel, varargin)
       import benchmarks.*;
       import helpers.*;
       obj.BenchmarkName = 'Desc. Matching';
-      [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
       varargin = obj.configureLogger(obj.BenchmarkName,varargin);
-      obj.checkInstall(varargin);
+      varargin = obj.checkInstall(varargin);
+      obj.Opts = vl_argparse(obj.Opts,varargin);
+      obj.ConsistencyModel = consistencyModel;
     end
-
-    function [precision recall info bestMatches reprojFrames] = ...
-        testFeatureExtractor(obj, featExtractor, tf, imageAPath, ...
-        imageBPath, magnification)
+    
+    function [precision recall subsres] = ...
+        testFeatureExtractor(obj, featExtractor, sceneGeometry, imageAPath, ...
+        imageBPath)
       % testFeatureExtractor
       %   [PRECISION, RECALL] = obj.testFeatureExtractor(FEAT_EXTR, TF, ...
-      %   IMG_A_PATH, IMG_B_PATH, MAGNIF) 
+      %   IMG_A_PATH, IMG_B_PATH)
       %
-      %   [PRECISION, RECALL, REPR_FRAMES, MATCHES] =
+      %   [PRECISION, RECALL, INFO] =
       %   obj.testFeatureExtractor(...) returns cell array REPR_FRAMES which
       %   contains reprojected and eventually cropped frames in
       %   format:
@@ -86,45 +88,43 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
       %   See also: benchmarks.DescMatchingBenchmark().
       import benchmarks.*;
       import helpers.*;
-
+      
       obj.info('Comparing frames from det. %s and images %s and %s.',...
-          featExtractor.Name,getFileName(imageAPath),...
-          getFileName(imageBPath));
-
+        featExtractor.Name,getFileName(imageAPath),...
+        getFileName(imageBPath));
+      
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
-      imageASize = helpers.imageSize(imageAPath);
-      imageBSize = helpers.imageSize(imageBPath);
+
       resultsKey = cell2str({obj.KeyPrefix, obj.getSignature(), ...
         featExtractor.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
-
+      
       % When detector does not cache results, do not use the cached data
       if isempty(cachedResults) || ~featExtractor.UseCache
         [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
         [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
-        [precision recall info bestMatches reprojFrames] = obj.testFeatures(...
-          tf, imageASize, imageBSize, framesA, framesB,...
-          descriptorsA, descriptorsB, magnification);
+        [precision recall subsres] = obj.testFeatures(sceneGeometry, ...
+          framesA, framesB, descriptorsA, descriptorsB);
         if featExtractor.UseCache
-          results = {precision recall info bestMatches reprojFrames};
+          results = {precision recall subsres};
           obj.storeResults(results, resultsKey);
         end
       else
-        [precision recall info bestMatches reprojFrames] = cachedResults{:};
+        [precision recall subsres] = cachedResults{:};
         obj.debug('Results loaded from cache');
       end
-
+      
     end
-
-    function [precision recall info matches reprojFrames] = ...
-        testFeatures(obj, tf, imageASize, imageBSize, framesA, framesB, ...
-        descriptorsA, descriptorsB, magnification)
-      % testFeatures Compute repeatability of given image features
+    
+    function [precision recall subsres] = ...
+        testFeatures(obj, sceneGeometry, framesA, framesB, ...
+        descriptorsA, descriptorsB)
+      % testFeatures
       %   [PRECISION, RECALL] = obj.testFeatures(TF, IMAGE_A_SIZE,
-      %   IMAGE_B_SIZE, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B, MAGNIF)
+      %   IMAGE_B_SIZE, FRAMES_A, FRAMES_B, DESCS_A, DESCS_B)
       %
-      %   [PRECISION, RECALL, REPR_FRAMES, MATCHES] =
+      %   [PRECISION, RECALL, INFO] =
       %   obj.testFeatures(...) returns cell array REPR_FRAMES which
       %   contains reprojected and eventually cropped frames in
       %   format:
@@ -140,11 +140,11 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
       %   When frame CFRAMES_A(k) is not matched, MATCHES(k) = 0.
       import benchmarks.helpers.*;
       import helpers.*;
-
+      
       obj.info('Computing matches between %d/%d frames.',...
-          size(framesA,2),size(framesB,2));
+        size(framesA,2),size(framesB,2));
       if isempty(framesA) || isempty(framesB)
-        matches = zeros(size(framesA,2)); reprojFrames = {}; 
+        subsres = struct(); precision = []; recall = [];
         obj.info('Nothing to compute.');
         return;
       end
@@ -152,132 +152,132 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
           || size(framesB,2) ~= size(descriptorsB,2)
         obj.error('Number of frames and descriptors must be the same.');
       end
-
+      
       startTime = tic;
-      overlapError = obj.Opts.overlapError;
-      overlapThresh = 1 - overlapError;
-
-      % convert frames from any supported format to unortiented
-      % ellipses for uniformity
-      framesA = localFeatures.helpers.frameToEllipse(framesA) ;
-      framesB = localFeatures.helpers.frameToEllipse(framesB) ;
-
-      % map frames from image A to image B and viceversa
-      reprojFramesA = warpEllipse(tf, framesA,...
-        'Method',obj.Opts.warpMethod) ;
-      reprojFramesB = warpEllipse(inv(tf), framesB,...
-        'Method',obj.Opts.warpMethod) ;
-
-      % optionally remove frames that are not fully contained in
-      % both images
-      if obj.Opts.cropFrames
-        % find frames fully visible in both images
-        bboxA = [1 1 imageASize(2)+1 imageASize(1)+1] ;
-        bboxB = [1 1 imageBSize(2)+1 imageBSize(1)+1] ;
-
-        visibleFramesA = isEllipseInBBox(bboxA, framesA ) & ...
-          isEllipseInBBox(bboxB, reprojFramesA);
-
-        visibleFramesB = isEllipseInBBox(bboxA, reprojFramesB) & ...
-          isEllipseInBBox(bboxB, framesB );
-
-        % Crop frames outside overlap region
-        framesA = framesA(:,visibleFramesA);
-        reprojFramesA = reprojFramesA(:,visibleFramesA);
-        framesB = framesB(:,visibleFramesB);
-        reprojFramesB = reprojFramesB(:,visibleFramesB);
-        if isempty(framesA) || isempty(framesB)
-          matches = zeros(size(framesA,2)); reprojFrames = {};
-          return;
-        end
-        descriptorsA = descriptorsA(:,visibleFramesA);
-        descriptorsB = descriptorsB(:,visibleFramesB);
+      [correspondences consistency subsres] = ...
+        obj.ConsistencyModel.findConsistentCorresps(sceneGeometry, framesA, framesB);
+      
+      if isempty(correspondences), return; end;
+      
+      if isfield(subsres,'validFramesA') && isfield(subsres,'validFramesB')
+        descriptorsA = descriptorsA(:,subsres.validFramesA);
+        descriptorsB = descriptorsB(:,subsres.validFramesB);
       end
-
-      % When frames are not normalised, account the descriptor region
-      magFactor = magnification^2;
-      framesA = [framesA(1:2,:); framesA(3:5,:).*magFactor];
-      reprojFramesB = [reprojFramesB(1:2,:); ...
-        reprojFramesB(3:5,:).*magFactor];
-
-      reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
-      numFramesA = size(framesA,2);
-      numFramesB = size(reprojFramesB,2);
-
-      obj.info('Computing frame overlaps');
-      frameOverlaps = fastEllipseOverlap(reprojFramesB, framesA, ...
-        'NormaliseFrames',false,'MinAreaRatio',overlapThresh);
-      numCorresps = sum(cellfun(@(a) sum(a > overlapThresh),frameOverlaps.scores));
+      
+      numFramesA = size(descriptorsA,2);
+      numFramesB = size(descriptorsB,2);
+      
+      % Create indexes of positive values in incidence matrix
+      validCorrespIdxs = sub2ind([numFramesA, numFramesB], ...
+        correspondences(1,:), correspondences(2,:));
+      
+      switch obj.Opts.matchingStrategy
+        case 'threshold'
+          % Count number of correspondences for each frame
+          numCorresps = size(consistency,2);
+        case {'nn','nn-dist-ratio'}
+          % Sort the edges by decrasing score
+          [drop, perm] = sort(consistency, 'descend');
+          sortedCorrespondences = correspondences(:, perm);
+          
+          % Find one to one stable matching
+          obj.info('Matching frames geometry.');
+          geometryMatches = greedyBipartiteMatching(numFramesA,...
+            numFramesB, sortedCorrespondences(1:2,:)');
+          subsres.geometryMatches = geometryMatches;
+          
+          numCorresps = sum(geometryMatches > 0);
+      end
       obj.info('Number of correspondences: %d',numCorresps);
-      descriptorsA = single(descriptorsA);
-      descriptorsB = single(descriptorsB);
       
       score = [];
       matches = [];
       labels = [];
       switch obj.Opts.matchingStrategy
         case 'threshold'
-          obj.info('Computing cross distances between all descriptors');
-          dists = vl_alldist2(descriptorsA,descriptorsB,...
-          obj.Opts.descriptorsDistanceMetric);
+          matcher = benchmarks.helpers.DataMatcher('matchStrategy','all');
+          [matches dists] = matcher.matchData(descriptorsA, descriptorsB);
+          [dists, perm] = sort(dists(:),'ascend');
+          
           labels = -ones(numFramesA, numFramesB);
-          for aIdx=1:numFramesA
-            neighs = frameOverlaps.neighs{aIdx};
-            overlaps = frameOverlaps.scores{aIdx};
-            hasEnoughOverlap = overlaps >= overlapThresh;
-            labels(aIdx,neighs(hasEnoughOverlap)) = 1;
-          end
-          [aIdx bIdx] = ind2sub([numFramesA, numFramesB],1:numel(dists));
-          matches = [aIdx bIdx];
+          labels(validCorrespIdxs) = 1;
+          labels = labels(perm);
+          
           score = -dists(:);
           labels = labels(:);
         case {'nn','nn-dist-ratio'}
-          obj.info('Building kd-tree.');
-          kdtree = vl_kdtreebuild(descriptorsB) ;
-          %[dists, perm] = sort(dists,2,'ascend');
-          %matches = [1:numFramesA;perm(:,1)'];
-          obj.info('Querying kd-tree.');
           switch obj.Opts.matchingStrategy
             case 'nn'
-              [index, dists] = vl_kdtreequery(kdtree, descriptorsB,...
-                descriptorsA, 'NumNeighbors', 1) ;
-              score = -dists(1,:);
+              matcher = benchmarks.helpers.DataMatcher('matchStrategy','1to1');
             case 'nn-dist-ratio'
-              [index, dists] = vl_kdtreequery(kdtree, descriptorsB,...
-                descriptorsA, 'NumNeighbors', 2) ;
-              score = -dists(1,:)./dists(2,:);
+              matcher = benchmarks.helpers.DataMatcher('matchStrategy','1to1secondclosest');
           end
+          
+          [matches dists] = matcher.matchData(descriptorsB, descriptorsA);
+          score = -inf(1,numFramesA);
           labels = -ones(1,numFramesA);
-          for aIdx=1:numFramesA
-            bIdx = index(1,aIdx);
-            [hasCorresp bCorresp] = ismember(bIdx,frameOverlaps.neighs{aIdx});
-            % Check whether found descriptor matches fulfill frame overlap
-            if hasCorresp && ...
-               frameOverlaps.scores{aIdx}(bCorresp) >= overlapThresh
-              labels(aIdx) = 1;
-            end
-          end
+          % In case of nn, dists contains descriptor distance -> use
+          % inverse. In case of second closes it contains ratio of the
+          % closest to the second closest - use inverse as well.
+          % In original KM code the second closest ratio is a ratio of the
+          % second closest to the closest descriptor (inverse).
+          score(matches(2,:)) = -dists;
+          
+          % Idxs of matches in incidence matrix
+          matchesIdxs = sub2ind([numFramesA, numFramesB], ...
+            matches(2,:), matches(1,:));
+          
+          % Find matches with enough overlap
+          [drop validMatch] = intersect(matchesIdxs, validCorrespIdxs);
+          
+          labels(matches(2,validMatch)) = 1;
       end
       numCorrectMatches = sum(labels > 0);
       obj.info('Number of correct matches: %d',numCorrectMatches);
+      
       [recall precision info] = vl_pr(labels,score,'NumPositives',numCorresps);
-      %[recall precision] = vl_pr(labels,score);
-
-      obj.debug('Results between %d/%d frames comp. in %gs',size(framesA,2), ...
-        size(framesB,2),toc(startTime));
+      subsres = vl_override(subsres, info);
+      subsres.numCorresp = numCorresps;
+      subsres.numCorrectMatches = numCorrectMatches;
+      subsres.descMatches = matches;
+      subsres.descDists = dists;
+      
+      if ~isinf(obj.Opts.prPointsNum)
+        numValues = numel(recall);
+        switch obj.Opts.matchingStrategy
+          case 'threshold'
+            samples = round(logspace(0,log10(numValues),obj.Opts.prPointsNum));
+          case {'nn','nn-dist-ratio'}
+            samples = round(linspace(1,numValues,obj.Opts.prPointsNum));
+        end
+        subsres.recall_all = recall;
+        subsres.precision_all = precision;
+        recall = recall(samples);
+        precision = precision(samples);
+      end
+      
+      if nargout > 2
+        subsres.matches = matches;
+        subsres.labels = labels;
+        subsres.distances = dists;
+      end
+      
+      obj.debug('Results between %d/%d frames comp. in %gs',numFramesA, ...
+        numFramesB,toc(startTime));
     end
 
     function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.Opts);
+      signature = [helpers.struct2str(obj.Opts) ...
+        obj.ConsistencyModel.getSignature()];
     end
   end
-
+  
   methods (Access = protected)
     function deps = getDependencies(obj)
-      deps = {helpers.Installer(),helpers.VlFeatInstaller('0.9.14'),...
-        benchmarks.helpers.Installer()};
+      deps = {helpers.Installer(),helpers.VlFeatInstaller('0.9.14'), ...
+        benchmarks.helpers.DataMatcher()};
     end
   end
-
+  
 end
 
