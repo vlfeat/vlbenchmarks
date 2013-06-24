@@ -5,6 +5,10 @@ classdef DTURobotDataset < datasets.GenericTransfDataset ...
 %   cellRadius [10]
 %     Size of search cells in the structured light grid.
 
+% Authors: Anders Boesen Lindbo Larsen, Karel Lenc
+
+% AUTORIGHTS
+
   properties (SetAccess=private, GetAccess=public)
     Category = 'arc1'; % Dataset category
     Viewpoints;

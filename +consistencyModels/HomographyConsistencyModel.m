@@ -27,6 +27,11 @@ classdef HomographyConsistencyModel < consistencyModels.GenericConsistencyModel 
 %     Numerical method used for warping ellipses. Available mathods are
 %     'standard' and 'linearise' for precise reproduction of IJCV2005 
 %     benchmark results.
+
+
+% Authors: Karel Lenc, Andrea Vedaldi
+
+% AUTORIGHTS
   
   properties
     Opts = struct(...

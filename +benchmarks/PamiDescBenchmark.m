@@ -19,7 +19,7 @@ classdef PamiDescBenchmark < benchmarks.GenericBenchmark ...
 %       A Performance Evaluation of Local Descriptors. PAMI, 
 %       27(10):1615–1630, 2005.
 
-% Authors: Karel Lenc, Varun Gulshan
+% Authors: Karel Lenc
 
 % AUTORIGHTS
   

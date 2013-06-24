@@ -14,6 +14,10 @@ classdef DTURobotConsistencyModel < consistencyModels.GenericConsistencyModel ..
 %     Acceptance threshold of scale difference after distance
 %     normalization. A value of 2 corresponds to an octave.
   
+% Authors: Anders Boesen Lindbo Larsen, Karel Lenc
+
+% AUTORIGHTS
+
   properties (SetAccess = protected, GetAccess = public)
     Opts = struct(...
       'strLBoxPad', 3e-3, ...

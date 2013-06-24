@@ -1,6 +1,9 @@
 classdef SampsonErrorConsistencyModel < consistencyModels.GenericConsistencyModel ...
   & helpers.Logger
-%UNTITLED4 Summary of this class goes here
+
+% Authors: Karel Lenc
+
+% AUTORIGHTS
   
   properties
     Opts = struct('maxError', 10);

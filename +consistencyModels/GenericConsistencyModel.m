@@ -1,6 +1,8 @@
 classdef GenericConsistencyModel < handle
-  %UNTITLED3 Summary of this class goes here
-  %   Detailed explanation goes here
+
+% Authors: Karel Lenc
+
+% AUTORIGHTS
   
   methods
     [corresps consistency subsres] = findConsistentCorresps(obj, ...
