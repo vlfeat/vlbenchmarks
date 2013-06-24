@@ -83,6 +83,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       'badImagesNum',100,...
       'samplingSeed',1,...
       'cacheDatabase',true);
+    Category;   % Dataset category
     ImagesDir;  % Directory with current category images
     GtDir;      % Directory with current category ground truth data
     Images;     % Array of structs defining the dataset images
@@ -115,11 +116,16 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       obj.DatasetName = 'VggRetrievalDataset';
       varargin = obj.configureLogger(obj.DatasetName, varargin);
       [obj.Opts varargin] = helpers.vl_argparse(obj.Opts,varargin);
-      obj.checkInstall(varargin);
       assert(ismember(obj.Opts.category,obj.AllCategories),...
              sprintf('Invalid category for vgg retreival dataset: %s\n',...
              obj.Opts.category));
+      obj.Category = obj.Opts.category;
+      obj.checkInstall(varargin);
       obj.ImagesDir = fullfile(obj.RootInstallDir,obj.Opts.category,'');
+      if strcmp(obj.Opts.category,'paris')
+        % Paris dataset archives are contained in a 'paris' subdirectory
+        obj.ImagesDir = fullfile(obj.ImagesDir,'paris','');
+      end
       obj.GtDir = fullfile(obj.RootInstallDir,...
         [obj.Opts.category '_gt'],'');
       % Load the object only in case when installed
@@ -148,8 +154,8 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       % getImagePath Get a path of an image from the database.
       %   IMG_PATH = obj.getImagePath(IMG_NO) Get path IMG_PATH of an
       %   image defined by its number 0 < IMG_NO <= obj.NumImages.
-      if imageNo >= 1 && imageNo <= obj.NumImages
-        imgPath = fullfile(obj.ImagesDir,obj.Images.names{imageNo});
+      if ~isempty(imageNo) && imageNo >= 1 && imageNo <= obj.NumImages
+        imgPath = fullfile(obj.ImagesDir,obj.Images.paths{imageNo});
       else
         obj.error('Out of bounds image number.\n');
       end
@@ -210,20 +216,39 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
   end
 
   methods(Access = protected)
+    function [names paths] = getAllImages(obj)
+      switch obj.Opts.category
+        case 'oxbuild'
+          % oxbuild images are stored in a single directory
+          files = dir(fullfile(obj.ImagesDir, '*.jpg')) ;
+          paths = {files.name};
+        case 'paris'
+          subdirs = dir(fullfile(obj.ImagesDir));
+          subdirs = subdirs([subdirs.isdir]);
+          subdirs = subdirs(~ismember({subdirs.name},{'.','..'}));
+          subdirs = {subdirs.name};
+          paths = cell(1,numel(subdirs));
+          for sdi = 1:numel(subdirs)
+            imgFiles = dir(fullfile(obj.ImagesDir, subdirs{sdi}, '*.jpg'));
+            paths{sdi} = cellfun(@(a)fullfile(subdirs{sdi},a),...
+              {imgFiles.name},'UniformOutput',false);
+          end
+          paths = [paths{:}];
+      end
+      function name = fname(path), [tmp name] = fileparts(path); end
+      names = cellfun(@fname,paths,'UniformOutput',false);
+    end
+
     function [images queries] = buildImageDatabase(obj)
       import datasets.*;
-      obj.info('Loading dataset %s.',obj.DatasetName);
-      names = dir(fullfile(obj.ImagesDir, '*.jpg')) ;
-      numImages = numel(names);
+      obj.info('Parsing dataset %s.',obj.Opts.category);
+      [imageNames imagePaths] = obj.getAllImages() ;
+      numImages = numel(imageNames);
       images.id = 1:numImages ;
-      images.names = {names.name} ;
-
-      postfixless = cell(numImages,1);
-      for i = 1:numImages
-        [ans,postfixless{i}] = fileparts(images.names{i}) ;
-      end
+      images.names = imageNames;
+      images.paths = imagePaths;
       function i = toindex(x)
-        [ok,i] = ismember(x,postfixless) ;
+        [ok,i] = ismember(x,imageNames);
         i = i(ok) ;
       end
       names = dir(fullfile(obj.GtDir,'*_query.txt'));
@@ -231,6 +256,7 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
       if numel(names) == 0
         obj.warn('No queries in %s',obj.GtDir);
       end
+      isoxbuild = strcmp(obj.Opts.category,'oxbuild');
 
       for i = 1:numel(names)
         base = names{i} ;
@@ -239,7 +265,8 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         name = base ;
         name = name(1:end-10) ;
         imageName = cell2mat(imageName) ;
-        imageName = imageName(6:end) ;
+        % Oxbuild - wrong image names in the query specifications
+        if isoxbuild, imageName = imageName(6:end); end;
         queries(i).name = name ;
         queries(i).imageName = imageName ;
         queries(i).imageId = toindex(imageName) ;
@@ -271,11 +298,11 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
           obj.sampleArray(allOkImages,obj.Opts.okImagesNum);
         junkImages = ...
           obj.sampleArray(allJunkImages,obj.Opts.junkImagesNum);
-        badImages = ...
+        images.badImages = ...
           obj.sampleArray(allBadImages,obj.Opts.badImagesNum);
 
         pickedImages = [allQueriesImages, goodImages, okImages, ...
-          junkImages, badImages];
+          junkImages, images.badImages];
         pickedImages = unique(pickedImages);
         obj.debug('Size of the images subset: %d',numel(pickedImages));
         
@@ -296,6 +323,8 @@ classdef VggRetrievalDataset < datasets.GenericDataset & helpers.Logger ...
         end
         images.id = 1:numel(pickedImages);
         images.names = images.names(pickedImages);
+        images.paths = images.paths(pickedImages);
+        images.badImages = map(images.badImages);
       end
     end
 
