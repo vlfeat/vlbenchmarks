@@ -15,8 +15,8 @@ classdef GenericTransfDataset < datasets.GenericDataset
   end
 
   methods(Abstract)
-    tf = getTransformation(obj,imgNo) 
-    % GETTRANSFORMATION Get transformation between an image and ref. image.
+    [geometry] = getSceneGeometry(obj,imgNo) 
+    % GETSCENEGEOMETRY Get transformation between an image and ref. image.
     %   TF = getTransformation(IMG_NO) Return the 3x3 homography TF from 
     %   image 1 to image IMG_NO.
   end

@@ -1,4 +1,4 @@
-function plotFrameMatches(bestMatches,reprojFrames,varargin)
+function plotFrameMatches(subsres,varargin)
 % PLOTFRAMEMATCHES Visualise matched frames in original images.
 %   PLOTFRAMEMATCHES(BEST_MATCHES, REPROJ_FRAMES) 
 %     Plots matches between frames stored in cell array REPROJ_FRAMES with
@@ -45,9 +45,32 @@ opts.plotUnmatched = true;
 opts.plotMatchLine = false;
 opts.isReferenceImage = true;
 opts.plotLegend = true;
+opts.filter = [];
 opts = helpers.vl_argparse(opts, varargin);
 
-[framesA,framesB,reprojFramesA,reprojFramesB] = reprojFrames{:};
+
+if ~isfield(subsres,'ellipsesA') || ...
+    ~isfield(subsres,'ellipsesB') || ...
+    ~isfield(subsres,'reprojEllipsesA') || ...
+    ~isfield(subsres,'reprojEllipsesB') || ...
+    ~isfield(subsres,'matches')
+  error(['Invalid fields of input structure.'...
+    'Are the results computed with Homography scene model?']);
+end
+
+framesA = subsres.ellipsesA;
+framesB = subsres.ellipsesB;
+reprojFramesA = subsres.reprojEllipsesA;
+reprojFramesB = subsres.reprojEllipsesB ;
+
+bestMatches = subsres.matches;
+
+if ~isempty(opts.filter)
+  bestMatches = bestMatches(opts.filter);
+  framesA = framesA(:,opts.filter);
+  reprojFramesA = reprojFramesA(:,opts.filter);
+end
+  
 hold on;
 
 matchBFrames = bestMatches(1,(bestMatches(1,:)~=0));

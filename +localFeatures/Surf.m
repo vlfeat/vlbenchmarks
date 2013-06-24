@@ -32,7 +32,8 @@ classdef Surf < localFeatures.GenericLocalFeatureExtractor & ...
       end
       obj.Name = 'SURF';
       varargin = obj.checkInstall(varargin);
-      obj.configureLogger(obj.Name,varargin);
+      varargin = obj.configureLogger(obj.Name,varargin);
+      obj.Opts = vl_argparse(obj.Opts, varargin);
       obj.SupportedImgFormats = {'.pgm'};
     end
 

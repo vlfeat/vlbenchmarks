@@ -57,6 +57,11 @@ classdef CvSurf < localFeatures.GenericLocalFeatureExtractor & ...
       if(size(img,3)>1), img = rgb2gray(img); end
       img = uint8(img);
       startTime = tic;
+      if size(frames,1) > 4
+        fscale = localFeatures.helpers.getFrameScale(frames);
+        frames = [frames(1:2,:); fscale];
+      end
+      
       [frames descriptors] = mex.cvSurf(img,'Frames', ...
         frames,obj.CvsurfArguments{:});
       timeElapsed = toc(startTime);

@@ -97,7 +97,7 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
         imgbox = [1 1 imgSize(2)+1 imgSize(1)+1];
         mf = obj.Opts.magnification ^ 2;
         magFrames = [frames(1:2,:) ; frames(3:5,:) .* mf];
-        isVisible = benchmarks.helpers.isEllipseInBBox(imgbox,magFrames);
+        isVisible = helpers.isEllipseInBBox(imgbox,magFrames);
         frames = frames(:,isVisible);
       end
       if isempty(frames), descriptors = []; return; end;

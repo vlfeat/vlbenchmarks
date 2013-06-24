@@ -6,6 +6,7 @@
 *.mexmaci64
 *.mexglx
 *.m~
+*.orig
 data/
 junk/
 results/

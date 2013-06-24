@@ -23,6 +23,14 @@ classdef GenericDataset < handle
   end
 
   methods
+    function paths = getImagePaths(obj, imgNos)
+    % getImagePaths Get array of paths of images from the dataset
+    %   IMG_PATHS = obj.getImagePaths(IMG_NOS) Returns cell array IMG_PATHS
+    %   with paths to images defined by their number in vector IMG_NOS.
+    %   All image numbers in IMG_NOS must be \in [1:NumImages]
+      paths = arrayfun(@(a) obj.getImagePath(a),imgNos,'UniformOutput',false);
+    end
+
     function signatures = getImagesSignature(obj, imgs)
     % getImagesSignature Get signature of all images in the dataset
     %   SIGN = obj.getImagesSignature() Returns signature of all the

@@ -58,7 +58,6 @@ classdef GenericInstaller < handle
       obj.installTarballs();
       obj.compile();
       obj.compileMexFiles();
-	    obj.setup();
     end
 
     function clean(obj)
@@ -195,12 +194,25 @@ classdef GenericInstaller < handle
         end
       end
     end
+    
+    function res = setupDependencies(obj)
+    % setupDependencies Setup all dependencies.
+    %   List of classes which this class depends on is defined by
+    %   return values of method getDependencies().
+      deps = obj.getDependencies();
+      res = true;
+      for dep = deps
+        dep{:}.setup();
+      end
+    end
 
     function varargin = checkInstall(obj, varargin)
     % checkInstall Check whether object is installed.
     %   obj.checkInstall('AutoInstall', false) Do not install if not
     %   installed.
       import helpers.*;
+      obj.setupDependencies();
+      obj.setup();
       opts.autoInstall = true;
       [opts varargin] = vl_argparse(opts, varargin{:});
       if opts.autoInstall && ~obj.isInstalled()
@@ -268,7 +280,7 @@ classdef GenericInstaller < handle
       if ~exist('flags','var'), flags = ''; end;
       curDir = pwd;
       [mexDir mexFile mexExt] = fileparts(mexFile);
-      mexCmd = sprintf('mex %s %s -O', [mexFile mexExt], flags);
+      mexCmd = sprintf('mex %s %s -O -v', [mexFile mexExt], flags);
       fprintf('Compiling: %s\n',mexCmd);
       cd(mexDir);
       try

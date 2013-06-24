@@ -75,12 +75,12 @@ classdef Logger < handle
     %   format, see Logger documentation for details.
       import helpers.*;
       obj.LogLabel = LogLabel;
-      opts.verbose = obj.VerboseLevel;
-      opts.fileVerbose = obj.FileVerboseLevel;
+      opts.verboseLevel = obj.VerboseLevel;
+      opts.fileVerboseLevel = obj.FileVerboseLevel;
       opts.logFile = obj.LogFile;
       [opts varargin] = vl_argparse(opts,varargin{:});
-      obj.VerboseLevel = opts.verbose;
-      obj.FileVerboseLevel = opts.fileVerbose;
+      obj.VerboseLevel = opts.verboseLevel;
+      obj.FileVerboseLevel = opts.fileVerboseLevel;
       obj.LogFile = opts.logFile;
     end
 
@@ -118,7 +118,7 @@ classdef Logger < handle
         obj.displayLog(level,varargin{:});
       end
       if ~isempty(obj.LogFile) && level <= obj.FileVerboseLevel
-        obj.logToFile(level,varargin)
+        obj.logToFile(level,varargin{:})
       end
     end
 
@@ -142,11 +142,10 @@ classdef Logger < handle
       % Change this method if you want to change the format of log
       % messages stored in a log file.
       lFile = fopen(obj.LogFile,'a');
-      name = obj.getName();
-      str = srpintf(varargin{:});
+      str = sprintf(varargin{:});
       % Adjust this to modify the output to log file
-      fprintf(lFile,'%s \t %s:%s %s\n',...
-        datestr(clock),obj.levelStr(level),name,str);
+      fprintf(lFile,'(%s)\t%s:\t%s\n',obj.levelStr(level),...
+          obj.LogLabel,str);
       fclose(lFile);
     end
   end

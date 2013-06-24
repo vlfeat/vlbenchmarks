@@ -120,7 +120,7 @@ classdef ExampleLocalFeatureExtractor < helpers.GenericInstaller ...
       % Crop the frames which are out of image
       ellipses = frameToEllipse(frames);
       imgBBox = [1,1,imgSize([2 1])];
-      isVisible = benchmarks.helpers.isEllipseInBBox(imgBBox, ellipses);
+      isVisible = helpers.isEllipseInBBox(imgBBox, ellipses);
       frames = frames(:,isVisible);
 
       % Prealocate descriptors

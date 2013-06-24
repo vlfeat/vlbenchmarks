@@ -19,6 +19,7 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
   properties (SetAccess = protected)
     FrameDetector; % Handle to the frame detector
     DescExtractor; % Handle to the descriptor extractor
+    Opts;
   end
 
   methods
@@ -39,6 +40,14 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
       obj.DescExtractor = descExtractor;
       obj.Name = [frameDetector.Name ' + ' descExtractor.Name];
       obj.configureLogger(obj.Name,varargin);
+
+      % Store the options in one struct
+      if isprop(frameDetector,'Opts'),
+        obj.Opts.detector = frameDetector.Opts;
+      end
+      if isprop(descExtractor,'Opts'),
+        obj.Opts.descExtractor = descExtractor.Opts;
+      end
 
       obj.SupportedImgFormats = intersect(frameDetector.SupportedImgFormats,...
         descExtractor.SupportedImgFormats);

@@ -36,7 +36,6 @@ switch ext
   case '.zip'
     command = unZipCommand;
     if ~commandExist(command) || ~hasWget, unzip(url,distDir); return; end
-    return;
   case '.bz2'
     command = unbzipCommand;
   otherwise

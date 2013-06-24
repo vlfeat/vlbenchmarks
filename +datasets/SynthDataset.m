@@ -11,12 +11,13 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     GenTfs
     ImageExt
     Image
+    GenerateImages = true;
   end
 
   properties (Constant)
     RootDir = fullfile('data','datasets','synthDataset');
     MaxLatitude = 85/180*pi;
-    GaussK = 3;
+    GaussK = 6;
     BlurTypes = {'gaussian','motion','median'};
     NoiseTypes = {'gaussian','localvar','salt & pepper','speckle'};
     GradientTypes = {'circular','linleft','linright','linup','lindown'};
@@ -27,8 +28,8 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       import helpers.*;
       obj.NumImages = numImages;
       obj.CropImage = cropImage;
-      obj.DatasetName = 'Synth. Dataset';
       [pathstr, obj.ImageName, obj.ImageExt] = fileparts(imagePath);
+      obj.DatasetName = ['Synth-' obj.ImageName];
 
       transformations = {};
       transfNames = {};
@@ -47,6 +48,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       obj.DataDir = fullfile(obj.RootDir,...
         obj.ImageName,transfName);
       obj.ImageNames = cell(obj.NumImages,1);
+      obj.DatasetName = [obj.DatasetName '-' transfName];
 
       % Check whether images already generated
       imgFiles = dir(fullfile(obj.DataDir, ['img*' obj.ImageExt]));
@@ -54,12 +56,22 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       if numel(imgFiles) == numImages && numel(tfsFiles) == numImages - 1
         obj.info('Transformations "%s" of image "%s" already exist.',...
           transfName,obj.ImageName);
+        obj.GenerateImages = false;
         % Generate image names
-        for tfh = transformations, tfh{1}(obj); end
+        for tfh = transformations
+          tfh{1}(obj); 
+        end
+        obj.ImageNames = cellfun(@strtrim,obj.ImageNames,'UniformOutput',false);
         return;
       else
         % Generate transformed images and save them
-        obj.Image = imread(imagePath);
+        if ~isempty(obj.ImageName)
+          if exist(imagePath,'file')
+            obj.Image = imread(imagePath);
+          else
+            obj.error('Input image does not exist.');
+          end
+        end
         vl_xmkdir(obj.DataDir);
         obj.info('Generating transformations "%s" of image "%s"...',...
         transfName,obj.ImageName);
@@ -71,6 +83,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         for tfh = transformations
           tfh{1}(obj);
         end
+        obj.ImageNames = cellfun(@strtrim,obj.ImageNames,'UniformOutput',false);
         obj.saveGeneratedTransformations();
         obj.GenImages = [];
       end
@@ -81,17 +94,37 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       imgPath = fullfile(obj.DataDir,sprintf('img%d%s',imgIdx,obj.ImageExt));
     end
 
-    function tfs = getTransformation(obj,imgIdx)
-      assert(imgIdx >= 1 && imgIdx <= obj.NumImages,'Out of bounds idx');
-      if(imgIdx == 1), tfs = eye(3); return; end
-      tfs = zeros(3,3);
-      [tfs(:,1) tfs(:,2) tfs(:,3)] = ...
-        textread(fullfile(obj.DataDir,sprintf('H1to%dp',imgIdx)),...
-        '%f %f %f%*[^\n]');
+    function sceneGeometry = getSceneGeometry(obj,imgNo)
+      import consistencyModels.*;
+      assert(imgNo >= 1 && imgNo <= obj.NumImages,'Out of bounds idx\n');
+      if(imgNo == 1)
+        tfs = eye(3);
+        testImgSize = obj.RefImageSize;
+      else
+        tfs = zeros(3,3);
+        [tfs(:,1) tfs(:,2) tfs(:,3)] = ...
+           textread(fullfile(obj.DataDir,sprintf('H1to%dp',imgNo)),...
+          '%f %f %f%*[^\n]');
+        testImgSize = helpers.imageSize(obj.getImagePath(imgNo));
+      end
+      sceneGeometry = HomographyConsistencyModel.createSceneGeometry(tfs, ...
+        obj.RefImageSize, testImgSize);
     end
   end
 
   methods (Static)
+    function res = isoBlobs(scales, cutoff)
+      if ~exist('scales','var'), scales = [1 10]; end;
+      res = {@(obj) obj.generateIsoBlobs(scales, cutoff)
+        sprintf('isoBlobs-cf%f-%0.2f-%0.2f',cutoff,scales(1),scales(end))};
+    end
+    
+    function res = isoCircles(radiuses, cutoff)
+      if ~exist('radiuses','var'), radiuses = [1 10]; end;
+      res = {@(obj) obj.generateIsoCircles(radiuses, cutoff)
+        sprintf('isoCircles-cf%f-%0.2f-%0.2f',cutoff,radiuses(1),radiuses(end))};
+    end
+    
     function res = scale(scales)
       if ~exist('scales','var'), scales = [1 2]; end;
       res = {@(obj) obj.generateScales(scales)
@@ -160,6 +193,14 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     function res = isInstalled()
       res = true;
     end
+    
+    function [ res ] = drawCircle( imsize, pt, radius )
+      [X Y] = ndgrid(1:imsize(1),1:imsize(2));
+      X = X(:); Y = Y(:);
+      radius_2 = radius^2;
+      cdists_2 = (X - pt(1)).^2 + (Y - pt(2)).^2;
+      res = reshape((cdists_2 <= radius_2), imsize);
+    end
   end
 
   methods (Access = protected, Hidden)
@@ -180,7 +221,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         angle = angles(i);
         obj.ImageNames{i} = [obj.ImageNames{i} ...
         num2str(angle/pi*180,'%0.2f') '° '];
-        if isempty(obj.Image), continue; end;
+        if ~obj.GenerateImages, continue; end;
         rot = [cos(angle) -sin(angle) 0;... 
            sin(angle) cos(angle) 0; 0 0 1];
         obj.GenTfs{i} = rot * obj.GenTfs{i};
@@ -196,12 +237,44 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       for i=1:numel(scales)
         scale = scales(i);
         obj.ImageNames{i} = num2str(scale,'%0.2f');
-        if isempty(obj.Image), continue; end;
+        % When we want to generate just the image names, continue
+        if ~obj.GenerateImages, continue; end;
         tfs = [scale 0 0; 0 scale 0; 0 0 1];
         obj.GenTfs{i} = tfs * obj.GenTfs{i};
       end
       obj.debug('Scales: %s.',...
         [sprintf('%g, ',scales(1:end-1)) num2str(scales(end))]);
+    end
+    
+    function generateIsoBlobs(obj, scales, cutoff)
+      obj.ImageNamesLabel = [obj.ImageNamesLabel 'isoBlob '];
+      scales = obj.checkParamsList(scales);
+      imgSize = round(max(scales)*cutoff)*2 + 1;
+      for i=1:numel(scales)
+        scale = scales(i);
+        obj.ImageNames{i} = num2str(scale,'%0.2f');
+        if ~obj.GenerateImages, continue; end;
+        obj.GenImages{i} = fspecial('gauss',imgSize,scale);
+        obj.GenImages{i} = obj.GenImages{i}./max(obj.GenImages{i}(:));
+      end
+      obj.debug('IsoBlobs: %s.',...
+        [sprintf('%g, ',scales(1:end-1)) num2str(scales(end))]);
+    end
+    
+    function generateIsoCircles(obj, radiuses, cutoff)
+      obj.ImageNamesLabel = [obj.ImageNamesLabel 'isoBlob '];
+      radiuses = obj.checkParamsList(radiuses);
+      imgSize = round(max(radiuses)*cutoff)*2 + 1;
+      imgSize = [imgSize imgSize];
+      for i=1:numel(radiuses)
+        radius = radiuses(i);
+        obj.ImageNames{i} = num2str(radius,'%0.2f');
+        if ~obj.GenerateImages, continue; end;
+        center = round(imgSize/2);
+        obj.GenImages{i} = obj.drawCircle(imgSize,center,radius).*255;
+      end
+      obj.debug('IsoBlobs: %s.',...
+        [sprintf('%g, ',radiuses(1:end-1)) num2str(radiuses(end))]);
     end
 
     function generateAffVpt(obj, latitudes, longitudes)
@@ -220,7 +293,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         obj.ImageNames{i} = [obj.ImageNames{i} ...
         num2str(lat/pi*180,'%0.2f') '°|' ...
         num2str(long/pi*180,'%0.2f') '° '];
-        if isempty(obj.Image), continue; end;
+        if ~obj.GenerateImages, continue; end;
         rot = [cos(long) -sin(long) 0;... 
            sin(long) cos(long) 0; 0 0 1];
         tM = [diag([1 abs(cos(lat))]) zeros(2,1); 0 0 1];
@@ -241,7 +314,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         nval = noiseValues(i);
         obj.debug('Generating %s noise with val. %f.',noiseType,val);
         obj.ImageNames{i} = ['\sigma_n=' num2str(nval,'%0.2f') ' '];
-        if isempty(obj.Image), continue; end;
+        if ~obj.GenerateImages, continue; end;
         switch noiseType
           case 'gaussian'
           obj.GenImages{i} = imnoise(obj.GenImages{i},'gaussian',0,nval);
@@ -264,20 +337,25 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         switch blurType
           case 'gaussian'
           obj.ImageNames{i} = ['\sigma_b=' num2str(val,'%0.2f') ' '];
-          if isempty(obj.Image), continue; end;
-          filterSize = round(obj.GaussK*val);
+          if ~obj.GenerateImages, continue; end;
+          if val == 0, continue; end; % Do not blur with sigma = 0
+          filterSize = round(obj.GaussK*2*val);
+          if mod(filterSize,2)==0, filterSize = filterSize + 1; end;
           filter = fspecial('gaussian',[filterSize filterSize],val);
-          obj.GenImages{i} = imfilter(obj.GenImages{i},filter,'same');
+          % Circular has got the cleanes spectrum
+          obj.GenImages{i} = imfilter(obj.GenImages{i},filter,'same','circular');
           case 'motion'
           filterSize = round(val);
           obj.ImageNames{i} = ['\l=' num2str(filterSize,'%d') ' '];
           if isempty(obj.Image), continue; end;
+          if val == 0, continue; end; % Do not blur with sigma = 0
           filter = fspecial('motion',filterSize,0);
           obj.GenImages{i} = imfilter(obj.GenImages{i},filter,'same');
           case 'median'
           filterSize = round(val);
           obj.ImageNames{i} = ['\d=' num2str(filterSize,'%d') ' '];
           if isempty(obj.Image), continue; end;
+          if val == 0, continue; end; % Do not blur with sigma = 0
           obj.GenImages{i} = medfilt2(obj.GenImages{i},...
             [filterSize filterSize]);
           otherwise
@@ -296,7 +374,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         obj.debug('Generating %s gradient with foff %f.',gradType,foff);
         obj.ImageNames{i} = ['\foff=' num2str(foff,'%d') ' '];
         if foff == 1, continue; end;
-        if isempty(obj.Image), continue; end;
+        if ~obj.GenerateImages, continue; end;
         imgSize = size(obj.Image);
         switch gradType
           case 'linup'
@@ -329,7 +407,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       for i = 1:numel(imQualities)
         imq = imQualities(i);
         obj.ImageNames{i} = ['jpeg_q=' num2str(imq,'%d') ' '];
-        if isempty(obj.Image), continue; end;
+        if ~obj.GenerateImages, continue; end;
         if imq == 100, continue; end;
         imFile = [tempname '.jpeg'];
         imwrite(obj.Image,imFile,'JPEG','Quality',imq);
@@ -357,7 +435,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
           obj.GenImages{i} = imfilter(obj.Image,filter,'same');
         end
         center = size(obj.Image);
-        center = center([2 1])'./2;
+        center = round(center([2 1])'./2);
         centerImageTf = [eye(2) [-center(1); -center(2)]; 0 0 1];
         if obj.CropImage
           mvImgTf = [eye(2) [center(1); center(2)];0 0 1];
@@ -377,23 +455,29 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
           mvImgTf = [eye(2) [-xMin; -yMin];0 0 1];
           tf = mvImgTf * tf * centerImageTf;
         end
-        % Transposed as Matlab uses row vectors in imtform definition
-        tform = maketform('projective',tf');
         im = obj.GenImages{i};
-        tImage = imtransform(im,tform,'XData',xData,'YData',...
-          yData,'UData',[0 size(im,2)],'VData',[0 size(im,1)]);
-        imwrite(tImage,imageFileName);
-        if i==1, baseTf = tf; continue; end;
-        % Save homography
-        transfFileName = fullfile(obj.DataDir,sprintf('H1to%dp',i));
-        file = fopen(transfFileName,'w');
-        % Adjust the transformation to be a tform from the first image
-        tf = tf / baseTf;
-        tfi = tf'; % In the protocol inverse is saved
-        for r=1:3
-          fprintf(file,'%f %f %f\n',tfi(:,r));
+        if ~isequal(tf,eye(3))
+          % Transposed as Matlab uses row vectors in imtform definition
+          tform = maketform('projective',tf');
+          tImage = imtransform(im,tform,'XData',xData,'YData',...
+              yData,'UData',[0 size(im,2)],'VData',[0 size(im,1)]);
+          imwrite(tImage,imageFileName);
+          if i==1, baseTf = tf; continue; end;
+        else
+          imwrite(im,imageFileName);
         end
-        fclose(file);
+        if i > 1
+          % Save homography
+          transfFileName = fullfile(obj.DataDir,sprintf('H1to%dp',i));
+          file = fopen(transfFileName,'w');
+          % Adjust the transformation to be a tform from the first image
+          tf = tf / baseTf;
+          tfi = tf'; % In the protocol inverse is saved
+          for r=1:3
+            fprintf(file,'%f %f %f\n',tfi(:,r));
+          end
+          fclose(file);
+        end
         obj.debug('Image "%s" generated and saved',imgName);
       end
     end

@@ -27,7 +27,10 @@ mxGetNumberOfDimensions(P) == 2 && !mxIsSparse(P) && mxIsDouble(P))
 #define NUM_EL1_IN  prhs[0]
 #define NUM_EL2_IN  prhs[1]
 #define A_IN        prhs[2]
-#define RES         plhs[0]
+/* Results - matching */
+#define RES_ES      plhs[0]
+/* Results - second closest features */
+#define RES_SC      plhs[1]
 
 
 void mexFunction(int nlhs,       mxArray *plhs[],
@@ -36,7 +39,7 @@ void mexFunction(int nlhs,       mxArray *plhs[],
     int i;
     int numNodesA, numNodesB, numEdges, matchedNodes, maxNumMatches;
     const int *dims = mxGetDimensions(A_IN);
-    double *startNodes, *endNodes, *matches;
+    double *startNodes, *endNodes, *matches, *secondClosest;
     int *nodeAAvail, *nodeBAvail;
 
     if (nrhs > 3) {
@@ -62,10 +65,20 @@ void mexFunction(int nlhs,       mxArray *plhs[],
     numEdges = (const int)dims[0];
     startNodes = mxGetPr(A_IN);
     endNodes = startNodes + numEdges;
-    RES = mxCreateDoubleMatrix(1, numNodesA, mxREAL);
-    matches = mxGetPr(RES);
+    /* Prepare the output array for the matches */
+    RES_ES = mxCreateDoubleMatrix(1, numNodesA, mxREAL);
+    matches = mxGetPr(RES_ES);
     for (i = 0; i < numNodesA; ++i) {
         *matches = 0.;
+    }
+
+    if (nlhs > 1) {
+        /* Prepare the output array for the second closest matches */
+        RES_SC = mxCreateDoubleMatrix(1, numNodesA, mxREAL);
+        secondClosest = mxGetPr(RES_SC);
+        for (i = 0; i < numNodesA; ++i) {
+            *secondClosest = 0.;
+        }
     }
 
     nodeAAvail = malloc(numNodesA * sizeof(int));
@@ -84,6 +97,14 @@ void mexFunction(int nlhs,       mxArray *plhs[],
             mexErrMsgTxt("Invalid edge.\n");
             return;
         }
+
+        if (nlhs > 1) {
+            /* If the feature is matched, but does not have second closest match */
+            if (!nodeAAvail[aIdx] && secondClosest[aIdx] == 0.) {
+                secondClosest[aIdx] = (double)(bIdx + 1);
+            }
+        }
+
         if (nodeAAvail[aIdx] && nodeBAvail[bIdx]){
             /* Save the match */
             matches[aIdx] = (double)(bIdx + 1);

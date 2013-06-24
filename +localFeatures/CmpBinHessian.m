@@ -25,6 +25,7 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
     rootInstallDir = fullfile('data','software','cmpBinHessian','');
     url = 'http://cmp.felk.cvut.cz/~perdom1/code/haff_cvpr09';
     binName = 'haff_cvpr09';
+    BuiltInMagnification = 3*sqrt(3);
   end
 
   methods
@@ -76,6 +77,11 @@ classdef CmpBinHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       delete(featFile);
       if imIsTmp, delete(imagePath); end;
       timeElapsed = toc(startTime);
+      if nargout == 1
+        magFactor = obj.BuiltInMagnification;
+        magFactor = magFactor ^ 2;
+        frames(3:5,:) = frames(3:5,:) ./ magFactor;
+      end
       obj.debug(sprintf('%d Frames of image %s computed in %gs',...
         size(frames,2),getFileName(origImagePath),timeElapsed));
       obj.storeFeatures(origImagePath, frames, descriptors);

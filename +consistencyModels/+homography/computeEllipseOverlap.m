@@ -4,9 +4,9 @@ function overlap =  computeEllipseOverlap(vggA,vggB)
 %   Mikolajczyk ellipse overlap function and returns overlap ratio of
 %   the elliptical frames ELL1 and ELL2.
 
-import benchmarks.*
+import consistencyModels.homography.*;
 
-[w, tw, d, td] = helpers.mexComputeEllipseOverlap(vggA, vggB, -1);
+[w, tw, d, td] = mexComputeEllipseOverlap(vggA, vggB, -1);
 
 overlap = 1 - tw / 100 ;
 

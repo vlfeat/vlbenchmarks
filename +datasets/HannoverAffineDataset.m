@@ -118,13 +118,21 @@ classdef HannoverAffineDataset < datasets.GenericTransfDataset & helpers.Logger.
       imgPath = fullfile(obj.DataDir,sprintf('img%d.%s',imgNo,obj.ImgExt));
     end
 
-    function tfs = getTransformation(obj,imgIdx)
-      assert(imgIdx >= 1 && imgIdx <= obj.NumImages,'Out of bounds idx\n');
-      if(imgIdx == 1), tfs = eye(3); return; end
-      tfs = zeros(3,3);
-      [tfs(:,1) tfs(:,2) tfs(:,3)] = ...
-         textread(fullfile(obj.DataDir,sprintf('H1to%dp',imgIdx)),...
-         '%f %f %f%*[^\n]');
+    function sceneGeometry = getSceneGeometry(obj,imgNo)
+      import consistencyModels.*;
+      assert(imgNo >= 1 && imgNo <= obj.NumImages,'Out of bounds idx\n');
+      if(imgNo == 1)
+        tfs = eye(3);
+        testImgSize = obj.RefImageSize;
+      else
+        tfs = zeros(3,3);
+        [tfs(:,1) tfs(:,2) tfs(:,3)] = ...
+           textread(fullfile(obj.DataDir,sprintf('H1to%dp',imgNo)),...
+          '%f %f %f%*[^\n]');
+        testImgSize = helpers.imageSize(obj.getImagePath(imgNo));
+      end
+      sceneGeometry = HomographyConsistencyModel.createSceneGeometry(tfs, ...
+        obj.RefImageSize, testImgSize);
     end
   end
 

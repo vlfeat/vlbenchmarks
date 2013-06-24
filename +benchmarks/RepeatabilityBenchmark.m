@@ -95,32 +95,6 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 %     'DescMatchingScore'
 %        Match frames only based on their descriptors.
 %
-%   OverlapError:: 0.4
-%     Maximal overlap error of frames to be considered as
-%     correspondences.
-%
-%   NormaliseFrames:: true
-%     Normalise the frames to constant scale (defaults is true for
-%     detector repeatability tests, see Mikolajczyk et. al 2005).
-%
-%   NormalisedScale:: 30
-%     When frames scale normalisation applied, fixed scale to which it is
-%     normalised to.
-%
-%   CropFrames:: true
-%     Crop the frames out of overlapping regions (regions present in both
-%     images).
-%
-%   Magnification:: 3
-%     When frames are not normalised, this parameter is magnification
-%     applied to the input frames. Usually is equal to magnification
-%     factor used for descriptor calculation.
-%
-%   WarpMethod:: 'linearise'
-%     Numerical method used for warping ellipses. Available mathods are
-%     'standard' and 'linearise' for precise reproduction of IJCV2005 
-%     benchmark results.
-%
 %   DescriptorsDistanceMetric:: 'L2'
 %     Distance metric used for matching the descriptors. See
 %     documentation of vl_alldist2 for details.
@@ -138,14 +112,10 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
   properties
     Opts = struct(...
-      'overlapError', 0.4,...
-      'normaliseFrames', true,...
-      'cropFrames', true,...
-      'magnification', 3,...
-      'warpMethod', 'linearise',...
       'mode', 'repeatability',...
-      'descriptorsDistanceMetric', 'L2',...
-      'normalisedScale', 30);
+      'descriptorsDistanceMetric', 'L2' ...
+      );
+    ConsistencyModel;
   end
 
   properties(Constant, Hidden)
@@ -159,23 +129,24 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
   end
 
   methods
-    function obj = RepeatabilityBenchmark(varargin)
+    function obj = RepeatabilityBenchmark(consistencyModel, varargin)
       import benchmarks.*;
       import helpers.*;
       obj.BenchmarkName = 'repeatability';
+      varargin = obj.configureLogger(obj.BenchmarkName,varargin);
       if numel(varargin) > 0
-        [obj.Opts varargin] = vl_argparse(obj.Opts,varargin);
+        obj.Opts = vl_argparse(obj.Opts,varargin);
         obj.Opts.mode = lower(obj.Opts.mode);
         if ~ismember(obj.Opts.mode, obj.Modes)
           error('Invalid mode %s.',obj.Opts.mode);
         end
       end
-      varargin = obj.configureLogger(obj.BenchmarkName,varargin);
-      obj.checkInstall(varargin);
+      obj.ConsistencyModel = consistencyModel;
     end
 
-    function [score numMatches bestMatches reprojFrames] = ...
-        testFeatureExtractor(obj, featExtractor, tf, imageAPath, imageBPath)
+    function [score numMatches subsres] = ...
+        testFeatureExtractor(obj, featExtractor, sceneGeometry, ...
+        imageAPath, imageBPath)
       % testFeatureExtractor Image feature extractor repeatability
       %   REPEATABILITY = obj.testFeatureExtractor(FEAT_EXTRACTOR, TF,
       %   IMAGEAPATH, IMAGEBPATH) computes the repeatability REP of a image
@@ -217,8 +188,6 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
 
       imageASign = helpers.fileSignature(imageAPath);
       imageBSign = helpers.fileSignature(imageBPath);
-      imageASize = helpers.imageSize(imageAPath);
-      imageBSize = helpers.imageSize(imageBPath);
       resultsKey = cell2str({obj.KeyPrefix, obj.getSignature(), ...
         featExtractor.getSignature(), imageASign, imageBSign});
       cachedResults = obj.loadResults(resultsKey);
@@ -228,28 +197,27 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
         if obj.ModesOpts(obj.Opts.mode).matchDescs
           [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
           [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
-          [score numMatches bestMatches reprojFrames] = obj.testFeatures(...
-            tf, imageASize, imageBSize, framesA, framesB,...
-            descriptorsA, descriptorsB);
+          [score numMatches subsres] = obj.testFeatures(...
+            sceneGeometry, framesA, framesB, descriptorsA, descriptorsB);
         else
           [framesA] = featExtractor.extractFeatures(imageAPath);
           [framesB] = featExtractor.extractFeatures(imageBPath);
-          [score numMatches bestMatches reprojFrames] = ...
-            obj.testFeatures(tf,imageASize, imageBSize,framesA, framesB);
+          [score numMatches subsres] = ...
+            obj.testFeatures(sceneGeometry, framesA, framesB);
         end
         if featExtractor.UseCache
-          results = {score numMatches bestMatches reprojFrames};
+          results = {score numMatches subsres};
           obj.storeResults(results, resultsKey);
         end
       else
-        [score numMatches bestMatches reprojFrames] = cachedResults{:};
+        [score numMatches subsres] = cachedResults{:};
         obj.debug('Results loaded from cache');
       end
 
     end
 
-    function [score numMatches matches reprojFrames] = ...
-        testFeatures(obj, tf, imageASize, imageBSize, framesA, framesB, ...
+    function [score numMatches subsres] = ...
+        testFeatures(obj, sceneGeometry, framesA, framesB, ...
         descriptorsA, descriptorsB)
       % testFeatures Compute repeatability of given image features
       %   [SCORE NUM_MATCHES] = obj.testFeatures(TF, IMAGE_A_SIZE,
@@ -282,9 +250,10 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
           size(framesA,2),size(framesB,2));
       matchGeometry = obj.ModesOpts(obj.Opts.mode).matchGeometry;
       matchDescriptors = obj.ModesOpts(obj.Opts.mode).matchDescs;
-      score = 0; numMatches = 0;
+      
+      score = 0; numMatches = 0; matches = [];
+      
       if isempty(framesA) || isempty(framesB)
-        matches = zeros(size(framesA,2)); reprojFrames = {}; 
         obj.info('Nothing to compute.');
         return;
       end
@@ -298,128 +267,57 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       end
 
       startTime = tic;
-      normFrames = obj.Opts.normaliseFrames;
-      overlapError = obj.Opts.overlapError;
-      overlapThresh = 1 - overlapError;
-
-      % convert frames from any supported format to unortiented
-      % ellipses for uniformity
-      framesA = localFeatures.helpers.frameToEllipse(framesA) ;
-      framesB = localFeatures.helpers.frameToEllipse(framesB) ;
-
-      % map frames from image A to image B and viceversa
-      reprojFramesA = warpEllipse(tf, framesA,...
-        'Method',obj.Opts.warpMethod) ;
-      reprojFramesB = warpEllipse(inv(tf), framesB,...
-        'Method',obj.Opts.warpMethod) ;
-
-      % optionally remove frames that are not fully contained in
-      % both images
-      if obj.Opts.cropFrames
-        % find frames fully visible in both images
-        bboxA = [1 1 imageASize(2)+1 imageASize(1)+1] ;
-        bboxB = [1 1 imageBSize(2)+1 imageBSize(1)+1] ;
-
-        visibleFramesA = isEllipseInBBox(bboxA, framesA ) & ...
-          isEllipseInBBox(bboxB, reprojFramesA);
-
-        visibleFramesB = isEllipseInBBox(bboxA, reprojFramesB) & ...
-          isEllipseInBBox(bboxB, framesB );
-
-        % Crop frames outside overlap region
-        framesA = framesA(:,visibleFramesA);
-        reprojFramesA = reprojFramesA(:,visibleFramesA);
-        framesB = framesB(:,visibleFramesB);
-        reprojFramesB = reprojFramesB(:,visibleFramesB);
-        if isempty(framesA) || isempty(framesB)
-          matches = zeros(size(framesA,2)); reprojFrames = {};
-          return;
-        end
-
-        if matchDescriptors
-          descriptorsA = descriptorsA(:,visibleFramesA);
-          descriptorsB = descriptorsB(:,visibleFramesB);
+      [correspondences consistency subsres] = ...
+        obj.ConsistencyModel.findConsistentCorresps(sceneGeometry, framesA, framesB);
+      
+      if isempty(correspondences), return; end;
+      
+      if isfield(subsres,'validFramesA') && isfield(subsres,'validFramesB')
+        framesA = framesA(:,subsres.validFramesA);
+        framesB = framesB(:,subsres.validFramesB);
+        if nargin > 4 
+          descriptorsA = descriptorsA(:,subsres.validFramesA);
+          descriptorsB = descriptorsB(:,subsres.validFramesB);
         end
       end
-
-      if ~normFrames
-        % When frames are not normalised, account the descriptor region
-        magFactor = obj.Opts.magnification^2;
-        framesA = [framesA(1:2,:); framesA(3:5,:).*magFactor];
-        reprojFramesB = [reprojFramesB(1:2,:); ...
-          reprojFramesB(3:5,:).*magFactor];
-      end
-
-      reprojFrames = {framesA,framesB,reprojFramesA,reprojFramesB};
+      
       numFramesA = size(framesA,2);
-      numFramesB = size(reprojFramesB,2);
-
-      % Find all ellipse overlaps (in one-to-n array)
-      frameOverlaps = fastEllipseOverlap(reprojFramesB, framesA, ...
-        'NormaliseFrames',normFrames,'MinAreaRatio',overlapThresh,...
-        'NormalisedScale',obj.Opts.normalisedScale);
-
-      matches = [];
+      numFramesB = size(framesB,2);
+      
+      % Create indexes of positive values in incidence matrix
+      validCorrespIdxs = sub2ind([numFramesA, numFramesB], ...
+        correspondences(1,:), correspondences(2,:));
 
       if matchGeometry
-        % Create an edge between each feature in A and in B
-        % weighted by the overlap. Each edge is a candidate match.
-        corresp = cell(1,numFramesA);
-        for j=1:numFramesA
-          numNeighs = length(frameOverlaps.scores{j});
-          if numNeighs > 0
-            corresp{j} = [j *ones(1,numNeighs); ...
-                          frameOverlaps.neighs{j}; ...
-                          frameOverlaps.scores{j}];
-          end
-        end
-        corresp = cat(2,corresp{:}) ;
-        if isempty(corresp)
-          score = 0; numMatches = 0; matches = zeros(1,numFramesA); return;
-        end
-
-        % Remove edges (candidate matches) that have insufficient overlap
-        corresp = corresp(:,corresp(3,:) > overlapThresh) ;
-        if isempty(corresp)
-          score = 0; numMatches = 0; matches = zeros(1,numFramesA); return;
-        end
-
         % Sort the edgest by decrasing score
-        [drop, perm] = sort(corresp(3,:), 'descend');
-        corresp = corresp(:, perm);
+        [drop, perm] = sort(consistency, 'descend');
+        sortedCorresp = correspondences(:, perm);
 
         % Approximate the best bipartite matching
         obj.info('Matching frames geometry.');
         geometryMatches = greedyBipartiteMatching(numFramesA,...
-          numFramesB, corresp(1:2,:)');
+          numFramesB, sortedCorresp');
 
+        subsres.geometryMatches = geometryMatches;
         matches = [matches ; geometryMatches];
       end
 
       if matchDescriptors
-        obj.info('Computing cross distances between all descriptors');
-        dists = vl_alldist2(single(descriptorsA),single(descriptorsB),...
-          obj.Opts.descriptorsDistanceMetric);
-        obj.info('Sorting distances')
-        [dists, perm] = sort(dists(:),'ascend');
+        matcher = benchmarks.helpers.DataMatcher('matchStrategy','1to1',...
+          'distMetric',obj.Opts.descriptorsDistanceMetric);
 
-        % Create list of edges in the bipartite graph
-        [aIdx bIdx] = ind2sub([numFramesA, numFramesB],perm(1:numel(dists)));
-        edges = [aIdx bIdx];
+        matchEdges = matcher.matchData(descriptorsB, descriptorsA);
 
-        % Find one-to-one best matches
-        obj.info('Matching descriptors.');
-        descMatches = greedyBipartiteMatching(numFramesA, numFramesB, edges);
-
-        for aIdx=1:numFramesA
-          bIdx = descMatches(aIdx);
-          [hasCorresp bCorresp] = ismember(bIdx,frameOverlaps.neighs{aIdx});
-          % Check whether found descriptor matches fulfill frame overlap
-          if ~hasCorresp || ...
-             ~frameOverlaps.scores{aIdx}(bCorresp) > overlapThresh
-            descMatches(aIdx) = 0;
-          end
-        end
+        % Idxs of matches in incidence matrix
+        matchesIdxs = sub2ind([numFramesA, numFramesB], ...
+          matchEdges(2,:), matchEdges(1,:));
+        
+        % Find matches with sufficient overlap
+        [drop validMatch] = intersect(matchesIdxs, validCorrespIdxs);
+        
+        descMatches = zeros(1,numFramesA);
+        descMatches(matchEdges(2,validMatch)) = matchEdges(1,validMatch);
+        subsres.descMatches = descMatches;
         matches = [matches ; descMatches];
       end
 
@@ -427,28 +325,21 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       validMatches = ...
         prod(single(matches == repmat(matches(1,:),size(matches,1),1)),1);
       matches = matches(1,:) .* validMatches;
+      subsres.matches = matches;
 
       % Compute the score
-      numBestMatches = sum(matches ~= 0);
-      score = numBestMatches / min(size(framesA,2), size(framesB,2));
-      numMatches = numBestMatches;
+      numMatches = sum(matches ~= 0);
+      score = numMatches / min(size(framesA,2), size(framesB,2));
 
-      obj.info('Score: %g \t Num matches: %g', ...
-        score,numMatches);
+      obj.info('Score: %g \t Num matches: %g', score,numMatches);
 
-      obj.debug('Score between %d/%d frames comp. in %gs',size(framesA,2), ...
-        size(framesB,2),toc(startTime));
+      obj.debug('Score between %d/%d frames comp. in %gs',...
+        size(framesA,2), size(framesB,2),toc(startTime));
     end
 
     function signature = getSignature(obj)
-      signature = helpers.struct2str(obj.Opts);
-    end
-  end
-
-  methods (Access = protected)
-    function deps = getDependencies(obj)
-      deps = {helpers.Installer(),helpers.VlFeatInstaller('0.9.14'),...
-        benchmarks.helpers.Installer()};
+      signature = [helpers.struct2str(obj.Opts) ...
+        obj.ConsistencyModel.getSignature()];
     end
   end
 

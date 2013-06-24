@@ -21,6 +21,7 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
   properties (Constant, Hidden)
     RootInstallDir = fullfile('data','software','cmpHessian','');
     SoftwareUrl = 'http://cmp.felk.cvut.cz/~perdom1/code/hesaff.tar.gz';
+    BuiltInMagnification = 3*sqrt(3);
   end
 
   methods
@@ -74,6 +75,12 @@ classdef CmpHessian < localFeatures.GenericLocalFeatureExtractor  & ...
       timeElapsed = toc(startTime);
       obj.debug(sprintf('%d Features from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed));
+      
+      if nargout == 1
+        magFactor = obj.BuiltInMagnification;
+        magFactor = magFactor ^ 2;
+        frames(3:5,:) = frames(3:5,:) ./ magFactor;
+      end
       
       obj.storeFeatures(imagePath, frames, descriptors);
     end

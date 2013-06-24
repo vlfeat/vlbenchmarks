@@ -17,6 +17,16 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
 %   CommonPart :: [1]
 %     flag should be set to 1 for repeatability and 0 for descriptor 
 %     performance
+%     Common part 1:
+%       - Crop frames to overlapping regions
+%       - Overlap error 40%
+%       - Normalise frames
+%       - one-to-one matching
+%     Common part 0:
+%       - Do not crop frames to overlap regions
+%       - Overlap error 50%
+%       - Do not normalise frames but magnify their scale by 3
+%       - m-to-n matching (any pair with sufficient overlap)
 %
 %   REFERENCES
 %   [1] K. Mikolajczyk, T. Tuytelaars, C. Schmid, A. Zisserman,
@@ -67,7 +77,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
     end
     
     function [repScore, numCorresp, matchScore, numMatches] = ...
-        testFeatureExtractor(obj, featExtractor, tf, imageAPath, imageBPath)
+        testFeatureExtractor(obj, featExtractor, sceneGeometry, imageAPath, imageBPath)
       % testFeatureExtractor Compute repeatability and matching score.
       %   [REP NUM_CORR MATCHING NUM_MATCHES] = obj.testFeatureExtractor(
       %   FEAT_EXTRACTOR, TF, IMAGEA_PATH, IMAGEB_PATH) Compute repeatability
@@ -99,7 +109,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
           [framesA descriptorsA] = featExtractor.extractFeatures(imageAPath);
           [framesB descriptorsB] = featExtractor.extractFeatures(imageBPath);
           [repScore, numCorresp, matchScore, numMatches] = ...
-            obj.testFeatures(tf, imageAPath, imageBPath, ...
+            obj.testFeatures(sceneGeometry, imageAPath, imageBPath, ...
                              framesA, framesB, descriptorsA, descriptorsB);
         else
           obj.info('Comparing frames from det. %s and images %s and %s.',...
@@ -107,7 +117,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
           [framesA] = featExtractor.extractFeatures(imageAPath);
           [framesB] = featExtractor.extractFeatures(imageBPath);
           [repScore, numCorresp] = ...
-            obj.testFeatures(tf, imageAPath, imageBPath, framesA, framesB);
+            obj.testFeatures(sceneGeometry, imageAPath, imageBPath, framesA, framesB);
           matchScore = -1;
           numMatches = -1;
         end
@@ -122,8 +132,8 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       
     end
 
-    function [repScore numCorresp matchScore numMatches] = ... 
-               testFeatures(obj, tf, imageAPath, imageBPath, ...
+    function [repScore numCorresp matchScore numMatches geomMatches] = ... 
+               testFeatures(obj, sceneGeometry, imageAPath, imageBPath, ...
                  framesA, framesB, descriptorsA, descriptorsB)
       % TestFeatures Compute scores of image features
       %   [REP NUM_CORR MATCHING NUM_MATCHES] = obj.testFeatures(TF,
@@ -136,6 +146,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       %   [REP NUM_CORR] = obj.testFeatures(TF, IMAGEA_PATH,
       %   IMAGEB_PATH, FRAMES_A, FRAMES_B) Compute only repeatability
       %   between the the frames FRAMES_A and FRAMES_B.
+      
       import benchmarks.*;
       import helpers.*;
       
@@ -162,13 +173,13 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       ellBFrames = localFeatures.helpers.frameToEllipse(framesB);
       localFeatures.helpers.writeFeatures(ellAFile,ellAFrames, descriptorsA);
       localFeatures.helpers.writeFeatures(ellBFile,ellBFrames, descriptorsB);
-      H = tf;
+      H = sceneGeometry.homography;
       save(tmpHFile,'H','-ASCII');
       overlap_err_idx = round(obj.Opts.overlapError*10);
 
       addpath(krisDir);
       rehash;
-      [err, tmprepScore, tmpnumCorresp, matchScore, numMatches] ...
+      [err, tmprepScore, tmpnumCorresp, matchScore, numMatches twi] ...
           = repeatability(ellAFile,ellBFile,tmpHFile,imageAPath,...
               imageBPath,obj.Opts.commonPart);
       rmpath(krisDir);
@@ -184,6 +195,11 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
       
       obj.info('Match score: %g \t Num matches: %g',matchScore,numMatches);
       
+      
+      %[tmpA tmpB] = ind2sub([size(framesA,2), size(framesB,2)],find(twi>0));
+      %geomMatches = [tmpA; tmpB];
+      geomMatches = [];
+      
       timeElapsed = toc(startTime);
       obj.debug('Score between %d/%d frames comp. in %gs',...
         size(framesA,2),size(framesB,2),timeElapsed);
@@ -196,7 +212,7 @@ classdef IjcvOriginalBenchmark < benchmarks.GenericBenchmark ...
 
   methods (Access = protected, Hidden)
     function deps = getDependencies(obj)
-      deps = {helpers.Installer(),benchmarks.helpers.Installer()};
+      deps = {helpers.Installer()};
     end
 
     function [srclist flags] = getMexSources(obj)
