@@ -211,13 +211,13 @@ classdef GenericInstaller < handle
     %   obj.checkInstall('AutoInstall', false) Do not install if not
     %   installed.
       import helpers.*;
-      obj.setupDependencies();
-      obj.setup();
       opts.autoInstall = true;
       [opts varargin] = vl_argparse(opts, varargin{:});
       if opts.autoInstall && ~obj.isInstalled()
         obj.install();
       end
+      obj.setupDependencies();
+      obj.setup();
     end
 
     function [srclist flags]  = getMexSources(obj)
