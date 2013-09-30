@@ -24,10 +24,12 @@ end
 str = [chars{:}];
 
 function str = tostr(m)
-if ischar(m)
+ if iscell(m)
+  str = helpers.cell2str(m, separator);  
+ elseif ischar(m)
   str = m;
-else
+ else
   str = mat2str(m);
-end
+ end
 end
 end
