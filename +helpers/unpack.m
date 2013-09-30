@@ -10,6 +10,7 @@ function unpack( url, distDir )
 % AUTORIGHTS
 import helpers.*;
 
+unTarCommand = 'tar xvf %s';
 unbzipCommand = 'tar xvjf %s';
 unTarGzipCommand = 'tar xvzf %s';
 unGzipCommand = 'gunzip %s';
@@ -28,19 +29,21 @@ switch ext
       deleteArchive = false;
     else
       command = unTarGzipCommand;
-      if ~commandExist(command) || ~hasWget, untar(url,distDir);return;end
     end
-  case {'.tar','.tgz'}
+  case '.tar'
+    command = unTarCommand;
+  case '.tgz'
     command = unTarGzipCommand;
-    if ~commandExist(command) || ~hasWget, untar(url,distDir); return; end
   case '.zip'
     command = unZipCommand;
-    if ~commandExist(command) || ~hasWget, unzip(url,distDir); return; end
   case '.bz2'
     command = unbzipCommand;
   otherwise
     error(['Unknown archive extension ' ext]);
-end 
+end
+
+if ~commandExist(command) || ~hasWget, untar(url,distDir); return; end
+
 
 if ~commandExist(command)
   error('Unpacking of the given archive not supported on your system.');
