@@ -29,6 +29,7 @@ classdef HannoverAffineDataset < datasets.GenericTransfDataset & helpers.Logger.
     Category = 'graf'; % Dataset category
     DataDir; % Image location
     ImgExt; % Image extension
+    RefImageSize;
   end
 
   properties (Constant)
@@ -111,6 +112,7 @@ classdef HannoverAffineDataset < datasets.GenericTransfDataset & helpers.Logger.
       end
       obj.ImageNames = obj.CategoryImageLabels(opts.Category);
       obj.ImageNamesLabel = obj.CategoryImageNames(opts.Category);
+      obj.RefImageSize = helpers.imageSize(obj.getImagePath(1));
     end
 
     function imgPath = getImagePath(obj,imgNo)

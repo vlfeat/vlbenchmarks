@@ -16,6 +16,11 @@ function scales = getFrameScale(frames)
 % AUTORIGHTS
 import localFeatures.helpers.*;
 
+if isempty(frames)
+  scales = [];
+  return;
+end
+
 switch size(frames,1)
   case {3,4}
     scales = frames(3,:);

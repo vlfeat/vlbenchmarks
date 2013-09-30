@@ -143,8 +143,8 @@ classdef DescMatchingBenchmark < benchmarks.GenericBenchmark ...
       
       obj.info('Computing matches between %d/%d frames.',...
         size(framesA,2),size(framesB,2));
+      subsres = struct(); precision = []; recall = [];
       if isempty(framesA) || isempty(framesB)
-        subsres = struct(); precision = []; recall = [];
         obj.info('Nothing to compute.');
         return;
       end

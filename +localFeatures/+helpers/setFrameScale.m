@@ -5,6 +5,11 @@ function frames = setFrameScale(frames, scales)
 % AUTORIGHTS
 import localFeatures.helpers.*;
 
+if isempty(frames)
+  frames = [];
+  return;
+end
+
 if size(frames,2) ~= numel(scales)
   error('Number of frames and scales must be the same');
 end
@@ -33,6 +38,6 @@ switch size(frames,1)
       error('Invalid affine transformation.');
     end
   otherwise
-    error('Invalid frame');
+na    error('Invalid frame');
 end
 end

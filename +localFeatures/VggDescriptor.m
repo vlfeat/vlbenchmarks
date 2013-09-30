@@ -124,6 +124,7 @@ classdef VggDescriptor < localFeatures.GenericLocalFeatureExtractor ...
 
       if oneFrameHack
         frames = frames(:,1:end-1);
+        descriptors = descriptors(:,1:end-1);
       end
 
       if obj.Opts.magnification ~= obj.BuiltInMagnification

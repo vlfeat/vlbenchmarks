@@ -251,7 +251,7 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       matchGeometry = obj.ModesOpts(obj.Opts.mode).matchGeometry;
       matchDescriptors = obj.ModesOpts(obj.Opts.mode).matchDescs;
       
-      score = 0; numMatches = 0; matches = [];
+      score = 0; numMatches = 0; matches = []; subsres = struct();
       
       if isempty(framesA) || isempty(framesB)
         obj.info('Nothing to compute.');

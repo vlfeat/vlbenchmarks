@@ -58,6 +58,8 @@ classdef DescriptorAdapter < localFeatures.GenericLocalFeatureExtractor
         % conversion is made in this class.
         obj.SupportedImgFormats = 'all';
       end
+      
+      obj.UseCache = frameDetector.UseCache && descExtractor.UseCache;
     end
 
     function [frames descriptors] = extractFeatures(obj, imagePath)

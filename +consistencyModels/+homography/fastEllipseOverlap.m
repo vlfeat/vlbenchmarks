@@ -71,7 +71,6 @@ function [ellipsePairs scores] = fastEllipseOverlap(f1, f2, varargin)
   %   maxOverlap = min(|f1|,|f2|) / max(|f1|,|f2|)
   %
   %
-
   for i2 = 1:N2
     s = conf.normalisedScale / sqrt(a2(i2) / pi)  ;
 
@@ -82,6 +81,11 @@ function [ellipsePairs scores] = fastEllipseOverlap(f1, f2, varargin)
     ellipsePairs{i2} = find(maxOverlap > conf.minAreaRatio);
     ellipsePairs{i2} = [repmat(i2,1,numel(ellipsePairs{i2}));ellipsePairs{i2}];
 
+    if isempty(ellipsePairs{i2})
+        ellipsePairs{i2} = zeros(2,0);
+        scores{i2} = [];
+        continue;
+    end
     if conf.normaliseFrames
       vggS = [1 1 1/s^2 1/s^2 1/s^2 s s s s]';
       lhsEllipse = vggS.*vggEll2(:,i2);
@@ -96,4 +100,5 @@ function [ellipsePairs scores] = fastEllipseOverlap(f1, f2, varargin)
   % Convert to a matrix
   ellipsePairs = cell2mat(ellipsePairs);
   scores = cell2mat(scores);
+
 end
