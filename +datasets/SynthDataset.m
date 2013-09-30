@@ -4,6 +4,10 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     ImageName
     DataDir
     CropImage
+    Opts = struct(...
+        'transform', 'imtransform', ...
+        'smooth', true ...
+        );
   end
 
   properties (SetAccess=protected, GetAccess=protected)
@@ -12,8 +16,14 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     ImageExt
     Image
     GenerateImages = true;
+    RefImageSize
+    PhotometricTransfQueue;
+    GeomTransfWaiting = false;
   end
 
+  % TODO allow apply photometric transformations after geometric
+  % transformations...
+  
   properties (Constant)
     RootDir = fullfile('data','datasets','synthDataset');
     MaxLatitude = 85/180*pi;
@@ -53,6 +63,11 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       % Check whether images already generated
       imgFiles = dir(fullfile(obj.DataDir, ['img*' obj.ImageExt]));
       tfsFiles = dir(fullfile(obj.DataDir, 'H1to*p'));
+      if ~exist(imagePath,'file')
+        obj.error('Input image does not exist.');
+      end
+      obj.RefImageSize = helpers.imageSize(imagePath);
+
       if numel(imgFiles) == numImages && numel(tfsFiles) == numImages - 1
         obj.info('Transformations "%s" of image "%s" already exist.',...
           transfName,obj.ImageName);
@@ -61,17 +76,11 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         for tfh = transformations
           tfh{1}(obj); 
         end
-        obj.ImageNames = cellfun(@strtrim,obj.ImageNames,'UniformOutput',false);
+        %obj.ImageNames = cellfun(@strtrim,obj.ImageNames,'UniformOutput',false);
         return;
       else
         % Generate transformed images and save them
-        if ~isempty(obj.ImageName)
-          if exist(imagePath,'file')
-            obj.Image = imread(imagePath);
-          else
-            obj.error('Input image does not exist.');
-          end
-        end
+        obj.Image = imread(imagePath);
         vl_xmkdir(obj.DataDir);
         obj.info('Generating transformations "%s" of image "%s"...',...
         transfName,obj.ImageName);
@@ -83,7 +92,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         for tfh = transformations
           tfh{1}(obj);
         end
-        obj.ImageNames = cellfun(@strtrim,obj.ImageNames,'UniformOutput',false);
+        %obj.ImageNames = cellfun(@strtrim,obj.ImageNames,'UniformOutput',false);
         obj.saveGeneratedTransformations();
         obj.GenImages = [];
       end
@@ -113,6 +122,17 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
   end
 
   methods (Static)
+      
+    function res = pretransform(tr_struct)
+      res = {@(obj) obj.genPretransform(tr_struct.tr)
+        sprintf('pretransform-%s',tr_struct.name)};
+    end
+    
+    function res = homographies(hs)
+      res = {@(obj) obj.genHomographies(hs)
+        sprintf('generic-homographies')};
+    end
+      
     function res = isoBlobs(scales, cutoff)
       if ~exist('scales','var'), scales = [1 10]; end;
       res = {@(obj) obj.generateIsoBlobs(scales, cutoff)
@@ -129,6 +149,12 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       if ~exist('scales','var'), scales = [1 2]; end;
       res = {@(obj) obj.generateScales(scales)
         sprintf('scale-%0.2f-%0.2f',scales(1),scales(end))};
+    end
+    
+    function res = anis(anisotropies)
+      if ~exist('anisotropies','var'), anisotropies = [1 0.5]; end;
+      res = {@(obj) obj.generateAnis(anisotropies)
+        sprintf('anis-%0.2f-%0.2f',anisotropies(1),anisotropies(end))};
     end
 
     function res = rotation(angles)
@@ -149,7 +175,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
 
     function res = noise(noiseType, noiseValues)
       import datasets.*;
-      if ~exist('noiseVals','var'), noiseValues = [0.001 0.01]; end;
+      if ~exist('noiseValues','var'), noiseValues = [0.001 0.01]; end;
       if ~exist('noiseType','var'), noiseType = 'gaussian'; end;
       if ~ismember(noiseType,SynthDataset.NoiseTypes)
         error('Invalid noise type %s',blurType); 
@@ -213,8 +239,32 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
         end
       end
     end
+    
+    function genPretransform(obj, tf)
+      obj.GeomTransfWaiting = true;
+      obj.ImageNamesLabel = [obj.ImageNamesLabel 'scale '];
+      for i=1:numel(obj.ImageNames)
+        % When we want to generate just the image names, continue
+        if ~obj.GenerateImages, continue; end;
+        obj.GenTfs{i} = tf * obj.GenTfs{i};
+      end
+      obj.debug('Transforming all images.');
+    end
+    
+        
+    function genHomographies(obj, hs)
+      obj.GeomTransfWaiting = true;
+      obj.ImageNamesLabel = [obj.ImageNamesLabel 'scale '];
+      for i=1:numel(obj.ImageNames)
+        % When we want to generate just the image names, continue
+        if ~obj.GenerateImages, continue; end;
+        obj.GenTfs{i} = hs{i} * obj.GenTfs{i};
+      end
+      obj.debug('Applying Homographies.');
+    end
 
     function generateRotations(obj, angles)
+      obj.GeomTransfWaiting = true;
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'rot. '];
       angles = obj.checkParamsList(angles);
       for i=1:numel(angles)
@@ -232,6 +282,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     end
 
     function generateScales(obj, scales)
+      obj.GeomTransfWaiting = true;
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'scale '];
       scales = obj.checkParamsList(scales);
       for i=1:numel(scales)
@@ -244,6 +295,22 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       end
       obj.debug('Scales: %s.',...
         [sprintf('%g, ',scales(1:end-1)) num2str(scales(end))]);
+    end
+    
+    function generateAnis(obj, anisotropies)
+      obj.GeomTransfWaiting = true;
+      obj.ImageNamesLabel = [obj.ImageNamesLabel 'anis '];
+      anisotropies = obj.checkParamsList(anisotropies);
+      for i=1:numel(anisotropies)
+        anis = anisotropies(i);
+        obj.ImageNames{i} = num2str(anis,'%0.2f');
+        % When we want to generate just the image names, continue
+        if ~obj.GenerateImages, continue; end;
+        tfs = [1 0 0; 0 anis 0; 0 0 1];
+        obj.GenTfs{i} = tfs * obj.GenTfs{i};
+      end
+      obj.debug('Anis: %s.',...
+        [sprintf('%g, ',anis(1:end-1)) num2str(anis(end))]);
     end
     
     function generateIsoBlobs(obj, scales, cutoff)
@@ -278,6 +345,7 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     end
 
     function generateAffVpt(obj, latitudes, longitudes)
+      obj.GeomTransfWaiting = true;
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'aff. vpt. [lat|long]'];
       latitudes = obj.checkParamsList(latitudes);
       longitudes = obj.checkParamsList(longitudes);
@@ -308,11 +376,18 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     end
 
     function generateNoise(obj, noiseType, noiseValues)
+      if obj.GeomTransfWaiting
+        handle = @(a) obj.generateNoise(noiseType, noiseValues);
+        obj.PhotometricTransfQueue{end+1} = handle;
+        obj.debug('Transformation in a queue.');
+        return;
+      end
+
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'noise '];
       noiseValues = obj.checkParamsList(noiseValues);
       for i=1:numel(noiseValues)
         nval = noiseValues(i);
-        obj.debug('Generating %s noise with val. %f.',noiseType,val);
+        obj.debug('Generating %s noise with val. %f.',noiseType,nval);
         obj.ImageNames{i} = ['\sigma_n=' num2str(nval,'%0.2f') ' '];
         if ~obj.GenerateImages, continue; end;
         switch noiseType
@@ -329,6 +404,12 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     end
 
     function generateBlur(obj, blurType, blurVals)
+      if obj.GeomTransfWaiting
+        handle = @(a) obj.generateBlur(blurType, blurVals);
+        obj.PhotometricTransfQueue{end+1} = handle;
+        obj.debug('Transformation in a queue.');
+        return;
+      end
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'blur '];
       blurVals = obj.checkParamsList(blurVals);
       for i = 1:numel(blurVals)
@@ -367,6 +448,12 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     end
 
     function generateGradients(obj, gradType, fallOffs)
+      if obj.GeomTransfWaiting
+        handle = @(a) obj.generateGradients(gradType, fallOffs);
+        obj.PhotometricTransfQueue{end+1} = handle;
+        obj.debug('Transformation in a queue.');
+        return;
+      end
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'int. grad. '];
       fallOffs = obj.checkParamsList(fallOffs);
       for i = 1:numel(fallOffs)
@@ -402,6 +489,12 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
     end
 
     function generateJpegCompression(obj, imgQualities)
+      if obj.GeomTransfWaiting
+        handle = @(a) obj.generateJpegCompression(imgQualities);
+        obj.PhotometricTransfQueue{end+1} = handle;
+        obj.debug('Transformation in a queue.');
+        return;
+      end
       obj.ImageNamesLabel = [obj.ImageNamesLabel 'jpeg comp. '];
       imQualities = round(obj.checkParamsList(imgQualities));
       for i = 1:numel(imQualities)
@@ -422,27 +515,33 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
       baseTf = eye(3); % transformation of the first image
       for i=1:obj.NumImages
         imgName = ['img',num2str(i),obj.ImageExt];
-        imageFileName = fullfile(obj.DataDir,imgName);
         tf = obj.GenTfs{i};
         % If the image is subsampled, filter the high frequencies
-        if det(tf) < 0.95
+        if det(tf) < 0.8 && obj.Opts.smooth
           % Take the affine transformation in the centre point of the image
           % where the transformation is defined
           obj.info('Smoothing input image.');
-          Aff = tf(1:2,1:2).*2;
+          Aff = tf(1:2,1:2)*3;
           Sigma = inv(Aff'*Aff);
-          filter = datasets.helpers.anisotropicGauss(Sigma);
-          obj.GenImages{i} = imfilter(obj.Image,filter,'same');
+          perp_sigmas = sqrt(svd(Sigma));
+          % TODO handle separable cases
+          if max(perp_sigmas) > 0.7 % Bad disc. approx of small Gauss.
+            % TODO - use some more proper filter...
+            filter = datasets.helpers.anisotropicGauss(Sigma)';
+            obj.GenImages{i} = imfilter(obj.Image,filter,'same');
+          end
         end
         center = size(obj.Image);
         center = round(center([2 1])'./2);
         centerImageTf = [eye(2) [-center(1); -center(2)]; 0 0 1];
-        if obj.CropImage
+        % Todo  - solve it more properly, not all transformations has to be
+        % performed in the center of the image.
+        xData = [0 size(obj.Image,2)];
+        yData = [0 size(obj.Image,1)];
+        if obj.CropImage == true
           mvImgTf = [eye(2) [center(1); center(2)];0 0 1];
-          xData = [0 size(obj.Image,2)];
-          yData = [0 size(obj.Image,1)];
           tf = mvImgTf * tf * centerImageTf;
-        else
+        elseif obj.CropImage == false
           imgCrnrs = [-center center.*[1;-1] center center.*[-1;1]; ...
             ones(1,4)];
           tfImgCrnrs = tf * imgCrnrs;
@@ -451,21 +550,37 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
           xMax = ceil(max(tfImgCrnrs(1,:)));
           yMin = floor(min(tfImgCrnrs(2,:)));
           yMax = ceil(max(tfImgCrnrs(2,:)));
-          xData = [0 xMax - xMin]; yData = [0 yMax - yMin];
+          % When not cropping, the image move has to be inside the
+          % transformation as well...
+          xData = [0 xMax - xMin]; 
+          yData = [0 yMax - yMin];
           mvImgTf = [eye(2) [-xMin; -yMin];0 0 1];
           tf = mvImgTf * tf * centerImageTf;
         end
+        
         im = obj.GenImages{i};
         if ~isequal(tf,eye(3))
-          % Transposed as Matlab uses row vectors in imtform definition
-          tform = maketform('projective',tf');
-          tImage = imtransform(im,tform,'XData',xData,'YData',...
-              yData,'UData',[0 size(im,2)],'VData',[0 size(im,1)]);
-          imwrite(tImage,imageFileName);
+          obj.GenImages{i} = obj.transformImage(im, tf, xData, yData);
           if i==1, baseTf = tf; continue; end;
-        else
-          imwrite(im,imageFileName);
         end
+        
+        obj.GenTfs{i} = tf;
+        obj.debug('Image "%s" transformed',imgName);
+      end
+        
+      obj.GeomTransfWaiting = false;
+      for tfh = obj.PhotometricTransfQueue
+        tfh{1}(obj);
+      end
+        
+      for i=1:obj.NumImages
+        imgName = ['img',num2str(i),obj.ImageExt];
+        imageFileName = fullfile(obj.DataDir,imgName);
+        tf = obj.GenTfs{i};
+
+        
+        imwrite(obj.GenImages{i},imageFileName);
+
         if i > 1
           % Save homography
           transfFileName = fullfile(obj.DataDir,sprintf('H1to%dp',i));
@@ -478,7 +593,18 @@ classdef SynthDataset < datasets.GenericTransfDataset & helpers.Logger
           end
           fclose(file);
         end
-        obj.debug('Image "%s" generated and saved',imgName);
+        obj.debug('Image "%s" saved',imgName);
+      end
+    end
+    
+    function tImage = transformImage(obj, im, tf, xData, yData)
+      switch obj.Opts.transform
+        case 'imtransform'
+          % Transposed as Matlab uses row vectors in imtform definition
+          tform = maketform('projective',tf');
+          tImage = imtransform(im,tform,'bilinear','XData',xData,'YData',...
+              yData,'UData',[0 size(im,2)],'VData',[0 size(im,1)]);
+        case 'interp2'
       end
     end
   end
