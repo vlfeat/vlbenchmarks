@@ -13,7 +13,7 @@ classdef VlFeatInstaller < helpers.GenericInstaller
 
 % AUTORIGHTS
   properties (Constant)
-    Version = '0.9.16';
+    Version = '0.9.17';
     RootDir = fullfile('data','software','vlfeat');
     Name = ['vlfeat-' helpers.VlFeatInstaller.Version];
     InstallDir = fullfile(pwd,helpers.VlFeatInstaller.RootDir,...
