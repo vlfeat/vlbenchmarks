@@ -1,5 +1,4 @@
-function eval_mh_oxford(resultsPath)
-if nargin < 1, resultsPath = ''; end;
+function eval_mh()
 
 import datasets.*;
 import benchmarks.*;
