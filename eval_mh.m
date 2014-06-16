@@ -29,15 +29,26 @@ for category_idx = 1:numel(categories)
     % PART 1: Detector repeatability
     % --------------------------------------------------------------------
 
+    vlcovdetDetector = VlFeatCovdet()
     siftDetector = VlFeatSift();
     mhDetector = MultiscaleHarris();
+    mhDetector.Opts.localization = 1;
+    mh_woDetector = MultiscaleHarris();
+    mh_woDetector.Opts.localization = 0;
+    lcDetector = LindebergCorners();
+    lcDetector.Opts.localization = 1;
+    lc_woDetector = LindebergCorners();
+    lc_woDetector.Opts.localization = 0;
     mser = VlFeatMser();
 
 
     repBenchmark = RepeatabilityBenchmark('Mode','Repeatability');
 
-    featExtractors = {siftDetector, mser, mhDetector};
-    detectorNames = {'SIFT', 'MSER', 'MH'};
+    featExtractors = {vlcovdetDetector, siftDetector, mser, lcDetector, lc_woDetector, mhDetector, mh_woDetector};
+    detectorNames = {'VLCovDet', 'VLSIFT', 'MSER', 'LC w. localization', 'LC w.o. localization', 'MH w. localization', 'MH w.o. localization'};
+
+%    featExtractors = {mh_woDetector};
+%    detectorNames = {'MH w.o. localization'};
 
     repeatability = [];
     numCorresp = [];
@@ -63,21 +74,26 @@ for category_idx = 1:numel(categories)
 
     figure(2); clf; 
     plotScores(detectorNames, dataset, 100 * repeatability, 'Repeatability');
-    printFigure(['results_mh_' dataset_name], [category_name '_repeatability']);
+    printFigure(['results_' dataset_name], [category_name '_repeatability']);
 
     figure(3); clf; 
     plotScores(detectorNames, dataset, numCorresp, 'Number of correspondences');
-    printFigure(['results_mh_' dataset_name], [category_name '_num-correspondences']);
+    printFigure(['results_' dataset_name], [category_name '_num-correspondences']);
 
 
     % --------------------------------------------------------------------
     % PART 2: Detector matching score
     % --------------------------------------------------------------------
 
+    vlcovdetWithSift = DescriptorAdapter(vlcovdetDetector, siftDetector);
     mserWithSift = DescriptorAdapter(mser, siftDetector);
     mhWithSift = DescriptorAdapter(mhDetector, siftDetector);
-    featExtractors = {siftDetector, mserWithSift, mhWithSift};
-    detectorNames = {'SIFT', 'MSER with SIFT', 'MH with SIFT'};
+    mh_woWithSift = DescriptorAdapter(mh_woDetector, siftDetector);
+    lcWithSift = DescriptorAdapter(lcDetector, siftDetector);
+    lc_woWithSift = DescriptorAdapter(lc_woDetector, siftDetector);
+
+    featExtractors = {vlcovdetWithSift, siftDetector, mserWithSift, mhWithSift, mh_woWithSift, lcWithSift, lc_woWithSift};
+    detectorNames = {'VLCovDet', 'SIFT', 'MSER', 'LC w. localization', 'LC w.o. localization', 'MH w. localization', 'MH w.o. localization'};
 
     matchingBenchmark = RepeatabilityBenchmark('Mode','MatchingScore');
 
@@ -102,12 +118,12 @@ for category_idx = 1:numel(categories)
     printScores(detectorNames, numMatches, 'Number of matches') ;
 
     figure(5); clf; 
-    plotScores(detectorNames, dataset, matchScore*100,'Matching Score');
-    printFigure(['results_mh_' dataset_name], [category_name '_matching_score']);
+    plotScores(detectorNames, dataset, matchScore*100,'Matching Score (with SIFT description)');
+    printFigure(['results_' dataset_name], [category_name '_matching_score']);
 
     figure(6); clf; 
-    plotScores(detectorNames, dataset, numMatches,'Number of matches');
-    printFigure(['results_mh_' dataset_name], [category_name '_num-matches']);
+    plotScores(detectorNames, dataset, numMatches,'Number of matches (with SIFT description)');
+    printFigure(['results_' dataset_name], [category_name '_num-matches']);
 
 end % dataset category
 

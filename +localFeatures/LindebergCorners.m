@@ -1,4 +1,4 @@
-classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
+classdef LindebergCorners < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 
   properties (SetAccess=public, GetAccess=public)
@@ -15,8 +15,8 @@ classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
 
 
   methods
-    function obj = MultiscaleHarris(varargin)
-      obj.Name = 'Multiscale Harris';
+    function obj = LindebergCorners(varargin)
+      obj.Name = 'Lindeberg Corners';
       obj.CodeDir = fullfile(obj.RootInstallDir, 'code');
       obj.Opts = struct('localization', 1);
       varargin = obj.checkInstall(varargin);
@@ -35,7 +35,8 @@ classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img); % If not already in uint8, then convert
 
-      frames = multiscaleharris(img, obj.Opts.localization)';
+      obj.Opts.localization
+      frames = lindebergcorner(img, obj.Opts.localization)';
       frames([1,2],:) = frames([2,1],:);
 
       timeElapsed = toc(startTime);
@@ -54,14 +55,14 @@ classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function setup(obj)
-      if(~exist('multiscaleharris.m', 'file')),
-        fprintf('Adding MultiscaleHarris to path.\n');
+      if(~exist('lindebergcorner.m', 'file')),
+        fprintf('Adding LindebergCorners to path.\n');
         addpath(obj.CodeDir)
       end
     end
 
     function unload(obj)
-      fprintf('Removing MultiscaleHarris from path.\n');
+      fprintf('Removing LindebergCorners from path.\n');
       rmpath(obj.CodeDir)
     end
 
