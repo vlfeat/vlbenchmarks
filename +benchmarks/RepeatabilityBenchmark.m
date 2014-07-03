@@ -284,6 +284,9 @@ classdef RepeatabilityBenchmark < benchmarks.GenericBenchmark ...
       if isempty(framesA) || isempty(framesB)
         matches = zeros(size(framesA,2));
         obj.info('Nothing to compute.');
+        score = 0;
+        numMatches = 0;
+        matches = [];
         return;
       end
       if exist('descriptorsA','var') && exist('descriptorsB','var')

@@ -7,8 +7,8 @@ import localFeatures.*;
 set(0,'DefaultFigureVisible','off');
 
 
-dataset_name = 'oxford';
-%dataset_name = 'dtu';
+%dataset_name = 'oxford';
+dataset_name = 'dtu';
 
 if strcmp(dataset_name, 'oxford')
     categories = datasets.VggAffineDataset.AllCategories;

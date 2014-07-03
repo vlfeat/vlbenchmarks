@@ -1,25 +1,31 @@
-classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
+classdef LindebergScaleSelect < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 
-  properties (SetAccess=public, GetAccess=public)
-    CodeDir;
-    Opts;
+  properties (SetAccess=private, GetAccess=public)
+    Opts = struct( ...
+        'localize', 0, ...
+        'NoScales', 61, ...
+        'sigmamin', 0.88, ...
+        'sigmamax', -1, ...
+        'Kthres', 10^(7.5) ...
+    )
   end
 
   properties (Constant, Hidden)
     % Installation directory
-    RootInstallDir = fullfile('data','software','multiscale_harris');
+    RootInstallDir = fullfile('data','software');
+    CodeDir = fullfile('data','software','diku-dtu_detectors');
     % URL for dataset tarballs
-    CodeUrl = 'http://imm.dtu.dk/~abll/files/multiscale_harris.tar.gz';
+    CodeUrl = 'http://imm.dtu.dk/~abll/files/diku-dtu_detectors.tar.gz';
   end
 
 
   methods
-    function obj = MultiscaleHarris(varargin)
-      obj.Name = 'Multiscale Harris';
-      obj.CodeDir = fullfile(obj.RootInstallDir, 'code');
-      obj.Opts = struct('localization', 1);
+    function obj = LindebergScaleSelect(varargin)
+      import helpers.*;
+      obj.Name = 'Lindeberg with scale selection';
       varargin = obj.checkInstall(varargin);
+      [obj.Opts varargin] = vl_argparse(obj.Opts, varargin);
       obj.setup();
     end
 
@@ -35,9 +41,8 @@ classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img); % If not already in uint8, then convert
 
-      frames = multiscaleharris(img, obj.Opts.localization)';
+      frames = lindebergcorner(img, obj.Opts)';
       frames([1,2],:) = frames([2,1],:);
-
       timeElapsed = toc(startTime);
       obj.debug('%d Frames from image %s computed in %gs',...
         size(frames,2),getFileName(imagePath),timeElapsed);
@@ -46,22 +51,19 @@ classdef MultiscaleHarris < localFeatures.GenericLocalFeatureExtractor & ...
 
     function sign = getSignature(obj)
       sign = [helpers.struct2str(obj.Opts),';',...
-        helpers.fileSignature(obj.CodeDir, 'lindebergcorner.cpp'), ...
-        helpers.fileSignature(obj.CodeDir, 'LocalMaxima3DFast.cpp'), ...
-        helpers.fileSignature(obj.CodeDir, 'multiscaleharris.cpp'), ...
-        helpers.fileSignature(obj.CodeDir, 'scale.cpp'), ...
+        helpers.fileSignature(obj.CodeDir, 'lindebergcorner.m'), ...
         mfilename('fullpath')];
     end
 
     function setup(obj)
-      if(~exist('multiscaleharris.m', 'file')),
-        fprintf('Adding MultiscaleHarris to path.\n');
+      if(~exist('lindebergcorner.m', 'file')),
+        fprintf('Adding LindebergScaleSelect to path.\n');
         addpath(obj.CodeDir)
       end
     end
 
     function unload(obj)
-      fprintf('Removing MultiscaleHarris from path.\n');
+      fprintf('Removing LindebergScaleSelect from path.\n');
       rmpath(obj.CodeDir)
     end
 
