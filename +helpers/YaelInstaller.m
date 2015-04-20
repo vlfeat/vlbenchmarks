@@ -27,10 +27,10 @@ classdef YaelInstaller < helpers.GenericInstaller
 % AUTORIGHTS
   properties (Constant)
     RootDir = fullfile('data','software','yael');
-    GlnxA64Url = 'https://gforge.inria.fr/frs/download.php/30399/yael_matlab_linux64_v277.tar.gz';
-    MaciA64Url = 'https://gforge.inria.fr/frs/download.php/30396/yael_matlab_mac64_v277.tar.gz';
-    SrcUrl = 'https://gforge.inria.fr/frs/download.php/30394/yael_v277.tar.gz';
-    InstallDir = fullfile(helpers.YaelInstaller.RootDir,'yael_v277');
+    GlnxA64Url = 'https://gforge.inria.fr/frs/download.php/34218/yael_matlab_linux64_v438.tar.gz';
+    MaciA64Url = 'https://gforge.inria.fr/frs/download.php/34219/yael_matlab_mac64_v438.tar.gz';
+    SrcUrl = 'https://gforge.inria.fr/frs/download.php/30394/yael_v438.tar.gz';
+    InstallDir = fullfile(helpers.YaelInstaller.RootDir,'yael_v438');
     MexDir = fullfile(helpers.YaelInstaller.InstallDir,'matlab');
 
     DistMetricParamMap = containers.Map(...
