@@ -29,7 +29,7 @@ classdef YaelInstaller < helpers.GenericInstaller
     RootDir = fullfile('data','software','yael');
     GlnxA64Url = 'https://gforge.inria.fr/frs/download.php/34218/yael_matlab_linux64_v438.tar.gz';
     MaciA64Url = 'https://gforge.inria.fr/frs/download.php/34219/yael_matlab_mac64_v438.tar.gz';
-    SrcUrl = 'https://gforge.inria.fr/frs/download.php/30394/yael_v438.tar.gz';
+    SrcUrl = 'https://gforge.inria.fr/frs/download.php/34217/yael_v438.tar.gz';
     InstallDir = fullfile(helpers.YaelInstaller.RootDir,'yael_v438');
     MexDir = fullfile(helpers.YaelInstaller.InstallDir,'matlab');
 
