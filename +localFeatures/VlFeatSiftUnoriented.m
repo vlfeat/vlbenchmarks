@@ -1,4 +1,4 @@
-classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
+classdef VlFeatSiftUnoriented < localFeatures.GenericLocalFeatureExtractor & ...
     helpers.GenericInstaller
 % localFeatures.VlFeatSift VlFeat vl_sift wrapper
 %   localFeatures.VlFeatSift('OptionName',OptionValue,...) Creates new
@@ -20,9 +20,9 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
   end
 
   methods
-    function obj = VlFeatSift(varargin)
+    function obj = VlFeatSiftUnoriented(varargin)
       % def. arguments
-      obj.Name = 'VLFeat SIFT';
+      obj.Name = 'VLFeat SIFT Unoriented';
       varargin = obj.configureLogger(obj.Name,varargin);
       obj.VlSiftArguments = obj.checkInstall(varargin);
       obj.ExtractsDescriptors = true;
@@ -64,7 +64,7 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       % Get the input image
       img = imread(imagePath);
       imgSize = size(img);
-      if numel(imgSize) > 2 && imgSize(3) > 1
+      if imgSize(3) > 1
         img = rgb2gray(img);
       end
       img = single(img);
@@ -76,6 +76,10 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
         % When no orientation, compute upright SIFT descriptors
         frames = [frames; zeros(1,size(frames,2))];
       end
+      if size(frames,1) == 4
+        % When no orientation, compute upright SIFT descriptors
+        frames(4,:) = zeros(1,size(frames,2));
+      end
       % Compute the descriptors (using scale space).
       [frames, descriptors] = vl_sift(img,'Frames',frames,...
         obj.VlSiftArguments{:});
@@ -84,8 +88,9 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
     end
 
     function sign = getSignature(obj)
-      sign = [helpers.VlFeatInstaller.getBinSignature('vl_sift'),...
-              helpers.cell2str(obj.VlSiftArguments)];
+      sign = [helpers.VlFeatInstaller.getBinSignature('vl_sift'), ...
+              helpers.cell2str(obj.VlSiftArguments), ...
+              mfilename('fullpath')];
     end
   end
 
