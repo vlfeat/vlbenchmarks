@@ -64,7 +64,7 @@ classdef VlFeatSift < localFeatures.GenericLocalFeatureExtractor & ...
       % Get the input image
       img = imread(imagePath);
       imgSize = size(img);
-      if imgSize(3) > 1
+      if numel(imgSize) == 3 && imgSize(3) > 1
         img = rgb2gray(img);
       end
       img = single(img);
