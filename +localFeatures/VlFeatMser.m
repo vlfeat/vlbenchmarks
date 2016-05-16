@@ -39,10 +39,9 @@ classdef VlFeatMser < localFeatures.GenericLocalFeatureExtractor & ...
       if(size(img,3)>1), img = rgb2gray(img); end
       img = im2uint8(img); % If not already in uint8, then convert
 
-      [xx brightOnDarkFrames] = vl_mser(img,obj.vlMserArguments{:});
-      [xx darkOnBrightFrames] = vl_mser(255-img,obj.vlMserArguments{:});
-
-      frames = vl_ertr([brightOnDarkFrames darkOnBrightFrames]);
+      % vl_mser() computes both bright on dark and dark on bright frames by default
+      [xx frames] = vl_mser(img,obj.vlMserArguments{:});
+      frames = vl_ertr(frames);
       sel = frames(3,:).*frames(5,:) - frames(4,:).^2 >= 1 ;
       frames = frames(:, sel) ;
       timeElapsed = toc(startTime);
